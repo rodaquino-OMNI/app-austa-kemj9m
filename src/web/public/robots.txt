@@ -1,0 +1,63 @@
+# Updated: 2024
+# Purpose: Define crawler access rules to protect healthcare data while enabling SEO
+# Cache-Control: public, max-age=3600
+
+# Default rules for all crawlers
+User-agent: *
+Crawl-delay: 10
+
+# Allow public routes
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /marketplace/
+Allow: /blog/
+Allow: /faq
+Allow: /terms
+Allow: /privacy
+
+# Protect sensitive healthcare & user data
+Disallow: /api/
+Disallow: /auth/
+Disallow: /dashboard/
+Disallow: /virtual-care/
+Disallow: /health-records/
+Disallow: /claims/
+Disallow: /admin/
+Disallow: /*.json
+Disallow: /*.js
+Disallow: /*.css
+Disallow: /icons/
+
+# Googlebot specific rules
+User-agent: Googlebot
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /marketplace/
+Allow: /blog/
+Allow: /faq
+Allow: /terms
+Allow: /privacy
+Disallow: /api/
+Disallow: /auth/
+Disallow: /dashboard/
+Disallow: /virtual-care/
+Disallow: /health-records/
+Disallow: /claims/
+Disallow: /admin/
+Disallow: /*.json
+Disallow: /*.js
+Disallow: /*.css
+Disallow: /icons/
+
+# Image crawler specific rules
+User-agent: Googlebot-Image
+Allow: /marketplace/images/
+Allow: /blog/images/
+Disallow: /health-records/images/
+Disallow: /virtual-care/images/
+Disallow: /dashboard/images/
+
+# Sitemap declaration
+Sitemap: /sitemap.xml
