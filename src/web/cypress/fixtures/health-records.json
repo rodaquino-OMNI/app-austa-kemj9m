@@ -1,0 +1,169 @@
+{
+  "records": [
+    {
+      "id": "hr-001",
+      "patientId": "pat-001",
+      "providerId": "prov-001",
+      "type": "CONSULTATION",
+      "date": "2024-01-15T10:00:00Z",
+      "content": {
+        "diagnosis": "Hypertension",
+        "notes": "Regular checkup, blood pressure elevated",
+        "recommendations": "Lifestyle changes, follow-up in 2 weeks",
+        "vitalSigns": {
+          "bloodPressure": {
+            "systolic": 142,
+            "diastolic": 92
+          },
+          "heartRate": 78,
+          "temperature": 37.1
+        }
+      },
+      "metadata": {
+        "version": 1,
+        "createdAt": "2024-01-15T10:30:00Z",
+        "createdBy": "dr-smith",
+        "updatedAt": "2024-01-15T10:30:00Z",
+        "updatedBy": "dr-smith",
+        "facility": "Central Hospital",
+        "department": "Cardiology",
+        "hipaaCompliance": {
+          "isProtectedHealth": true,
+          "dataMinimizationApplied": true,
+          "encryptionVerified": true,
+          "accessRestrictions": ["TREATING_PHYSICIAN", "PATIENT"],
+          "lastComplianceCheck": "2024-01-15T10:30:00Z",
+          "complianceOfficer": "compliance-001"
+        },
+        "auditTrail": [
+          {
+            "timestamp": "2024-01-15T10:30:00Z",
+            "action": "RECORD_CREATED",
+            "performedBy": "dr-smith",
+            "ipAddress": "10.0.0.1"
+          }
+        ]
+      },
+      "attachments": [],
+      "status": "FINAL",
+      "securityClassification": "HIGHLY_CONFIDENTIAL",
+      "encryptionLevel": "AES-256-GCM"
+    },
+    {
+      "id": "hr-002",
+      "patientId": "pat-001",
+      "providerId": "prov-002",
+      "type": "LAB_RESULT",
+      "date": "2024-01-10T08:30:00Z",
+      "content": {
+        "testType": "Complete Blood Count",
+        "results": {
+          "hemoglobin": {
+            "value": 14.2,
+            "unit": "g/dL",
+            "referenceRange": "13.5-17.5"
+          },
+          "whiteBloodCells": {
+            "value": 7.8,
+            "unit": "K/µL",
+            "referenceRange": "4.5-11.0"
+          }
+        },
+        "interpretation": "Within normal limits",
+        "orderingPhysician": "dr-jones"
+      },
+      "metadata": {
+        "version": 1,
+        "createdAt": "2024-01-10T09:15:00Z",
+        "createdBy": "lab-tech-001",
+        "updatedAt": "2024-01-10T09:15:00Z",
+        "updatedBy": "lab-tech-001",
+        "facility": "Central Hospital Laboratory",
+        "department": "Clinical Laboratory",
+        "hipaaCompliance": {
+          "isProtectedHealth": true,
+          "dataMinimizationApplied": true,
+          "encryptionVerified": true,
+          "accessRestrictions": ["LAB_STAFF", "TREATING_PHYSICIAN", "PATIENT"],
+          "lastComplianceCheck": "2024-01-10T09:15:00Z",
+          "complianceOfficer": "compliance-001"
+        },
+        "auditTrail": [
+          {
+            "timestamp": "2024-01-10T09:15:00Z",
+            "action": "RECORD_CREATED",
+            "performedBy": "lab-tech-001",
+            "ipAddress": "10.0.0.2"
+          }
+        ]
+      },
+      "attachments": [
+        {
+          "id": "att-001",
+          "type": "LABORATORY_REPORT",
+          "title": "CBC Report",
+          "contentType": "application/pdf",
+          "size": 245760,
+          "url": "https://storage.austa.health/lab-reports/att-001",
+          "uploadedAt": "2024-01-10T09:15:00Z",
+          "uploadedBy": "lab-tech-001",
+          "encryptionDetails": {
+            "algorithm": "AES-256-GCM",
+            "keyId": "key-001",
+            "initVector": "iv-001"
+          },
+          "securityHash": "sha256-hash-value"
+        }
+      ],
+      "status": "FINAL",
+      "securityClassification": "HIGHLY_CONFIDENTIAL",
+      "encryptionLevel": "AES-256-GCM"
+    },
+    {
+      "id": "hr-003",
+      "patientId": "pat-001",
+      "providerId": "prov-001",
+      "type": "PRESCRIPTION",
+      "date": "2024-01-15T10:30:00Z",
+      "content": {
+        "medication": "Lisinopril",
+        "dosage": "10mg",
+        "frequency": "Once daily",
+        "duration": "30 days",
+        "instructions": "Take in the morning with food",
+        "quantity": 30,
+        "refills": 2,
+        "prescribingPhysician": "dr-smith"
+      },
+      "metadata": {
+        "version": 1,
+        "createdAt": "2024-01-15T10:35:00Z",
+        "createdBy": "dr-smith",
+        "updatedAt": "2024-01-15T10:35:00Z",
+        "updatedBy": "dr-smith",
+        "facility": "Central Hospital",
+        "department": "Cardiology",
+        "hipaaCompliance": {
+          "isProtectedHealth": true,
+          "dataMinimizationApplied": true,
+          "encryptionVerified": true,
+          "accessRestrictions": ["TREATING_PHYSICIAN", "PHARMACIST", "PATIENT"],
+          "lastComplianceCheck": "2024-01-15T10:35:00Z",
+          "complianceOfficer": "compliance-001"
+        },
+        "auditTrail": [
+          {
+            "timestamp": "2024-01-15T10:35:00Z",
+            "action": "RECORD_CREATED",
+            "performedBy": "dr-smith",
+            "ipAddress": "10.0.0.1"
+          }
+        ]
+      },
+      "attachments": [],
+      "status": "FINAL",
+      "securityClassification": "HIGHLY_CONFIDENTIAL",
+      "encryptionLevel": "AES-256-GCM"
+    }
+  ]
+}
