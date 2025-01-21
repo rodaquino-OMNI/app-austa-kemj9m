@@ -1,0 +1,155 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: virtual-care-service
+  namespace: austa
+  labels:
+    app: austa-superapp
+    service: virtual-care
+    version: 2.0.0
+    tier: backend
+    criticality: high
+  annotations:
+    kubernetes.io/change-cause: "Production deployment with enhanced security and performance"
+    checksum/config: ${CONFIG_CHECKSUM}
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3002"
+    prometheus.io/path: "/metrics"
+spec:
+  replicas: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: austa-superapp
+      service: virtual-care
+  template:
+    metadata:
+      labels:
+        app: austa-superapp
+        service: virtual-care
+        version: 2.0.0
+    spec:
+      serviceAccountName: virtual-care-sa
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: virtual-care
+        image: austa-registry/virtual-care-service:2.0.0
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 3002
+          protocol: TCP
+        - name: webrtc
+          containerPort: 3003
+          protocol: UDP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: CONFIG_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: virtual-care-config
+              key: config_version
+        - name: WEBRTC_ICE_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: webrtc-config
+              key: ice_servers
+        - name: TLS_CERT
+          valueFrom:
+            secretKeyRef:
+              name: tls-certificates
+              key: tls.crt
+        - name: TLS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: tls-certificates
+              key: tls.key
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        startupProbe:
+          httpGet:
+            path: /health/startup
+            port: 3002
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 3002
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 3002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: secrets-volume
+          mountPath: /app/secrets
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: virtual-care-config
+      - name: secrets-volume
+        secret:
+          secretName: virtual-care-secrets
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: service
+                operator: In
+                values:
+                - virtual-care
+            topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-type
+                operator: In
+                values:
+                - high-performance
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            service: virtual-care
+      terminationGracePeriodSeconds: 60
+      imagePullSecrets:
+      - name: registry-credentials
