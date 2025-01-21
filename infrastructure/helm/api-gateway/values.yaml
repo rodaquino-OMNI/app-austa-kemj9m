@@ -1,0 +1,209 @@
+# Kong API Gateway Helm Values Configuration
+# Version: 2.19.0
+# Platform: AUSTA SuperApp
+
+nameOverride: "austa-api-gateway"
+fullnameOverride: "austa-api-gateway"
+
+image:
+  repository: austa/api-gateway
+  tag: "2.19.0"
+  pullPolicy: Always
+
+replicaCount: 3
+
+serviceAccount:
+  create: true
+  name: "api-gateway-sa"
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789:role/api-gateway-role"
+    iam.gke.io/gcp-service-account: "api-gateway@austa-health.iam.gserviceaccount.com"
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9542"
+  prometheus.io/path: "/metrics"
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/role: "api-gateway"
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 443
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:region:account:certificate/certificate-id"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+    nginx.ingress.kubernetes.io/enable-modsecurity: "true"
+    nginx.ingress.kubernetes.io/enable-owasp-core-rules: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+  hosts:
+    - host: api.austa-health.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: api-gateway-tls
+      hosts:
+        - api.austa-health.com
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 30
+
+nodeSelector:
+  kubernetes.io/role: networking
+  node.kubernetes.io/instance-type: c5.xlarge
+
+tolerations:
+  - key: "networking"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - api-gateway
+        topologyKey: kubernetes.io/hostname
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+                - amd64
+
+kong:
+  admin:
+    enabled: true
+    http:
+      enabled: true
+      servicePort: 8001
+      containerPort: 8001
+    tls:
+      enabled: true
+      parameters:
+        - TLSv1.2
+        - TLSv1.3
+  
+  proxy:
+    enabled: true
+    http:
+      enabled: true
+      servicePort: 8000
+      containerPort: 8000
+    tls:
+      enabled: true
+      servicePort: 8443
+      containerPort: 8443
+      parameters:
+        - TLSv1.2
+        - TLSv1.3
+      cipherSuites:
+        - ECDHE-ECDSA-AES128-GCM-SHA256
+        - ECDHE-RSA-AES128-GCM-SHA256
+
+  plugins:
+    configMaps:
+      - name: kong-plugin-cors
+        pluginName: cors
+      - name: kong-plugin-rate-limiting
+        pluginName: rate-limiting
+      - name: kong-plugin-oauth2
+        pluginName: oauth2
+      - name: kong-plugin-jwt
+        pluginName: jwt
+      - name: kong-plugin-ip-restriction
+        pluginName: ip-restriction
+      - name: kong-plugin-request-size-limiting
+        pluginName: request-size-limiting
+      - name: kong-plugin-bot-detection
+        pluginName: bot-detection
+      - name: kong-plugin-response-ratelimiting
+        pluginName: response-ratelimiting
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: "30s"
+    scrapeTimeout: "10s"
+    namespace: monitoring
+  prometheusRule:
+    enabled: true
+    namespace: monitoring
+    rules:
+      - alert: KongHighErrorRate
+        expr: sum(rate(kong_http_status{code=~"5.."}[5m])) / sum(rate(kong_http_status[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+
+env:
+  KONG_DATABASE: "off"
+  KONG_DECLARATIVE_CONFIG: "/kong/declarative/kong.yaml"
+  KONG_PROXY_ACCESS_LOG: "/dev/stdout"
+  KONG_ADMIN_ACCESS_LOG: "/dev/stdout"
+  KONG_PROXY_ERROR_LOG: "/dev/stderr"
+  KONG_ADMIN_ERROR_LOG: "/dev/stderr"
+  KONG_ADMIN_LISTEN: "0.0.0.0:8001 ssl"
+  KONG_PROXY_LISTEN: "0.0.0.0:8000, 0.0.0.0:8443 ssl"
+  KONG_SSL_CIPHER_SUITE: "modern"
+  KONG_SSL_PROTOCOLS: "TLSv1.2 TLSv1.3"
+  KONG_NGINX_WORKER_PROCESSES: "auto"
+  KONG_NGINX_WORKER_CONNECTIONS: "2048"
+  KONG_PLUGINS: "bundled,cors,rate-limiting,oauth2,jwt,ip-restriction,request-size-limiting,bot-detection,response-ratelimiting"
