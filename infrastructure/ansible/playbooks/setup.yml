@@ -1,0 +1,188 @@
+---
+# AUSTA SuperApp Infrastructure Setup Playbook
+# Version: 1.0.0
+# Dependencies:
+# - ansible.posix: 1.5.0
+# - community.general: 6.0.0
+# - community.crypto: 2.0.0
+
+- name: AUSTA SuperApp Infrastructure Setup
+  hosts: all
+  become: true
+  gather_facts: true
+  vars_files:
+    - "../inventory/{{ env | default('production') }}.yml"
+    - "../vars/security.yml"
+    - "../vars/compliance.yml"
+
+  pre_tasks:
+    - name: Pre-setup validation
+      block:
+        - name: Validate system requirements
+          assert:
+            that:
+              - ansible_memtotal_mb >= 8192
+              - ansible_processor_vcpus >= 2
+              - ansible_distribution in ['RedHat', 'CentOS', 'Ubuntu']
+              - ansible_distribution_major_version|int >= 8
+            msg: "System does not meet minimum requirements for HIPAA-compliant deployment"
+          tags: ['validation', 'security']
+
+        - name: Verify network connectivity
+          wait_for:
+            host: "{{ item }}"
+            port: "{{ hostvars[item].port }}"
+            timeout: 10
+          with_items: "{{ groups['all'] }}"
+          tags: ['validation', 'network']
+
+        - name: Check required ports availability
+          wait_for:
+            port: "{{ item }}"
+            timeout: 5
+          with_items:
+            - 80   # HTTP
+            - 443  # HTTPS
+            - 9090 # Prometheus
+            - 9093 # Alertmanager
+            - 3000 # Grafana
+          tags: ['validation', 'ports']
+
+  roles:
+    - role: common_tasks
+      tags: ['system', 'common']
+      vars:
+        update_system: true
+        configure_system: true
+        install_dependencies: true
+
+    - role: security_tasks
+      tags: ['security', 'compliance']
+      vars:
+        security_level: "{{ security | default('high') }}"
+        compliance_mode: "{{ compliance | default('hipaa_lgpd') }}"
+        encryption_enabled: true
+
+    - role: monitoring_tasks
+      tags: ['monitoring', 'observability']
+      vars:
+        prometheus_version: "2.45.0"
+        grafana_version: "10.0.0"
+        elasticsearch_version: "8.9.0"
+        monitoring_namespace: "monitoring"
+        ssl_cert_path: "/etc/ssl/monitoring"
+
+  tasks:
+    - name: Setup infrastructure components
+      block:
+        - name: Configure KMS encryption
+          include_tasks: "../tasks/configure-kms.yml"
+          vars:
+            kms_key_alias: "alias/{{ environment }}/health-records"
+            key_rotation_days: 90
+
+        - name: Setup WAF rules
+          include_tasks: "../tasks/configure-waf.yml"
+          vars:
+            waf_name: "{{ environment }}-austa-superapp-waf"
+            rate_limit: 2000
+            block_period: 300
+
+        - name: Configure high availability
+          include_tasks: "../tasks/configure-ha.yml"
+          vars:
+            min_nodes: 2
+            max_nodes: 10
+            desired_nodes: 3
+
+        - name: Setup backup procedures
+          include_tasks: "../tasks/configure-backups.yml"
+          vars:
+            retention_days: 180
+            backup_schedule: "0 2 * * *"
+            encryption_enabled: true
+
+      tags: ['setup', 'infrastructure']
+
+    - name: Configure monitoring stack
+      block:
+        - name: Deploy Prometheus
+          include_tasks: "../tasks/deploy-prometheus.yml"
+          vars:
+            prometheus_config: "{{ lookup('file', '../../../src/backend/monitoring/prometheus.yml') }}"
+            alerting_rules: "{{ lookup('file', '../../../src/backend/monitoring/alerting-rules.yml') }}"
+
+        - name: Deploy Grafana
+          include_tasks: "../tasks/deploy-grafana.yml"
+          vars:
+            grafana_admin_user: "{{ lookup('env', 'GRAFANA_ADMIN_USER') }}"
+            grafana_admin_password: "{{ lookup('env', 'GRAFANA_ADMIN_PASSWORD') }}"
+
+        - name: Deploy Elasticsearch
+          include_tasks: "../tasks/deploy-elasticsearch.yml"
+          vars:
+            cluster_name: "austa-elasticsearch"
+            node_count: 3
+            heap_size: "4g"
+
+      tags: ['monitoring', 'observability']
+
+  post_tasks:
+    - name: Verify deployment
+      block:
+        - name: Check service health
+          uri:
+            url: "https://{{ item.host }}:{{ item.port }}{{ item.path }}"
+            validate_certs: yes
+            return_content: yes
+          with_items:
+            - { host: "localhost", port: "9090", path: "/-/healthy", service: "prometheus" }
+            - { host: "localhost", port: "3000", path: "/api/health", service: "grafana" }
+            - { host: "localhost", port: "9200", path: "/_cluster/health", service: "elasticsearch" }
+          register: health_checks
+          until: health_checks is success
+          retries: 5
+          delay: 10
+
+        - name: Validate security controls
+          include_tasks: "../tasks/validate-security.yml"
+          vars:
+            required_controls:
+              - encryption_at_rest
+              - encryption_in_transit
+              - access_controls
+              - audit_logging
+
+        - name: Generate deployment report
+          template:
+            src: "../templates/deployment-report.j2"
+            dest: "/var/log/austa/deployment-{{ ansible_date_time.iso8601 }}.log"
+            mode: '0640'
+
+      tags: ['verification', 'post-setup']
+
+  handlers:
+    - name: Restart monitoring services
+      systemd:
+        name: "{{ item }}"
+        state: restarted
+        daemon_reload: yes
+      with_items:
+        - prometheus
+        - grafana-server
+        - elasticsearch
+      listen: "restart_monitoring"
+
+    - name: Reload security configurations
+      command: "{{ item }}"
+      with_items:
+        - systemctl reload auditd
+        - ufw reload
+        - fail2ban-client reload
+      listen: "reload_security"
+
+    - name: Update compliance status
+      command: "/usr/local/bin/update-compliance-status"
+      args:
+        creates: "/var/log/austa/compliance-{{ ansible_date_time.date }}.log"
+      listen: "update_compliance"
