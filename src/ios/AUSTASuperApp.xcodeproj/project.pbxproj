@@ -1,0 +1,303 @@
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1A2B3C4D5E6F7G8H /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7G8I /* AppDelegate.swift */; };
+		2B3C4D5E6F7G8H9I /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3C4D5E6F7G8H9J /* SceneDelegate.swift */; };
+		3C4D5E6F7G8H9I0J /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C4D5E6F7G8H9I0K /* HealthKit.framework */; };
+		4D5E6F7G8H9I0J1K /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5E6F7G8H9I0J1L /* Security.framework */; };
+		5E6F7G8H9I0J1K2L /* LocalAuthentication.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E6F7G8H9I0J1K2M /* LocalAuthentication.framework */; };
+		6F7G8H9I0J1K2L3M /* CryptoKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7G8H9I0J1K2L3N /* CryptoKit.framework */; };
+		7G8H9I0J1K2L3M4N /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 7G8H9I0J1K2L3M4O /* Alamofire */; };
+		8H9I0J1K2L3M4N5O /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 8H9I0J1K2L3M4N5P /* KeychainAccess */; };
+		9I0J1K2L3M4N5O6P /* TwilioVideo in Frameworks */ = {isa = PBXBuildFile; fileRef = 9I0J1K2L3M4N5O6Q /* TwilioVideo */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1A2B3C4D5E6F7G8I /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		2B3C4D5E6F7G8H9J /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		3C4D5E6F7G8H9I0K /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
+		4D5E6F7G8H9I0J1L /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		5E6F7G8H9I0J1K2M /* LocalAuthentication.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LocalAuthentication.framework; path = System/Library/Frameworks/LocalAuthentication.framework; sourceTree = SDKROOT; };
+		6F7G8H9I0J1K2L3N /* CryptoKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CryptoKit.framework; path = System/Library/Frameworks/CryptoKit.framework; sourceTree = SDKROOT; };
+		A1B2C3D4E5F6G7H8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B2C3D4E5F6G7H8I9 /* AUSTASuperApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AUSTASuperApp.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C3D4E5F6G7H8I9J0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C4D5E6F7G8H9I0J /* HealthKit.framework in Frameworks */,
+				4D5E6F7G8H9I0J1K /* Security.framework in Frameworks */,
+				5E6F7G8H9I0J1K2L /* LocalAuthentication.framework in Frameworks */,
+				6F7G8H9I0J1K2L3M /* CryptoKit.framework in Frameworks */,
+				7G8H9I0J1K2L3M4N /* Alamofire in Frameworks */,
+				8H9I0J1K2L3M4N5O /* KeychainAccess in Frameworks */,
+				9I0J1K2L3M4N5O6P /* TwilioVideo in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D4E5F6G7H8I9J0K1 = {
+			isa = PBXGroup;
+			children = (
+				E5F6G7H8I9J0K1L2 /* AUSTASuperApp */,
+				F6G7H8I9J0K1L2M3 /* Frameworks */,
+				G7H8I9J0K1L2M3N4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E5F6G7H8I9J0K1L2 /* AUSTASuperApp */ = {
+			isa = PBXGroup;
+			children = (
+				1A2B3C4D5E6F7G8I /* AppDelegate.swift */,
+				2B3C4D5E6F7G8H9J /* SceneDelegate.swift */,
+				H8I9J0K1L2M3N4O5 /* Core */,
+				I9J0K1L2M3N4O5P6 /* Features */,
+				J0K1L2M3N4O5P6Q7 /* Security */,
+				K1L2M3N4O5P6Q7R8 /* HealthKit */,
+				L2M3N4O5P6Q7R8S9 /* Resources */,
+				A1B2C3D4E5F6G7H8 /* Info.plist */,
+				B2C3D4E5F6G7H8I9 /* AUSTASuperApp.entitlements */,
+			);
+			path = AUSTASuperApp;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		M3N4O5P6Q7R8S9T0 /* AUSTASuperApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = N4O5P6Q7R8S9T0U1;
+			buildPhases = (
+				O5P6Q7R8S9T0U1V2 /* SwiftLint */,
+				P6Q7R8S9T0U1V2W3 /* Sources */,
+				Q7R8S9T0U1V2W3X4 /* Frameworks */,
+				R8S9T0U1V2W3X4Y5 /* Resources */,
+				S9T0U1V2W3X4Y5Z6 /* Security Validation */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AUSTASuperApp;
+			packageProductDependencies = (
+				7G8H9I0J1K2L3M4O /* Alamofire */,
+				8H9I0J1K2L3M4N5P /* KeychainAccess */,
+			);
+			productName = AUSTASuperApp;
+			productReference = T0U1V2W3X4Y5Z6A7 /* AUSTASuperApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		U1V2W3X4Y5Z6A7B8 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				ORGANIZATIONNAME = "AUSTA Healthcare";
+				TargetAttributes = {
+					M3N4O5P6Q7R8S9T0 = {
+						CreatedOnToolsVersion = 15.0;
+						LastSwiftMigration = 1500;
+						SystemCapabilities = {
+							com.apple.HealthKit = {
+								enabled = 1;
+							};
+							com.apple.Push = {
+								enabled = 1;
+							};
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+							com.apple.KeychainSharing = {
+								enabled = 1;
+							};
+							com.apple.SafariKeychain = {
+								enabled = 1;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = V2W3X4Y5Z6A7B8C9;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D4E5F6G7H8I9J0K1;
+			packageReferences = (
+				W3X4Y5Z6A7B8C9D0 /* XCRemoteSwiftPackageReference "Alamofire" */,
+				X4Y5Z6A7B8C9D0E1 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
+			);
+			productRefGroup = G7H8I9J0K1L2M3N4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				M3N4O5P6Q7R8S9T0 /* AUSTASuperApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		Y5Z6A7B8C9D0E1F2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ANALYZER_SECURITY_INSECUREAPI_RAND = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_SUSPICIOUS_MOVES = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = AUSTASuperApp/AUSTASuperApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AUSTA_DEVELOPMENT_TEAM;
+				ENABLE_BITCODE = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"HIPAA_LOGGING=1",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AUSTASuperApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-l\"c++\"",
+					"-framework",
+					"\"Security\"",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.austa.superapp;
+				PRODUCT_NAME = AUSTASuperApp;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		Z6A7B8C9D0E1F2G3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ANALYZER_SECURITY_INSECUREAPI_RAND = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_SUSPICIOUS_MOVES = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = AUSTASuperApp/AUSTASuperApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AUSTA_DEVELOPMENT_TEAM;
+				ENABLE_BITCODE = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"RELEASE=1",
+					"HIPAA_COMPLIANCE=1",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AUSTASuperApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-l\"c++\"",
+					"-framework",
+					"\"Security\"",
+				);
+				OTHER_SWIFT_FLAGS = "-D RELEASE -D HIPAA_ENABLED";
+				PRODUCT_BUNDLE_IDENTIFIER = com.austa.superapp;
+				PRODUCT_NAME = AUSTASuperApp;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		N4O5P6Q7R8S9T0U1 /* Build configuration list for PBXNativeTarget "AUSTASuperApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				Y5Z6A7B8C9D0E1F2 /* Debug */,
+				Z6A7B8C9D0E1F2G3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		V2W3X4Y5Z6A7B8C9 /* Build configuration list for PBXProject "AUSTASuperApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				Y5Z6A7B8C9D0E1F2 /* Debug */,
+				Z6A7B8C9D0E1F2G3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		W3X4Y5Z6A7B8C9D0 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = exactVersion;
+				version = 5.8.0;
+			};
+		};
+		X4Y5Z6A7B8C9D0E1 /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess.git";
+			requirement = {
+				kind = exactVersion;
+				version = 4.2.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7G8H9I0J1K2L3M4O /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = W3X4Y5Z6A7B8C9D0 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+		8H9I0J1K2L3M4N5P /* KeychainAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = X4Y5Z6A7B8C9D0E1 /* XCRemoteSwiftPackageReference "KeychainAccess" */;
+			productName = KeychainAccess;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = U1V2W3X4Y5Z6A7B8 /* Project object */;
+}
