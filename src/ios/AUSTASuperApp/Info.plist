@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Core App Information -->
+    <key>CFBundleIdentifier</key>
+    <string>com.austa.superapp</string>
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleName</key>
+    <string>AUSTA SuperApp</string>
+    <key>CFBundleDisplayName</key>
+    <string>AUSTA SuperApp</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>MinimumOSVersion</key>
+    <string>14.0</string>
+    
+    <!-- Device Capabilities -->
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>armv7</string>
+        <string>arm64</string>
+        <string>healthkit</string>
+        <string>face-id</string>
+    </array>
+    
+    <!-- Supported Interface Orientations -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    
+    <!-- Permission Usage Descriptions -->
+    <key>NSCameraUsageDescription</key>
+    <string>Camera access is required for virtual consultations and medical document scanning</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Microphone access is needed for telemedicine appointments</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Photo library access is needed to upload medical documents and prescriptions</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>Face ID is used to securely access your health information</string>
+    <key>NSHealthShareUsageDescription</key>
+    <string>Health data access is required to monitor your vital signs and medical conditions</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>Health data updates are needed to track your medical progress</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Location is used to find nearby healthcare providers</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Bluetooth is used to connect with medical devices and wearables</string>
+    
+    <!-- Security Configuration -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <true/>
+    
+    <!-- URL Scheme Handling -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>tel</string>
+        <string>facetime</string>
+        <string>mailto</string>
+    </array>
+    
+    <!-- Background Tasks -->
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>com.austa.superapp.refresh</string>
+    </array>
+    
+    <!-- Scene Configuration -->
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+        <key>UISceneConfigurations</key>
+        <dict>
+            <key>UIWindowSceneSessionRoleApplication</key>
+            <array>
+                <dict>
+                    <key>UISceneConfigurationName</key>
+                    <string>Default Configuration</string>
+                    <key>UISceneDelegateClassName</key>
+                    <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+                    <key>UISceneStoryboardFile</key>
+                    <string>Main</string>
+                </dict>
+            </array>
+        </dict>
+    </dict>
+    
+    <!-- Network Security Configuration -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+        <key>NSAllowsLocalNetworking</key>
+        <false/>
+        <key>NSExceptionDomains</key>
+        <dict>
+            <key>austa-api.com</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <false/>
+                <key>NSExceptionRequiresForwardSecrecy</key>
+                <true/>
+                <key>NSExceptionMinimumTLSVersion</key>
+                <string>TLSv1.3</string>
+                <key>NSRequiresCertificateTransparency</key>
+                <true/>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+                <key>NSPinnedDomains</key>
+                <dict>
+                    <key>austa-api.com</key>
+                    <dict>
+                        <key>NSIncludesSubdomains</key>
+                        <true/>
+                        <key>NSPinnedCAIdentities</key>
+                        <array>
+                            <dict>
+                                <key>SPKI-SHA256</key>
+                                <string>sha256-hash-value</string>
+                            </dict>
+                        </array>
+                    </dict>
+                </dict>
+            </dict>
+        </dict>
+    </dict>
+</dict>
+</plist>
