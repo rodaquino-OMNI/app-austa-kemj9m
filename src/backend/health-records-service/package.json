@@ -1,0 +1,82 @@
+{
+  "name": "@austa/health-records-service",
+  "version": "1.0.0",
+  "description": "FHIR R4 compliant health records management service with comprehensive security and healthcare integration features",
+  "main": "dist/index.js",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "test": "jest --coverage --detectOpenHandles",
+    "test:watch": "jest --watch",
+    "test:security": "npm audit && snyk test",
+    "lint": "eslint 'src/**/*.ts'",
+    "format": "prettier --write 'src/**/*.ts'",
+    "validate:fhir": "fhir-validator src/schemas/**/*.json",
+    "db:migrate": "mongoose-migrate up",
+    "db:seed": "ts-node src/scripts/seedData.ts",
+    "audit:security": "npm audit --audit-level=high",
+    "docs:generate": "typedoc --out docs src"
+  },
+  "dependencies": {
+    "@austa/shared": "1.0.0",
+    "@elastic/elasticsearch": "8.0.0",
+    "@types/fhir": "0.0.37",
+    "aws-sdk": "^2.1400.0",
+    "compression": "1.7.4",
+    "cors": "^2.8.5",
+    "crypto-js": "4.1.1",
+    "dotenv": "16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.9.0",
+    "fhir": "4.11.2",
+    "helmet": "^7.0.0",
+    "http-status": "1.6.2",
+    "joi": "17.9.0",
+    "mongoose": "7.0.0",
+    "node-hl7-parser": "1.4.0",
+    "prom-client": "14.2.0",
+    "winston": "^3.10.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "8.0.0",
+    "@jest/globals": "29.7.0",
+    "@types/express": "4.17.17",
+    "@types/helmet": "4.0.0",
+    "@types/jest": "29.5.0",
+    "@types/node": "18.15.0",
+    "@types/winston": "2.4.4",
+    "eslint": "8.48.0",
+    "husky": "8.0.3",
+    "jest": "29.6.0",
+    "jest-mock-extended": "3.0.4",
+    "lint-staged": "14.0.1",
+    "mongodb-memory-server": "8.13.0",
+    "nock": "13.3.8",
+    "prettier": "3.0.3",
+    "sinon": "15.0.0",
+    "snyk": "latest",
+    "supertest": "6.3.3",
+    "ts-jest": "^29.1.1",
+    "typescript": "5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/austa/health-records-service.git"
+  },
+  "keywords": [
+    "health-records",
+    "fhir",
+    "hl7",
+    "healthcare",
+    "medical-records",
+    "ehr"
+  ],
+  "author": "AUSTA Healthcare",
+  "license": "UNLICENSED"
+}
