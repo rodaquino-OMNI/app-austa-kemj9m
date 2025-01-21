@@ -1,0 +1,44 @@
+apiVersion: v2
+name: austa-api-gateway
+description: HIPAA-compliant Kong API Gateway Helm Chart for AUSTA SuperApp healthcare platform with integrated security, monitoring, and compliance features
+type: application
+version: 1.0.0
+appVersion: 3.4.0
+
+keywords:
+  - api-gateway
+  - kong
+  - healthcare
+  - austa-superapp
+  - hipaa-compliant
+  - lgpd-compliant
+  - telemedicine
+  - health-records
+
+maintainers:
+  - name: AUSTA Platform Team
+    email: platform@austa-superapp.com
+    url: https://austa-superapp.com/platform
+
+dependencies:
+  - name: kong
+    version: 3.4.0
+    repository: https://charts.konghq.com
+    condition: kong.enabled
+    tags:
+      - api-gateway
+      - healthcare
+
+  - name: kube-prometheus-stack
+    version: 45.0.0
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: metrics.enabled
+    tags:
+      - monitoring
+      - healthcare-metrics
+
+annotations:
+  compliance/hipaa: enabled
+  compliance/lgpd: enabled
+  security/encryption: required
+  monitoring/health-metrics: enabled
