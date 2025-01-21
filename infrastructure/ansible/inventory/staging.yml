@@ -1,0 +1,125 @@
+# Ansible Inventory - Staging Environment
+# Version: ansible-core 2.15.0
+# Purpose: Defines staging infrastructure components for AUSTA SuperApp platform
+
+all:
+  vars:
+    env: staging
+    region: us-east-1
+    backup_enabled: true
+    monitoring_enabled: true
+    ha_enabled: true
+    maintenance_window: "0 2 * * 0"  # Weekly maintenance at 2 AM Sunday
+    alert_notification_channel: slack
+    ssl_cert_renewal: "30d"
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+  children:
+    kubernetes_clusters:
+      hosts:
+        staging-eks-1:
+          ansible_host: eks-staging-1.austa.health
+          instance_type: t3.large
+          node_count: 3
+          zone: us-east-1a
+        staging-eks-2:
+          ansible_host: eks-staging-2.austa.health
+          instance_type: t3.large
+          node_count: 3
+          zone: us-east-1b
+      vars:
+        k8s_version: "1.27"
+        container_runtime: containerd
+        network_plugin: calico
+        pod_cidr: "172.16.0.0/16"
+        service_cidr: "172.17.0.0/16"
+        cluster_autoscaler_enabled: true
+        metrics_server_enabled: true
+
+    databases:
+      children:
+        postgresql:
+          hosts:
+            staging-pg-1:
+              ansible_host: pg-staging-1.austa.health
+              instance_type: db.r6g.xlarge
+              role: primary
+              zone: us-east-1a
+            staging-pg-2:
+              ansible_host: pg-staging-2.austa.health
+              instance_type: db.r6g.xlarge
+              role: replica
+              zone: us-east-1b
+          vars:
+            pg_version: "15"
+            backup_schedule: "0 */6 * * *"  # Every 6 hours
+            max_connections: 500
+            shared_buffers: "4GB"
+            effective_cache_size: "12GB"
+            wal_level: replica
+            archive_mode: "on"
+
+        mongodb:
+          hosts:
+            staging-mongo-1:
+              ansible_host: mongo-staging-1.austa.health
+              instance_type: r6g.xlarge
+              role: primary
+              zone: us-east-1a
+            staging-mongo-2:
+              ansible_host: mongo-staging-2.austa.health
+              instance_type: r6g.xlarge
+              role: secondary
+              zone: us-east-1b
+          vars:
+            mongo_version: "6.0"
+            replication_enabled: true
+            backup_schedule: "0 */6 * * *"  # Every 6 hours
+            wiredTiger_cache_size: "8GB"
+            oplog_size: "10GB"
+            authentication_enabled: true
+
+        redis:
+          hosts:
+            staging-redis-1:
+              ansible_host: redis-staging-1.austa.health
+              instance_type: cache.r6g.large
+              role: primary
+              zone: us-east-1a
+            staging-redis-2:
+              ansible_host: redis-staging-2.austa.health
+              instance_type: cache.r6g.large
+              role: replica
+              zone: us-east-1b
+          vars:
+            redis_version: "7.0"
+            cluster_enabled: true
+            maxmemory_policy: allkeys-lru
+            maxmemory: "12gb"
+            aof_enabled: true
+            rdb_save_intervals:
+              - "900 1"    # Save after 900 sec if at least 1 change
+              - "300 10"   # Save after 300 sec if at least 10 changes
+              - "60 10000" # Save after 60 sec if at least 10000 changes
+
+    monitoring:
+      hosts:
+        staging-monitoring-1:
+          ansible_host: monitoring-staging-1.austa.health
+          instance_type: t3.xlarge
+          role: primary
+          zone: us-east-1a
+        staging-monitoring-2:
+          ansible_host: monitoring-staging-2.austa.health
+          instance_type: t3.xlarge
+          role: secondary
+          zone: us-east-1b
+      vars:
+        prometheus_retention: "15d"
+        grafana_version: "10.0"
+        alertmanager_enabled: true
+        node_exporter_enabled: true
+        blackbox_exporter_enabled: true
+        alert_rules_path: /etc/prometheus/rules
+        dashboard_provisioning_path: /etc/grafana/provisioning/dashboards
