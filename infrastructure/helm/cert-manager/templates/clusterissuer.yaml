@@ -1,0 +1,80 @@
+{{/* ClusterIssuer template for automated TLS certificate management */}}
+{{/* cert-manager version: v1.13.0 */}}
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ template "generateIssuerName" .Values.clusterIssuers.letsencrypt.environment }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.Version }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/component: certificate-issuer
+    app.kubernetes.io/part-of: austa-superapp
+    security.austa.io/certificate-type: lets-encrypt
+    security.austa.io/environment: {{ .Values.clusterIssuers.letsencrypt.environment }}
+spec:
+  acme:
+    # ACME server URL based on environment (staging/production)
+    server: {{ .Values.clusterIssuers.letsencrypt.server }}
+    # Contact email for certificate notifications
+    email: {{ .Values.clusterIssuers.letsencrypt.email }}
+    privateKeySecretRef:
+      name: letsencrypt-{{ .Values.clusterIssuers.letsencrypt.environment }}-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+            podTemplate:
+              metadata:
+                labels:
+                  security.austa.io/certificate-solver: http01
+              spec:
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  fsGroup: 1000
+                seccompProfile:
+                  type: RuntimeDefault
+                containers:
+                  - name: http01-solver
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop:
+                          - ALL
+                      readOnlyRootFilesystem: true
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 64Mi
+                  limits:
+                    cpu: 200m
+                    memory: 128Mi
+
+---
+{{/* Helper template to generate issuer name */}}
+{{- define "generateIssuerName" -}}
+{{- if eq . "staging" -}}
+letsencrypt-staging
+{{- else if eq . "production" -}}
+letsencrypt-production
+{{- else -}}
+{{- fail "Invalid environment specified for ClusterIssuer. Must be 'staging' or 'production'." -}}
+{{- end -}}
+{{- end -}}
+
+---
+{{/* Validation template */}}
+{{- if not .Values.clusterIssuers.letsencrypt.email -}}
+{{- fail "Email address must be specified for ACME registration" -}}
+{{- end -}}
+
+{{- if not .Values.clusterIssuers.letsencrypt.server -}}
+{{- fail "ACME server URL must be specified" -}}
+{{- end -}}
+
+{{- if not (or (eq .Values.clusterIssuers.letsencrypt.environment "staging") (eq .Values.clusterIssuers.letsencrypt.environment "production")) -}}
+{{- fail "Environment must be either 'staging' or 'production'" -}}
+{{- end -}}
