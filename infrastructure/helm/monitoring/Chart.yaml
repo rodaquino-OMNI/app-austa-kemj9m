@@ -1,0 +1,55 @@
+apiVersion: v2
+name: austa-monitoring
+description: Enterprise-grade monitoring stack for AUSTA SuperApp platform including Prometheus, Grafana, and Alertmanager with high availability and security features
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+kubeVersion: ">=1.21.0-0"
+
+dependencies:
+  - name: prometheus
+    version: 19.0.0
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled
+    tags:
+      - metrics
+      - monitoring
+      - core
+
+  - name: grafana
+    version: 6.50.0
+    repository: https://grafana.github.io/helm-charts
+    condition: grafana.enabled
+    tags:
+      - visualization
+      - dashboards
+      - analytics
+
+  - name: alertmanager
+    version: 1.5.0
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: alertmanager.enabled
+    tags:
+      - alerts
+      - notifications
+
+maintainers:
+  - name: AUSTA Platform Team
+    email: platform@austa.health
+    url: https://austa.health/platform
+
+keywords:
+  - monitoring
+  - prometheus
+  - grafana
+  - alertmanager
+  - observability
+  - metrics
+  - healthcare
+  - security-monitoring
+  - high-availability
+
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/containsSecurityUpdates: "true"
