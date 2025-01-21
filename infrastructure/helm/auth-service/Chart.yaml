@@ -1,0 +1,51 @@
+apiVersion: v2
+name: auth-service
+version: 1.0.0
+appVersion: 1.0.0
+kubeVersion: ">=1.24.0"
+description: Authentication Service for AUSTA SuperApp providing OAuth2, OIDC, and MFA capabilities with high availability and security features
+type: application
+
+keywords:
+  - authentication
+  - oauth2
+  - oidc
+  - jwt
+  - mfa
+  - security
+  - identity-management
+  - kubernetes
+
+home: https://austa.health/auth-service
+sources:
+  - https://github.com/austa/auth-service
+
+maintainers:
+  - name: AUSTA Development Team
+    email: devops@austa.health
+    url: https://austa.health/team
+
+dependencies:
+  - name: nginx-ingress
+    version: 4.7.1
+    repository: https://kubernetes.github.io/ingress-nginx
+    condition: ingress.enabled
+    tags:
+      - networking
+      - ingress-controller
+  - name: cert-manager
+    version: 1.12.3
+    repository: https://charts.jetstack.io
+    condition: certManager.enabled
+    tags:
+      - security
+      - tls
+
+annotations:
+  artifacthub.io/changes: "Initial release of Authentication Service Helm chart with OAuth2, OIDC, and MFA support"
+  artifacthub.io/containsSecurityUpdates: "true"
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/license: "MIT"
+  artifacthub.io/signKey: "fingerprint: 0123456789ABCDEF"
+  artifacthub.io/recommendations: "Use with latest Kubernetes version for optimal security"
+  artifacthub.io/category: "security"
