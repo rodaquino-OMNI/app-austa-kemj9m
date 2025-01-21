@@ -1,0 +1,77 @@
+# Syntax: path/to/code @username1 @username2
+
+# Global owners - Project leads have oversight over all changes
+* @project-leads
+
+# Backend Services
+src/backend/ @backend-team
+src/backend/auth-service/ @backend-team @security-team
+src/backend/health-records/ @backend-team @security-team
+src/backend/database/ @backend-team @security-team
+
+# Mobile Applications
+src/ios/ @ios-team @mobile-security
+src/android/ @android-team @mobile-security
+
+# Web Application
+src/web/ @web-team
+
+# Infrastructure and DevOps
+infrastructure/ @devops-team @security-team
+.github/workflows/ @devops-team @security-team
+
+# Security-Critical Components
+src/**/security/ @security-team
+src/**/auth/ @security-team
+src/**/encryption/ @security-team
+
+# API Layer
+src/**/api/ @api-team @security-team
+
+# Testing and QA
+src/**/test/ @qa-team
+
+# Documentation
+docs/ @project-leads @technical-writers
+
+# Configuration Files
+*.config.js @devops-team
+*.config.ts @devops-team
+*.json @devops-team
+
+# Security Policy Files
+SECURITY.md @security-team
+**/security.config.* @security-team
+
+# Dependency Management
+package.json @devops-team @security-team
+yarn.lock @devops-team @security-team
+pom.xml @devops-team @security-team
+build.gradle @devops-team @security-team
+
+# Environment Configurations
+.env.* @devops-team @security-team
+**/config/*env* @devops-team @security-team
+
+# CI/CD Pipeline Configurations
+.github/workflows/*.yml @devops-team @security-team
+**/pipeline/*.yml @devops-team @security-team
+
+# Database Migrations and Schemas
+**/migrations/ @backend-team @security-team
+**/schemas/ @backend-team @security-team
+
+# Healthcare Data Processing Components
+src/**/health-data/ @backend-team @security-team
+src/**/medical-records/ @backend-team @security-team
+
+# Compliance and Audit Components
+src/**/compliance/ @security-team @legal-team
+src/**/audit/ @security-team @legal-team
+
+# Third-party Integrations
+src/**/integrations/ @backend-team @security-team
+
+# Monitoring and Logging
+src/**/monitoring/ @devops-team @security-team
+src/**/logging/ @devops-team @security-team
