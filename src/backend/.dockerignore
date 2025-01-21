@@ -1,0 +1,61 @@
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.npm
+.yarn
+
+# Source control
+.git
+.gitignore
+
+# Environment and secrets
+.env
+.env.*
+*.key
+*.pem
+*secret*
+
+# Test files and coverage reports
+**/*.test.ts
+**/*.spec.ts
+test
+tests
+coverage
+
+# IDE and editor files
+.vscode
+.idea
+
+# Build artifacts
+dist
+build
+
+# Documentation
+*.md
+README.md
+
+# Docker files
+docker-compose*.yml
+.dockerignore
+
+# Development configuration
+.eslintrc*
+.prettierrc*
+nodemon.json
+tsconfig.json
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# System files
+.DS_Store
+
+# Cache directories
+.npm
+.yarn
+
+# Additional development artifacts
+coverage
+docker-compose*.yml
