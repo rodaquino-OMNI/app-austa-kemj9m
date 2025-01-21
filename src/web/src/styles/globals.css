@@ -1,0 +1,264 @@
+/* Import normalize.css v8.0.1 for consistent cross-browser styling */
+@import 'normalize.css';
+
+/* Import Inter font v5.0.0 */
+@import '@fontsource/inter';
+
+/* CSS Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+/* Root Variables */
+:root {
+  /* Typography */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-base: 16px;
+  --line-height-base: 1.5;
+
+  /* Colors from theme */
+  --color-primary: #0B4F6C;
+  --color-primary-light: #3B7C96;
+  --color-primary-dark: #062A3C;
+  --color-secondary: #20BF55;
+  --color-clinical: #2C88D9;
+  --color-error: #D32F2F;
+  --color-warning: #ED6C02;
+  --color-success: #2E7D32;
+  --color-background: #FFFFFF;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #616161;
+  --color-text-disabled: #9E9E9E;
+
+  /* Focus and Interaction */
+  --focus-ring-color: var(--color-primary);
+  --focus-ring-width: 2px;
+  --transition-duration: 0.3s;
+
+  /* Layout */
+  --header-height: 64px;
+  --sidebar-width: 240px;
+  --grid-gap-base: 16px;
+  --border-radius-base: 4px;
+  --clinical-card-padding: 16px;
+  --form-element-height: 40px;
+
+  /* Z-index */
+  --z-index-modal: 1000;
+  --z-index-overlay: 900;
+  --z-index-dropdown: 800;
+  --z-index-header: 700;
+  --z-index-sidebar: 600;
+
+  /* Elevation */
+  --elevation-1: 0 1px 3px rgba(0,0,0,0.12);
+  --elevation-2: 0 3px 6px rgba(0,0,0,0.15);
+  --elevation-3: 0 10px 20px rgba(0,0,0,0.18);
+
+  /* Animation */
+  --animation-timing-quick: 0.15s;
+  --animation-timing-normal: 0.3s;
+  --animation-timing-slow: 0.5s;
+}
+
+/* Global Styles */
+html {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  contain: content;
+}
+
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 8px;
+  z-index: var(--z-index-modal);
+  transition: top var(--animation-timing-quick);
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Focus Styles */
+:focus {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* Healthcare Components */
+.clinical-card {
+  background: var(--color-background);
+  border-radius: var(--border-radius-base);
+  padding: var(--clinical-card-padding);
+  box-shadow: var(--elevation-1);
+  transition: box-shadow var(--animation-timing-quick);
+}
+
+.clinical-card:hover {
+  box-shadow: var(--elevation-2);
+}
+
+.clinical-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--border-radius-base);
+  font-weight: 500;
+}
+
+.clinical-status--critical {
+  background-color: var(--color-error);
+  color: #fff;
+}
+
+.clinical-status--warning {
+  background-color: var(--color-warning);
+  color: #000;
+}
+
+.clinical-status--stable {
+  background-color: var(--color-success);
+  color: #fff;
+}
+
+/* Medical Icons */
+.medical-icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+/* Health Alerts */
+.health-alert {
+  background: var(--color-error);
+  color: #fff;
+  padding: 8px 16px;
+  margin: 8px 0;
+  border-radius: var(--border-radius-base);
+}
+
+/* Responsive Media Queries */
+@media (min-width: 320px) {
+  :root {
+    --clinical-card-padding: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --clinical-card-padding: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --clinical-card-padding: 20px;
+  }
+}
+
+@media (min-width: 1440px) {
+  :root {
+    --clinical-card-padding: 24px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #121212;
+    --color-text-primary: #FFFFFF;
+    --color-text-secondary: #B0B0B0;
+    --elevation-1: 0 1px 3px rgba(255,255,255,0.12);
+    --elevation-2: 0 3px 6px rgba(255,255,255,0.15);
+    --elevation-3: 0 10px 20px rgba(255,255,255,0.18);
+  }
+}
+
+/* High Contrast Mode */
+@media (forced-colors: active) {
+  :root {
+    --focus-ring-color: Highlight;
+  }
+  
+  .clinical-card {
+    border: 1px solid CanvasText;
+  }
+  
+  .clinical-status {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: #fff;
+  }
+  
+  .clinical-card {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  
+  .skip-link,
+  .medical-icon {
+    display: none;
+  }
+}
