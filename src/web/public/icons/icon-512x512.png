@@ -1,0 +1,48 @@
+Technical Specifications:
+------------------------
+Dimensions: 512x512 pixels
+Format: PNG (Portable Network Graphics)
+Color Space: sRGB
+Alpha Channel: Yes (Transparency supported)
+Primary Color: #0066CC
+Purpose: ["any", "maskable"]
+Safe Zone: 410x410 pixels (80% centered)
+Minimum Padding: 16px from edges
+
+Design Implementation:
+---------------------
+1. Base Shape: Circular medical cross symbol
+2. Background: Transparent with #0066CC solid fallback
+3. Safe Zone: Content centered in 410x410px area
+4. Padding: 16px minimum edge padding
+5. Material Design: Following MD3.0 icon guidelines
+6. Platform Adaptations:
+   - iOS: Respects home screen margins
+   - Android: Compatible with adaptive icons
+   - Web: Optimized for PWA requirements
+
+Accessibility:
+-------------
+- Contrast Ratio: 4.5:1 minimum
+- Colorblind Safe: Tested for all types
+- Scale Testing: Verified 16x16 through 512x512
+
+Optimization:
+------------
+Content-Type: image/png
+Cache-Control: public, max-age=31536000, immutable
+Compression: Optimized lossless
+WebP Alternative: Yes
+CDN: Edge-cached, Brotli compressed
+
+Usage Contexts:
+--------------
+- PWA installation
+- App store listings
+- Splash screens
+- Device home screens
+- Task switchers
+- Favicon (scaled)
+- Platform adaptations
+
+[End of Binary File]
