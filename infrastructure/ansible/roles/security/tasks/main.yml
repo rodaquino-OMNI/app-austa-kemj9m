@@ -1,0 +1,181 @@
+---
+# Enhanced security tasks for AUSTA SuperApp platform
+# Version: 1.0.0
+# ansible.posix: 1.5.0
+# community.crypto: 2.0.0
+# community.aws: 5.0.0
+
+# Pre-tasks validation
+- name: Validate system requirements and dependencies
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution in ['RedHat', 'CentOS', 'Ubuntu']
+      - ansible_distribution_major_version|int >= 8
+    msg: "Unsupported operating system or version"
+  tags: ['security', 'validation']
+
+# System Security Configuration
+- name: Configure system security settings
+  block:
+    - name: Update system packages
+      ansible.builtin.package:
+        name: '*'
+        state: latest
+      notify: Restart security services
+
+    - name: Configure SELinux in enforcing mode
+      ansible.posix.selinux:
+        policy: targeted
+        state: enforcing
+      when: ansible_os_family == "RedHat"
+
+    - name: Configure system audit rules
+      ansible.builtin.template:
+        src: templates/audit.rules.j2
+        dest: /etc/audit/rules.d/security.rules
+        mode: '0600'
+      notify: Reload audit rules
+
+    - name: Setup intrusion detection
+      ansible.builtin.package:
+        name: 
+          - aide
+          - fail2ban
+        state: present
+      notify: Start IDS services
+  tags: ['security', 'system']
+
+# Encryption Configuration
+- name: Setup encryption services
+  block:
+    - name: Configure KMS integration
+      community.aws.aws_kms:
+        alias: "alias/{{ environment }}/health-records"
+        state: present
+        tags:
+          Environment: "{{ environment }}"
+          Purpose: "PHI Encryption"
+      register: kms_key
+
+    - name: Enable automatic key rotation
+      community.aws.aws_kms:
+        key_id: "{{ kms_key.key_id }}"
+        enable_key_rotation: true
+      when: kms_key.changed
+
+    - name: Configure TLS certificates
+      community.crypto.openssl_certificate:
+        path: /etc/ssl/certs/austa.crt
+        privatekey_path: /etc/ssl/private/austa.key
+        provider: selfsigned
+        selfsigned_digest: sha256
+      notify: Reload TLS configuration
+  tags: ['security', 'encryption']
+
+# WAF Configuration
+- name: Configure WAF rules
+  block:
+    - name: Setup WAF configuration
+      community.aws.aws_waf_web_acl:
+        name: "{{ environment }}-austa-superapp-waf"
+        metric_name: "{{ environment }}AustaSuperAppWAF"
+        default_action: "ALLOW"
+        rules:
+          - name: "RateBasedRule"
+            priority: 1
+            action: "BLOCK"
+            rate_limit: 2000
+            rate_key: "IP"
+
+    - name: Configure WAF logging
+      community.aws.aws_wafv2_web_acl_logging_configuration:
+        name: "{{ environment }}-austa-superapp-waf"
+        resource_arn: "{{ waf_config.waf_rules }}"
+        log_destination_configs:
+          - "{{ cloudwatch_log_group_arn }}"
+  tags: ['security', 'waf']
+
+# Compliance Controls
+- name: Setup compliance controls
+  block:
+    - name: Configure HIPAA controls
+      ansible.builtin.template:
+        src: templates/hipaa-controls.j2
+        dest: /etc/security/hipaa.conf
+        mode: '0600'
+      notify: Validate HIPAA compliance
+
+    - name: Setup LGPD requirements
+      ansible.builtin.template:
+        src: templates/lgpd-controls.j2
+        dest: /etc/security/lgpd.conf
+        mode: '0600'
+      notify: Validate LGPD compliance
+
+    - name: Configure audit logging
+      ansible.builtin.template:
+        src: templates/audit-policy.j2
+        dest: /etc/audit/audit.rules
+        mode: '0600'
+      notify: Reload audit rules
+  tags: ['security', 'compliance']
+
+# Security Monitoring
+- name: Setup security monitoring
+  block:
+    - name: Configure CloudWatch agent
+      ansible.builtin.template:
+        src: templates/cloudwatch-config.j2
+        dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+        mode: '0644'
+      notify: Restart CloudWatch agent
+
+    - name: Setup security metrics collection
+      ansible.builtin.template:
+        src: templates/security-metrics.j2
+        dest: /etc/security/metrics.conf
+        mode: '0600'
+      notify: Reload security metrics
+  tags: ['security', 'monitoring']
+
+# Handlers
+handlers:
+  - name: Restart security services
+    ansible.builtin.service:
+      name: "{{ item }}"
+      state: restarted
+    loop:
+      - auditd
+      - fail2ban
+      - aide
+
+  - name: Reload audit rules
+    ansible.builtin.command: auditctl -R /etc/audit/rules.d/security.rules
+    
+  - name: Start IDS services
+    ansible.builtin.service:
+      name: "{{ item }}"
+      state: started
+      enabled: yes
+    loop:
+      - aide
+      - fail2ban
+
+  - name: Reload TLS configuration
+    ansible.builtin.service:
+      name: nginx
+      state: reloaded
+
+  - name: Validate HIPAA compliance
+    ansible.builtin.command: /usr/local/bin/hipaa-validator
+
+  - name: Validate LGPD compliance
+    ansible.builtin.command: /usr/local/bin/lgpd-validator
+
+  - name: Restart CloudWatch agent
+    ansible.builtin.service:
+      name: amazon-cloudwatch-agent
+      state: restarted
+
+  - name: Reload security metrics
+    ansible.builtin.command: /usr/local/bin/reload-security-metrics
