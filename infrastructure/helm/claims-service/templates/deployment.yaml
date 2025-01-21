@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-claims-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: austa-superapp
+    service: claims
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    component: backend
+    tier: microservice
+  annotations:
+    deployment.kubernetes.io/revision: "{{ .Release.Revision }}"
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+spec:
+  replicas: {{ .Values.replicaCount | default 3 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: austa-superapp
+      service: claims
+  template:
+    metadata:
+      labels:
+        app: austa-superapp
+        service: claims
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.metrics.port | default 9090 }}"
+        prometheus.io/path: "/metrics"
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "claims-service"
+    spec:
+      serviceAccountName: {{ .Release.Name }}-claims-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: claims-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: {{ .Values.service.port | default 3003 }}
+              name: http
+              protocol: TCP
+            - containerPort: {{ .Values.metrics.port | default 9090 }}
+              name: metrics
+              protocol: TCP
+          resources:
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | default "1000m" }}
+              memory: {{ .Values.resources.limits.memory | default "1Gi" }}
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | default "500m" }}
+              memory: {{ .Values.resources.requests.memory | default "512Mi" }}
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health/startup
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.env.nodeEnv | default "production" }}
+            - name: PORT
+              value: "{{ .Values.service.port | default 3003 }}"
+            - name: LOG_LEVEL
+              value: {{ .Values.env.logLevel | default "info" }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-claims-config
+            - secretRef:
+                name: {{ .Release.Name }}-claims-secrets
+          volumeMounts:
+            - name: claims-data
+              mountPath: /app/data
+              readOnly: false
+            - name: claims-config
+              mountPath: /app/config
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+              readOnly: false
+      volumes:
+        - name: claims-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-claims-pvc
+        - name: claims-config
+          configMap:
+            name: {{ .Release.Name }}-claims-config
+        - name: tmp
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: service
+                      operator: In
+                      values:
+                        - claims
+                topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 60
