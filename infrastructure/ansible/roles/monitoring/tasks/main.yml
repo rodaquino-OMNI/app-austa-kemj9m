@@ -1,0 +1,284 @@
+---
+# AUSTA SuperApp Monitoring Stack Deployment Tasks
+# Version: 1.0.0
+# Dependencies: community.docker 3.4.0, community.general 7.0.0
+
+- name: Create monitoring namespace with enhanced security
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ monitoring_namespace }}"
+        labels:
+          security-level: hipaa-compliant
+          environment: production
+      spec:
+        securityContext:
+          fsGroup: 1000
+          runAsUser: 1000
+          runAsNonRoot: true
+
+- name: Ensure SSL certificates directory exists
+  file:
+    path: "{{ ssl_cert_path }}"
+    state: directory
+    mode: '0750'
+    owner: 1000
+    group: 1000
+
+- name: Configure SSL certificates for monitoring stack
+  include_tasks: configure-ssl.yml
+  vars:
+    cert_path: "{{ ssl_cert_path }}"
+    services:
+      - prometheus
+      - grafana
+      - elasticsearch
+
+- name: Deploy Prometheus with healthcare metrics
+  k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: prometheus
+        namespace: "{{ monitoring_namespace }}"
+      spec:
+        replicas: 2
+        selector:
+          matchLabels:
+            app: prometheus
+        template:
+          metadata:
+            labels:
+              app: prometheus
+          spec:
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              fsGroup: 1000
+            containers:
+              - name: prometheus
+                image: "prom/prometheus:{{ prometheus_version }}"
+                ports:
+                  - containerPort: 9090
+                volumeMounts:
+                  - name: prometheus-config
+                    mountPath: /etc/prometheus
+                  - name: prometheus-storage
+                    mountPath: /prometheus
+                  - name: ssl-certs
+                    mountPath: /etc/ssl/prometheus
+                resources:
+                  requests:
+                    memory: "2Gi"
+                    cpu: "500m"
+                  limits:
+                    memory: "4Gi"
+                    cpu: "1000m"
+            volumes:
+              - name: prometheus-config
+                configMap:
+                  name: prometheus-config
+              - name: prometheus-storage
+                persistentVolumeClaim:
+                  claimName: prometheus-storage
+              - name: ssl-certs
+                secret:
+                  secretName: monitoring-ssl-certs
+
+- name: Deploy Grafana with HIPAA dashboards
+  k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: grafana
+        namespace: "{{ monitoring_namespace }}"
+      spec:
+        replicas: 2
+        selector:
+          matchLabels:
+            app: grafana
+        template:
+          metadata:
+            labels:
+              app: grafana
+          spec:
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              fsGroup: 1000
+            containers:
+              - name: grafana
+                image: "grafana/grafana:{{ grafana_version }}"
+                ports:
+                  - containerPort: 3000
+                env:
+                  - name: GF_SECURITY_ADMIN_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: grafana-secrets
+                        key: admin-password
+                  - name: GF_AUTH_ANONYMOUS_ENABLED
+                    value: "false"
+                  - name: GF_SECURITY_ALLOW_EMBEDDING
+                    value: "false"
+                volumeMounts:
+                  - name: grafana-storage
+                    mountPath: /var/lib/grafana
+                  - name: grafana-config
+                    mountPath: /etc/grafana
+                  - name: ssl-certs
+                    mountPath: /etc/ssl/grafana
+                resources:
+                  requests:
+                    memory: "1Gi"
+                    cpu: "500m"
+                  limits:
+                    memory: "2Gi"
+                    cpu: "1000m"
+            volumes:
+              - name: grafana-storage
+                persistentVolumeClaim:
+                  claimName: grafana-storage
+              - name: grafana-config
+                configMap:
+                  name: grafana-config
+              - name: ssl-certs
+                secret:
+                  secretName: monitoring-ssl-certs
+
+- name: Deploy Elasticsearch with security features
+  k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: elasticsearch
+        namespace: "{{ monitoring_namespace }}"
+      spec:
+        serviceName: elasticsearch
+        replicas: 3
+        selector:
+          matchLabels:
+            app: elasticsearch
+        template:
+          metadata:
+            labels:
+              app: elasticsearch
+          spec:
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              fsGroup: 1000
+            initContainers:
+              - name: fix-permissions
+                image: busybox
+                command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
+                volumeMounts:
+                  - name: elasticsearch-data
+                    mountPath: /usr/share/elasticsearch/data
+            containers:
+              - name: elasticsearch
+                image: "docker.elastic.co/elasticsearch/elasticsearch:{{ elasticsearch_version }}"
+                env:
+                  - name: ES_JAVA_OPTS
+                    value: "-Xms2g -Xmx2g"
+                  - name: xpack.security.enabled
+                    value: "true"
+                  - name: xpack.monitoring.enabled
+                    value: "true"
+                ports:
+                  - containerPort: 9200
+                  - containerPort: 9300
+                volumeMounts:
+                  - name: elasticsearch-data
+                    mountPath: /usr/share/elasticsearch/data
+                  - name: elasticsearch-config
+                    mountPath: /usr/share/elasticsearch/config
+                  - name: ssl-certs
+                    mountPath: /etc/ssl/elasticsearch
+                resources:
+                  requests:
+                    memory: "4Gi"
+                    cpu: "1000m"
+                  limits:
+                    memory: "6Gi"
+                    cpu: "2000m"
+            volumes:
+              - name: elasticsearch-config
+                configMap:
+                  name: elasticsearch-config
+              - name: ssl-certs
+                secret:
+                  secretName: monitoring-ssl-certs
+        volumeClaimTemplates:
+          - metadata:
+              name: elasticsearch-data
+            spec:
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: 100Gi
+
+- name: Configure HIPAA compliance monitoring
+  include_tasks: configure-hipaa-monitoring.yml
+  vars:
+    compliance_enabled: "{{ hipaa_compliance_enabled }}"
+    audit_retention_days: "{{ backup_retention_days }}"
+
+- name: Setup monitoring backup procedures
+  include_tasks: configure-backups.yml
+  vars:
+    retention_days: "{{ backup_retention_days }}"
+    backup_services:
+      - prometheus
+      - grafana
+      - elasticsearch
+
+- name: Verify secure monitoring deployment
+  include_tasks: verify-monitoring.yml
+  vars:
+    expected_services:
+      - prometheus
+      - grafana
+      - elasticsearch
+    required_security_features:
+      - ssl
+      - authentication
+      - encryption
+      - audit_logging
+
+- name: Configure monitoring alerts
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: alerting-rules
+        namespace: "{{ monitoring_namespace }}"
+      data:
+        alerting-rules.yml: "{{ lookup('file', 'alerting-rules.yml') }}"
+
+- name: Apply resource quotas for monitoring namespace
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ResourceQuota
+      metadata:
+        name: monitoring-quota
+        namespace: "{{ monitoring_namespace }}"
+      spec:
+        hard:
+          requests.cpu: "4"
+          requests.memory: 8Gi
+          limits.cpu: "8"
+          limits.memory: 16Gi
