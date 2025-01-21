@@ -1,0 +1,74 @@
+# Fastlane configuration for AUSTA SuperApp Android
+# Version: 2.216.0
+# Purpose: Define application-specific identifiers and credentials for automated deployment
+
+# Validate minimum Fastlane version to ensure compatibility
+raise "Fastlane version must be >= 2.216.0" unless Fastfile.tools_version && Fastfile.tools_version.start_with?("2.216.0")
+
+# Application identifier with environment-aware configuration
+app_identifier(ENV['AUSTA_APP_ID'] || 'com.austa.superapp')
+
+# Package name for Google Play Store deployment
+package_name(ENV['AUSTA_PACKAGE_NAME'] || 'com.austa.superapp')
+
+# Secure path to Google Play Store API credentials
+# File permissions are enforced to 0600 for security
+json_key_file(
+  ENV['PLAY_STORE_JSON_KEY'] || 
+  File.join(Dir.pwd, '../keys/play-store-credentials.json')
+).tap do |key_file|
+  if File.exist?(key_file)
+    File.chmod(0600, key_file)
+  end
+end
+
+# Current deployment environment (development, staging, production)
+environment(ENV['FASTLANE_ENV'] || 'development')
+
+# Validate required configuration and credentials
+def validate_configuration
+  required_env_vars = [
+    'AUSTA_APP_ID',
+    'AUSTA_PACKAGE_NAME',
+    'PLAY_STORE_JSON_KEY'
+  ]
+
+  missing_vars = required_env_vars.select { |var| ENV[var].nil? }
+  
+  if !missing_vars.empty?
+    UI.important("Warning: Using default values for: #{missing_vars.join(', ')}")
+  end
+
+  # Validate JSON key file
+  key_file = ENV['PLAY_STORE_JSON_KEY'] || 
+             File.join(Dir.pwd, '../keys/play-store-credentials.json')
+             
+  unless File.exist?(key_file)
+    UI.error("Error: Google Play Store credentials file not found at: #{key_file}")
+    return false
+  end
+
+  # Validate file permissions
+  unless (File.stat(key_file).mode & 0777) == 0600
+    UI.error("Error: Incorrect permissions on credentials file. Setting to 0600.")
+    File.chmod(0600, key_file)
+  end
+
+  true
+end
+
+# Execute configuration validation
+validate_configuration
+
+# Team selection for CI environments
+for_platform :android do
+  team_id(ENV['ANDROID_TEAM_ID']) if ENV['ANDROID_TEAM_ID']
+end
+
+# Credential rotation reminder
+if File.exist?(json_key_file)
+  key_file_age = (Time.now - File.mtime(json_key_file)) / (24 * 60 * 60)
+  if key_file_age > 90
+    UI.important("Warning: Play Store credentials are over 90 days old. Consider rotating them.")
+  end
+end
