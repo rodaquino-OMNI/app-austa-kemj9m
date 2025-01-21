@@ -1,0 +1,91 @@
+node_modules
+.next
+dist
+build
+
+# Test files and coverage reports
+coverage
+__tests__
+cypress
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+
+# Development configuration files
+.env*
+.eslintrc*
+.prettierrc*
+jest.config.*
+cypress.config.*
+tsconfig.*
+babel.config.*
+
+# Version control
+.git
+.gitignore
+.github
+
+# Logs and debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+debug.log
+
+# Documentation and markdown
+*.md
+CHANGELOG
+LICENSE
+AUTHORS
+
+# IDE and editor files
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+
+# Cache directories
+.cache
+.npm
+.yarn
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Asset source files (only built assets needed)
+src/assets/raw
+*.psd
+*.ai
+*.sketch
+
+# Development tools and configs
+.editorconfig
+.stylelintrc*
+.browserslistrc
+postcss.config.*
+tailwind.config.*
+
+# Dependency lock files (copied separately in Dockerfile)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Local development overrides
+docker-compose.override.yml
+.env.local
+.env.development
+.env.test
+
+# Build and deployment scripts
+scripts
+Makefile
+*.sh
+
+# Monitoring and analysis
+lighthouse
+*.heapsnapshot
+*.cpuprofile
