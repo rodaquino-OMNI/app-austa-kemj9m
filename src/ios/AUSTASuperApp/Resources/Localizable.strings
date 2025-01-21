@@ -1,0 +1,122 @@
+/* Common strings */
+"app.name" = "AUSTA SuperApp";
+"common.ok" = "OK";
+"common.cancel" = "Cancel";
+"common.done" = "Done";
+"common.error" = "Error";
+"common.loading" = "Loading...";
+"common.retry" = "Retry";
+"common.save" = "Save";
+"common.delete" = "Delete";
+"common.share" = "Share";
+
+/* Accessibility strings */
+"accessibility.voice_over.hint" = "Double tap to activate";
+"accessibility.screen_reader.focus" = "Currently focused on %@";
+"accessibility.navigation.hint" = "Swipe right to move to next item";
+"accessibility.action.hint" = "Double tap to %@";
+"accessibility.image.description" = "Image showing %@";
+"accessibility.loading.status" = "Please wait while content loads";
+
+/* Authentication strings */
+"auth.login.title" = "Welcome to AUSTA SuperApp";
+"auth.login.button" = "Sign In";
+"auth.logout.button" = "Sign Out";
+"auth.email.placeholder" = "Enter your email";
+"auth.password.placeholder" = "Enter your password";
+"auth.forgot_password" = "Forgot Password?";
+"auth.biometric.prompt" = "Use Biometric Authentication";
+"auth.mfa.title" = "Enter Verification Code";
+"auth.mfa.message" = "Please enter the code sent to your device";
+"auth.accessibility.login.hint" = "Login form for secure access";
+
+/* Health Records strings */
+"health_records.title" = "Health Records";
+"health_records.no_records" = "No health records found";
+"health_records.filter.all" = "All Records";
+"health_records.filter.lab" = "Lab Results";
+"health_records.filter.prescriptions" = "Prescriptions";
+"health_records.filter.consultations" = "Consultations";
+"health_records.document_viewer.title" = "Document Viewer";
+"health_records.share_record" = "Share Record";
+"health_records.delete_record" = "Delete Record";
+"health_records.upload_record" = "Upload Record";
+"health_records.accessibility.hint" = "View and manage your medical records";
+
+/* Medical Terminology */
+"medical.lab_result.normal" = "Within normal range";
+"medical.lab_result.abnormal" = "Outside normal range";
+"medical.prescription.active" = "Active Prescription";
+"medical.prescription.expired" = "Expired Prescription";
+"medical.consultation.upcoming" = "Upcoming Consultation";
+"medical.consultation.past" = "Past Consultation";
+
+/* Privacy and Security */
+"privacy.hipaa.notice" = "Protected Health Information - HIPAA Compliant";
+"privacy.data.sharing" = "Your health data will be shared securely";
+"privacy.consent.required" = "Consent required for sharing medical information";
+"privacy.data.encrypted" = "All health data is encrypted";
+
+/* Error Messages */
+"error.network" = "Network connection error";
+"error.authentication" = "Authentication failed";
+"error.data_load" = "Unable to load health records";
+"error.permission" = "Permission denied";
+"error.timeout" = "Request timed out";
+"error.accessibility.hint" = "Error occurred. Double tap to retry";
+
+/* Navigation */
+"nav.back" = "Back";
+"nav.home" = "Home";
+"nav.profile" = "Profile";
+"nav.settings" = "Settings";
+"nav.accessibility.tab_bar" = "Tab %@ of %@";
+
+/* Dates and Times */
+"date.today" = "Today";
+"date.yesterday" = "Yesterday";
+"date.tomorrow" = "Tomorrow";
+"date.format.short" = "MM/dd/yy";
+"date.format.long" = "MMMM dd, yyyy";
+"time.format" = "h:mm a";
+
+/* Accessibility Actions */
+"accessibility.action.login" = "Sign in to your account";
+"accessibility.action.logout" = "Sign out of your account";
+"accessibility.action.view_record" = "View health record details";
+"accessibility.action.share_record" = "Share health record securely";
+"accessibility.action.delete_record" = "Delete health record";
+"accessibility.action.upload" = "Upload new health record";
+
+/* Health Record Categories */
+"category.vital_signs" = "Vital Signs";
+"category.medications" = "Medications";
+"category.allergies" = "Allergies";
+"category.immunizations" = "Immunizations";
+"category.conditions" = "Medical Conditions";
+"category.procedures" = "Procedures";
+"category.imaging" = "Medical Imaging";
+
+/* Document Types */
+"document.type.lab_report" = "Laboratory Report";
+"document.type.prescription" = "Prescription";
+"document.type.clinical_note" = "Clinical Note";
+"document.type.imaging_report" = "Imaging Report";
+"document.type.discharge_summary" = "Discharge Summary";
+"document.type.referral" = "Referral Letter";
+
+/* Accessibility Labels for Health Data */
+"accessibility.health.blood_pressure" = "Blood pressure reading: %@";
+"accessibility.health.heart_rate" = "Heart rate: %@ beats per minute";
+"accessibility.health.temperature" = "Temperature: %@ degrees";
+"accessibility.health.weight" = "Weight: %@ kilograms";
+"accessibility.health.height" = "Height: %@ centimeters";
+
+/* WCAG 2.1 Compliance Messages */
+"wcag.image.decorative" = "Decorative image";
+"wcag.button.state" = "Button state: %@";
+"wcag.form.required" = "Required field";
+"wcag.link.external" = "Opens in new window";
+"wcag.table.summary" = "Table showing %@";
+"wcag.landmark.main" = "Main content";
+"wcag.landmark.navigation" = "Navigation menu";
