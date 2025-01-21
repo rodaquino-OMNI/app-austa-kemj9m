@@ -1,0 +1,63 @@
+apiVersion: v2
+name: health-records
+description: A Helm chart for the AUSTA SuperApp Health Records Service implementing HL7 FHIR R4 standards with high availability and security features. Provides comprehensive EHR management, wearable integration, and document handling capabilities while ensuring HIPAA compliance and optimal performance.
+
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+kubeVersion: ">=1.27.0"
+
+# External chart dependencies
+dependencies:
+  - name: mongodb-kubernetes-operator
+    version: 1.15.0
+    repository: https://mongodb.github.io/helm-charts
+    condition: mongodb.enabled
+    tags:
+      - database
+      - persistence
+
+  - name: cert-manager
+    version: 1.12.0
+    repository: https://charts.jetstack.io
+    condition: ingress.enabled
+    tags:
+      - security
+      - certificates
+
+maintainers:
+  - name: AUSTA Development Team
+    email: devops@austa.health
+
+keywords:
+  - health-records
+  - ehr
+  - fhir
+  - healthcare
+  - medical-data
+  - hipaa-compliant
+
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/changes: |
+    - Initial release of Health Records service
+    - Integrated MongoDB operator for persistent storage
+    - Added cert-manager for TLS certificate management
+    - Configured for high availability (99.99% uptime)
+    - Optimized for <500ms response time
+    - Implemented HL7 FHIR R4 standards support
+  artifacthub.io/recommendations: |
+    - Use with recommended MongoDB replica set configuration
+    - Enable TLS encryption for all communications
+    - Configure appropriate resource limits
+  artifacthub.io/signKey: |
+    fingerprint: 51F960E6C76EE4AE842A228E556A9E66
+    url: https://keybase.io/austa_devops/pgp_keys.asc
+
+home: https://github.com/austa/superapp
+sources:
+  - https://github.com/austa/superapp
+
+icon: https://austa.health/images/health-records-icon.png
