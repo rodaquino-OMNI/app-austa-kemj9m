@@ -1,0 +1,77 @@
+PODS:
+  - Alamofire (5.8.0)
+  - BlueCryptor (1.0.32)
+  - BlueRSA (1.0.35)
+  - CryptoSwift (1.8.0)
+  - KeychainAccess (4.2.0)
+  - Nimble (12.0.1)
+  - Quick (7.0.2)
+  - SwiftJWT (3.6.0):
+    - BlueCryptor (~> 1.0.32)
+    - BlueRSA (~> 1.0.35)
+  - SwiftLint (0.52.0)
+  - TwilioVideo (5.5.0):
+    - TwilioVideo-WebRTC (= 1.5.0)
+  - TwilioVideo-WebRTC (1.5.0)
+
+DEPENDENCIES:
+  - Alamofire (~> 5.8.0)
+  - CryptoSwift (~> 1.8.0)
+  - KeychainAccess (~> 4.2.0)
+  - Nimble
+  - Quick
+  - SwiftJWT (~> 3.6.0)
+  - SwiftLint (= 0.52.0)
+  - TwilioVideo (~> 5.5.0)
+
+SPEC REPOS:
+  trunk:
+    - Alamofire
+    - BlueCryptor
+    - BlueRSA
+    - CryptoSwift
+    - KeychainAccess
+    - Nimble
+    - Quick
+    - SwiftJWT
+    - SwiftLint
+    - TwilioVideo
+    - TwilioVideo-WebRTC
+
+SPEC CHECKSUMS:
+  Alamofire: 0e92e751b3e9e66d7982db43919d01f313b8eb91
+  BlueCryptor: b0aee3d9b8f367b49b30de11cda90e1735571c24
+  BlueRSA: c6cd29d25c25c82f18d41c0e75c4f3973f6a0adb
+  CryptoSwift: 52aaf3fce7337552863b1d968c8ea6a6a6a8f6ec
+  KeychainAccess: c0c4f7f38f6fc7bbe58f5702e25f7bd2f65abf51
+  Nimble: 2f5b0d70dea975f6b3123a90b89cfaaa37a03dd0
+  Quick: 0349d4ce7f6368f4264d0f65a11d1458ab6db5e5
+  SwiftJWT: 88c412708f58c169d431d344c87bc79a87c830ae
+  SwiftLint: 2c16e8fa99dac2e440dc0c70ea74f2445f80c8d3
+  TwilioVideo: 2e62f3a4cad00d7e8d9d9e9cae5c82c8e2925c2f
+  TwilioVideo-WebRTC: 3417aa1ecd5c4d159bb4c5c4e4c8a6ad0e944ce2
+
+PODFILE CHECKSUM: 7a9d6e8c6a7b51f1f731d8c4345a9f3c89e2d01b
+
+COCOAPODS: 1.14.0
+
+CONFIGURATION_BUILD_DIR = ${PODS_CONFIGURATION_BUILD_DIR}
+FRAMEWORK_SEARCH_PATHS = $(inherited) "${PODS_ROOT}/TwilioVideo"
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1 ENCRYPTION_ENABLED=1
+HEADER_SEARCH_PATHS = $(inherited) "${PODS_ROOT}/Headers/Public"
+LD_RUNPATH_SEARCH_PATHS = $(inherited) '@executable_path/Frameworks' '@loader_path/Frameworks'
+OTHER_CFLAGS = $(inherited) -iquote "${PODS_CONFIGURATION_BUILD_DIR}/Alamofire/Alamofire.framework/Headers"
+OTHER_LDFLAGS = $(inherited) -ObjC -framework "Alamofire" -framework "CryptoSwift" -framework "KeychainAccess" -framework "SwiftJWT" -framework "TwilioVideo"
+OTHER_SWIFT_FLAGS = $(inherited) "-D" "COCOAPODS"
+PODS_BUILD_DIR = ${BUILD_DIR}
+PODS_CONFIGURATION_BUILD_DIR = ${PODS_BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)
+PODS_PODFILE_DIR_PATH = ${SRCROOT}/..
+PODS_ROOT = ${SRCROOT}/Pods
+SWIFT_TREAT_WARNINGS_AS_ERRORS = YES
+SWIFT_VERSION = 5.9
+ENABLE_BITCODE = NO
+IPHONEOS_DEPLOYMENT_TARGET = 14.0
+ENABLE_STRICT_OBJC_MSGSEND = YES
+CLANG_WARN_DOCUMENTATION_COMMENTS = YES
+GCC_WARN_ABOUT_SECURITY_PRACTICES = YES
+COCOAPODS_PARALLEL_CODE_SIGN = true
