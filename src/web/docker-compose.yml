@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+      args:
+        NODE_ENV: development
+        SECURITY_HEADERS: 'true'
+    container_name: austa-web-dev
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      - PORT=3000
+      - SECURITY_HEADERS=true
+      - STRICT_CSP=true
+      - CORS_ORIGIN=http://localhost:3000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_AUTH_DOMAIN=${NEXT_PUBLIC_AUTH_DOMAIN}
+      - NEXT_PUBLIC_AUTH_CLIENT_ID=${NEXT_PUBLIC_AUTH_CLIENT_ID}
+      - NEXT_PUBLIC_AUTH_AUDIENCE=${NEXT_PUBLIC_AUTH_AUDIENCE}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - NEXT_PUBLIC_ENCRYPTION_KEY=${NEXT_PUBLIC_ENCRYPTION_KEY}
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app:delegated
+      - node_modules:/app/node_modules
+      - next:/app/.next
+      - logs:/app/logs
+    networks:
+      web_network:
+        ipv4_address: 172.28.0.2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    restart: unless-stopped
+
+volumes:
+  node_modules:
+    name: austa-web-node-modules
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/node_modules
+      o: bind
+  next:
+    name: austa-web-next
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/.next
+      o: bind
+  logs:
+    name: austa-web-logs
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/logs
+      o: bind
+
+networks:
+  web_network:
+    name: austa-web-network
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: web_net
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1
