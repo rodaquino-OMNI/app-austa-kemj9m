@@ -1,0 +1,41 @@
+[Binary PNG Image File with the following specifications]
+
+Format: PNG
+Dimensions: 192x192 pixels
+Color Space: sRGB
+Transparency: Enabled
+Purpose: any maskable
+
+Design Specifications:
+- Material Design 3.0 style icon
+- Safe zone: Centered 180x180px for maskable context
+- Background: Solid or transparent with 4.5:1 minimum contrast ratio
+- Healthcare-themed AUSTA SuperApp branding
+- Optimized with lossless compression for web delivery
+- Proper padding to ensure visibility at 16x16px minimum size
+
+Technical Requirements:
+- MIME type: image/png
+- Cache-Control: public, max-age=31536000
+- Optimized lossless compression
+- CDN-distributed ready
+- Supports PWA installation requirements
+- Compatible with iOS 14+, Android 10+, and modern browsers
+
+Icon Design Layout:
+- Core icon content within 180x180px safe zone
+- Centered composition for maskable support
+- Clear silhouette recognizable at small sizes
+- Healthcare-specific visual elements
+- Brand color palette from theme.ts
+- Minimum 4.5:1 contrast ratio for accessibility
+
+Platform Support:
+- Home screen icon
+- App launcher icon
+- Browser favicon
+- Touch icon
+- Task switcher display
+- Installation prompt display
+
+[End of binary file specifications]
