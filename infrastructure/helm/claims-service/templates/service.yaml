@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "claims-service.fullname" . }}
+  labels:
+    helm.sh/chart: {{ include "claims-service.chart" . }}
+    app.kubernetes.io/name: {{ include "claims-service.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: austa-superapp
+    app.kubernetes.io/component: claims-service
+  annotations:
+    # Prometheus monitoring integration
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.CLAIMS_CONFIG.service.port }}"
+    prometheus.io/path: "/metrics"
+    
+    # Service monitoring and SLA configurations
+    service.beta.kubernetes.io/monitor: "true"
+    service.beta.kubernetes.io/rate-limit-requests: "1000"
+    service.beta.kubernetes.io/response-time-sla: "500ms"
+    
+    # High availability and compliance annotations
+    service.beta.kubernetes.io/load-balancer-type: "internal"
+    service.beta.kubernetes.io/hipaa-compliant: "true"
+    service.beta.kubernetes.io/lgpd-compliant: "true"
+    
+    # Performance monitoring thresholds from claims config
+    service.beta.kubernetes.io/max-concurrent-claims: "100"
+    service.beta.kubernetes.io/processing-timeout: "30000"
+    service.beta.kubernetes.io/retry-attempts: "3"
+
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.CLAIMS_CONFIG.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+      
+    # Metrics port for Prometheus scraping
+    - port: 9090
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+
+  selector:
+    app.kubernetes.io/name: {{ include "claims-service.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+
+  # Session affinity for consistent claim processing
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 1800  # 30 minutes session timeout
+
+  # Health check configuration
+  publishNotReadyAddresses: false
+  
+  # Service account for RBAC
+  serviceAccountName: claims-service
