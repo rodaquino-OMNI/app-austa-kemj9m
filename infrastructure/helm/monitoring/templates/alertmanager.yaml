@@ -1,0 +1,272 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-alertmanager
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/component: alertmanager
+    app.kubernetes.io/part-of: monitoring
+    healthcare.austa.com/hipaa-compliant: "true"
+    app.kubernetes.io/version: "0.25.0"  # Alertmanager version
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+      smtp_smarthost: smtp.austa.health:587
+      smtp_from: alerts@austa.health
+      smtp_auth_username: {{ .Values.alertmanager.smtp.username }}
+      smtp_auth_password: {{ .Values.alertmanager.smtp.password }}
+      slack_api_url: {{ .Values.alertmanager.slack.webhook_url }}
+      pagerduty_url: {{ .Values.alertmanager.pagerduty.api_url }}
+      http_config:
+        tls_config:
+          cert_file: /etc/alertmanager/certs/tls.crt
+          key_file: /etc/alertmanager/certs/tls.key
+
+    templates:
+      - /etc/alertmanager/templates/*.tmpl
+
+    route:
+      group_by: ['alertname', 'cluster', 'service', 'severity', 'healthcare_component']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: default-receiver
+      routes:
+        # Critical medical system alerts
+        - match:
+            severity: critical
+            healthcare_impact: high
+          receiver: critical-medical-alerts
+          group_wait: 0s
+          repeat_interval: 15m
+          continue: true
+
+        # HIPAA security alerts
+        - match:
+            type: security
+            hipaa_relevant: 'true'
+          receiver: security-hipaa-alerts
+          group_wait: 0s
+          repeat_interval: 30m
+          continue: true
+
+        # Service availability alerts
+        - match:
+            severity: critical
+            alert: ServiceDown
+          receiver: service-alerts
+          group_wait: 0s
+          repeat_interval: 15m
+
+        # Performance SLA alerts
+        - match:
+            severity: warning
+            sla_breach: 'true'
+          receiver: sla-alerts
+          group_wait: 30s
+          repeat_interval: 2h
+
+        # PHI access violations
+        - match:
+            alert: PHIAccessViolation
+          receiver: phi-violation-alerts
+          group_wait: 0s
+          repeat_interval: 30m
+
+    receivers:
+      - name: default-receiver
+        email_configs:
+          - to: monitoring@austa.health
+            send_resolved: true
+            html: '{{ template "default.alert.html" . }}'
+
+      - name: critical-medical-alerts
+        pagerduty_configs:
+          - service_key: {{ .Values.alertmanager.pagerduty.medical_key }}
+            description: '{{ template "medical.alert.description" . }}'
+            severity: critical
+            client: 'AUSTA SuperApp'
+            client_url: https://monitoring.austa.health
+        slack_configs:
+          - channel: '#critical-medical-alerts'
+            title: '[CRITICAL-MEDICAL] {{ .GroupLabels.alertname }}'
+            text: '{{ template "medical.alert.text" . }}'
+            send_resolved: true
+        email_configs:
+          - to: medical-oncall@austa.health
+            send_resolved: true
+            html: '{{ template "medical.alert.html" . }}'
+
+      - name: security-hipaa-alerts
+        pagerduty_configs:
+          - service_key: {{ .Values.alertmanager.pagerduty.security_key }}
+            description: '{{ template "hipaa.alert.description" . }}'
+            severity: critical
+        slack_configs:
+          - channel: '#security-hipaa'
+            title: '[HIPAA-SECURITY] {{ .GroupLabels.alertname }}'
+            text: '{{ template "hipaa.alert.text" . }}'
+            send_resolved: true
+        email_configs:
+          - to: security@austa.health
+            send_resolved: true
+            html: '{{ template "hipaa.alert.html" . }}'
+
+      - name: service-alerts
+        pagerduty_configs:
+          - service_key: {{ .Values.alertmanager.pagerduty.service_key }}
+            description: '{{ template "service.alert.description" . }}'
+        slack_configs:
+          - channel: '#service-alerts'
+            title: '[SERVICE] {{ .GroupLabels.alertname }}'
+            text: '{{ template "service.alert.text" . }}'
+            send_resolved: true
+
+      - name: sla-alerts
+        slack_configs:
+          - channel: '#sla-alerts'
+            title: '[SLA] {{ .GroupLabels.alertname }}'
+            text: '{{ template "sla.alert.text" . }}'
+            send_resolved: true
+        email_configs:
+          - to: sla-team@austa.health
+            send_resolved: true
+            html: '{{ template "sla.alert.html" . }}'
+
+      - name: phi-violation-alerts
+        pagerduty_configs:
+          - service_key: {{ .Values.alertmanager.pagerduty.hipaa_key }}
+            description: '{{ template "phi.alert.description" . }}'
+            severity: critical
+        email_configs:
+          - to: hipaa-compliance@austa.health
+            send_resolved: true
+            html: '{{ template "phi.alert.html" . }}'
+
+    inhibit_rules:
+      # Prevent warning notifications when critical alert is firing
+      - source_match:
+          severity: critical
+          healthcare_impact: high
+        target_match:
+          severity: warning
+        equal: ['alertname', 'cluster', 'service', 'healthcare_component']
+
+      # Prevent duplicate PHI violation alerts
+      - source_match:
+          alert: PHIAccessViolation
+        target_match:
+          type: security
+        equal: ['cluster', 'service']
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-alertmanager
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/component: alertmanager
+    app.kubernetes.io/part-of: monitoring
+    healthcare.austa.com/hipaa-compliant: "true"
+spec:
+  replicas: {{ .Values.alertmanager.replicas | default 2 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: alertmanager
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: alertmanager
+        app.kubernetes.io/part-of: monitoring
+    spec:
+      containers:
+        - name: alertmanager
+          image: "prom/alertmanager:v0.25.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--config.file=/etc/alertmanager/alertmanager.yml"
+            - "--storage.path=/alertmanager"
+            - "--web.external-url=https://alerts.austa.health"
+            - "--cluster.listen-address=0.0.0.0:9094"
+            - "--data.retention=120h"
+          ports:
+            - containerPort: 9093
+              name: http
+            - containerPort: 9094
+              name: cluster
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alertmanager
+            - name: storage
+              mountPath: /alertmanager
+            - name: certs
+              mountPath: /etc/alertmanager/certs
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-alertmanager
+        - name: storage
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-alertmanager
+        - name: certs
+          secret:
+            secretName: {{ .Release.Name }}-alertmanager-certs
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-alertmanager
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/component: alertmanager
+    app.kubernetes.io/part-of: monitoring
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9093
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 9094
+      targetPort: cluster
+      protocol: TCP
+      name: cluster
+  selector:
+    app.kubernetes.io/component: alertmanager
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-alertmanager
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.alertmanager.storage.size | default "10Gi" }}
+  storageClassName: {{ .Values.alertmanager.storage.class | default "standard" }}
