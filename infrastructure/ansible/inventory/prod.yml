@@ -1,0 +1,127 @@
+---
+# AUSTA SuperApp Production Environment Inventory Configuration
+# Version: 1.0.0
+# Dependencies: ansible-core 2.15.0
+
+all:
+  vars:
+    # Global environment configuration
+    environment: production
+    backup_enabled: true
+    monitoring_enabled: true
+    high_availability: true
+    ansible_user: ansible
+    ansible_become: true
+    ansible_become_method: sudo
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+
+    # Security and compliance controls
+    security_controls:
+      encryption_in_transit: true
+      encryption_at_rest: true
+      access_logging: true
+      intrusion_detection: true
+      ddos_protection: true
+    compliance:
+      hipaa: true
+      lgpd: true
+      audit_interval: quarterly
+
+  children:
+    kubernetes_clusters:
+      hosts:
+        prod-eks-cluster-1-us-east:
+          region: us-east-1
+          role: primary
+          node_groups: ['app', 'system', 'monitoring']
+        prod-eks-cluster-2-us-west:
+          region: us-west-2
+          role: secondary
+          node_groups: ['app', 'system', 'monitoring']
+      vars:
+        k8s_version: '1.27'
+        container_runtime: containerd
+        high_availability: true
+        pod_security_policies: true
+        network_policies: true
+        encryption_at_rest: true
+        audit_logging: true
+        auto_scaling:
+          enabled: true
+          min_nodes: 3
+          max_nodes: 10
+          target_cpu_utilization: 70
+
+    databases:
+      children:
+        postgresql:
+          hosts:
+            prod-pg-primary-us-east:
+              role: primary
+              region: us-east-1
+            prod-pg-replica-1-us-east:
+              role: replica
+              region: us-east-1
+            prod-pg-replica-2-us-west:
+              role: replica
+              region: us-west-2
+          vars:
+            postgresql_version: '15'
+            replication_type: synchronous
+            backup_retention: 30d
+            encryption_at_rest: true
+            ssl_enabled: true
+            max_connections: 1000
+            shared_buffers: 8GB
+            wal_level: logical
+            archive_mode: true
+
+        mongodb:
+          hosts:
+            prod-mongo-primary-us-east:
+              role: primary
+              region: us-east-1
+            prod-mongo-secondary-1-us-east:
+              role: secondary
+              region: us-east-1
+            prod-mongo-secondary-2-us-west:
+              role: secondary
+              region: us-west-2
+          vars:
+            mongodb_version: '6.0'
+            replication_factor: 3
+            sharding_enabled: true
+            encryption_at_rest: true
+            ssl_enabled: true
+            authentication: x509
+            oplog_size_mb: 51200
+            wiredTiger_cache_size_gb: 16
+
+    monitoring:
+      hosts:
+        prod-prometheus-us-east:
+          role: primary
+          region: us-east-1
+        prod-prometheus-us-west:
+          role: secondary
+          region: us-west-2
+        prod-grafana: {}
+        prod-elasticsearch-cluster:
+          nodes: ['es-master', 'es-data', 'es-client']
+          heap_size: 16g
+        prod-kibana: {}
+      vars:
+        retention_days: 90
+        alert_endpoints: ['pagerduty', 'slack', 'email']
+        metrics_resolution: 15s
+        health_check_interval: 30s
+        compliance_reporting:
+          enabled: true
+          hipaa_metrics: true
+          lgpd_metrics: true
+          report_interval: daily
+        audit_logging:
+          enabled: true
+          retention: 365d
+          encryption: true
