@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marketplace-service
+  namespace: austa
+  labels:
+    app: austa-superapp
+    service: marketplace
+    version: 1.0.0
+    tier: backend
+    environment: production
+  annotations:
+    kubernetes.io/change-cause: "Initial production deployment"
+    security.policy/compliance: "hipaa-lgpd-compliant"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3005"
+    prometheus.io/path: "/metrics"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: austa-superapp
+      service: marketplace
+  template:
+    metadata:
+      labels:
+        app: austa-superapp
+        service: marketplace
+        tier: backend
+        version: 1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3005"
+        prometheus.io/path: "/metrics"
+        security.policy/seccomp: "runtime/default"
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "marketplace"
+    spec:
+      serviceAccountName: marketplace-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: marketplace
+        image: austa/marketplace-service:1.0.0
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        ports:
+        - name: http
+          containerPort: 3005
+          protocol: TCP
+        - name: metrics
+          containerPort: 3006
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3005"
+        - name: METRICS_PORT
+          value: "3006"
+        envFrom:
+        - configMapRef:
+            name: austa-superapp-config
+        - secretRef:
+            name: austa-superapp-secrets
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /cache
+      volumes:
+      - name: tmp
+        emptyDir:
+          medium: Memory
+          sizeLimit: 64Mi
+      - name: cache
+        emptyDir:
+          medium: Memory
+          sizeLimit: 128Mi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: service
+                  operator: In
+                  values:
+                  - marketplace
+              topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfied: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            service: marketplace
+      terminationGracePeriodSeconds: 60
+      imagePullSecrets:
+      - name: registry-credentials
