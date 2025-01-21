@@ -1,0 +1,65 @@
+apiVersion: v2
+name: istio
+version: 1.0.0
+description: Istio service mesh configuration for AUSTA SuperApp platform with HIPAA-compliant security controls and healthcare-specific optimizations
+type: application
+appVersion: 1.19.0
+
+# Istio core dependencies
+dependencies:
+  - name: istio-base
+    version: 1.19.0
+    repository: https://istio-release.storage.googleapis.com/charts
+    condition: istio-base.enabled
+    tags:
+      - infrastructure
+      - security
+
+  - name: istiod
+    version: 1.19.0
+    repository: https://istio-release.storage.googleapis.com/charts
+    condition: istiod.enabled
+    tags:
+      - control-plane
+      - security
+
+  - name: istio-ingress
+    version: 1.19.0
+    repository: https://istio-release.storage.googleapis.com/charts
+    condition: ingress.enabled
+    tags:
+      - ingress
+      - security
+
+# Healthcare-specific metadata
+keywords:
+  - istio
+  - service-mesh
+  - security
+  - observability
+  - traffic-management
+  - healthcare
+  - hipaa-compliant
+  - zero-trust
+
+maintainers:
+  - name: AUSTA Platform Team
+    email: platform@austa.health
+
+# Kubernetes version compatibility
+kubeVersion: ">=1.24.0-0"
+
+# Annotations for healthcare compliance
+annotations:
+  healthcare.austa.com/hipaa-compliant: "true"
+  healthcare.austa.com/data-classification: "phi"
+  healthcare.austa.com/security-controls: "mtls,rbac,jwt"
+  healthcare.austa.com/audit-enabled: "true"
+
+# Home URL and documentation
+home: https://istio.austa.health
+sources:
+  - https://github.com/austa/infrastructure/helm/istio
+
+# Additional chart information
+icon: https://istio.io/latest/img/istio-whitelogo-bluebackground-framed.svg
