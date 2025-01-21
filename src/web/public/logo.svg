@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="240" height="60" viewBox="0 0 240 60" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" role="img" aria-label="AUSTA SuperApp Logo" preserveAspectRatio="xMidYMid meet">
+  <title>AUSTA SuperApp Logo</title>
+  <desc>AUSTA SuperApp healthcare platform logo featuring modern medical symbolism</desc>
+  
+  <style>
+    .logo-primary {
+      fill: var(--md-sys-color-primary, #006494);
+    }
+    .logo-secondary {
+      fill: var(--md-sys-color-secondary, #4CAF50);
+    }
+    @media (prefers-color-scheme: dark) {
+      .logo-primary {
+        fill: var(--md-sys-color-primary-dark, #64B5F6);
+      }
+      .logo-secondary {
+        fill: var(--md-sys-color-secondary-dark, #81C784);
+      }
+    }
+  </style>
+
+  <defs>
+    <clipPath id="rounded-clip">
+      <rect x="10" y="10" width="40" height="40" rx="8"/>
+    </clipPath>
+  </defs>
+
+  <!-- Medical Cross Symbol -->
+  <g class="logo-secondary" transform="translate(10, 10)">
+    <path d="M20 0C8.95 0 0 8.95 0 20s8.95 20 20 20 20-8.95 20-20S31.05 0 20 0zm10 22h-8v8h-4v-8h-8v-4h8v-8h4v8h8v4z"/>
+  </g>
+
+  <!-- AUSTA Text -->
+  <g class="logo-primary" transform="translate(60, 15)">
+    <path d="M15.4 35L12.2 27H4.8L1.6 35H0L10 5h1l10 30h-1.6zm-3.6-9l-3.4-10.2L5 26h6.8z"/>
+    <path d="M35 35V5h1.6v28.4H47V35H35z"/>
+    <path d="M65 35l-8-30h1.7l7 26.8L72.7 5h1.7l-8 30H65z"/>
+    <path d="M90 35V5h12v1.6H91.6v12.2h9.8v1.6h-9.8v13h10.4V35H90z"/>
+    <path d="M120 35V5h1.6v30H120z"/>
+  </g>
+
+  <!-- SuperApp Text -->
+  <g class="logo-secondary" transform="translate(60, 45)">
+    <text font-family="var(--md-sys-typescale-brand, 'Roboto')" font-size="12">
+      SuperApp
+    </text>
+  </g>
+</svg>
