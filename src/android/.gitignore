@@ -1,0 +1,126 @@
+# Gradle files
+.gradle/
+.gradle/daemon/
+.gradle/caches/
+build/
+*/build/
+.gradle-test-kit/
+local.properties
+
+# IDE files
+.idea/
+*.iml
+.project
+.settings/
+.classpath
+.vscode/
+*.sublime-*
+.fleet/
+*.workspace
+
+# Build outputs
+/app/release/
+/app/debug/
+/app/benchmark/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.hprof
+
+# Generated files
+generated/
+bin/
+gen/
+out/
+captures/
+navigation/safeargs/
+schemas/
+tmp/
+
+# Security sensitive files
+*.keystore
+*.jks
+*.pepk
+google-services.json
+firebase-*.json
+*.properties
+!gradle.properties
+!gradle-wrapper.properties
+secret.properties
+api-keys.properties
+signing.properties
+
+# System files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.bak
+desktop.ini
+._*
+.Spotlight-V100
+
+# Logs and reports
+*.log
+reports/
+lint-results/
+test-results/
+coverage/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+fastlane/readme.md
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Crashlytics
+crashlytics.properties
+crashlytics-build.properties
+com_crashlytics_export_strings.xml
+fabric.properties
+
+# R8/ProGuard
+proguard/
+*.pro
+!proguard-rules.pro
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.orig
+*.rej
+*.old
+*.bak
+*.tmp
+*.temp
+
+# NDK
+.externalNativeBuild/
+.cxx/
+*.so
+obj/
+
+# Kotlin
+*.kotlin_module
+*.kotlin_metadata
+*.kotlin_builtins
+
+# Resource files
+*.ipr
+*.iws
+
+# Misc
+*.patch
+*.diff
+.attach_pid*
