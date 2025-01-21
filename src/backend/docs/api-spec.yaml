@@ -1,0 +1,282 @@
+openapi: 3.0.0
+info:
+  title: AUSTA SuperApp API
+  version: 1.0.0
+  description: |
+    Enterprise-grade healthcare platform API with comprehensive HIPAA and LGPD compliance.
+    Implements secure telemedicine, health records management, and insurance operations.
+  contact:
+    name: AUSTA SuperApp Support
+    email: api-support@austa.health
+    url: https://developer.austa.health
+  license:
+    name: Proprietary
+    url: https://austa.health/license
+
+servers:
+  - url: https://api.austa.health/v1
+    description: Production environment
+  - url: https://staging-api.austa.health/v1
+    description: Staging environment
+  - url: https://dev-api.austa.health/v1
+    description: Development environment
+
+security:
+  - OAuth2: []
+    BearerAuth: []
+    mTLS: []
+
+paths:
+  /auth:
+    post:
+      summary: Authenticate user
+      security: []
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                mfaCode:
+                  type: string
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /health-records:
+    get:
+      summary: Retrieve health records
+      tags: [Health Records]
+      parameters:
+        - $ref: '#/components/parameters/PatientId'
+        - $ref: '#/components/parameters/RecordType'
+        - $ref: '#/components/parameters/DateRange'
+      responses:
+        '200':
+          description: Health records retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HealthRecord'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      summary: Create health record
+      tags: [Health Records]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthRecord'
+      responses:
+        '201':
+          description: Health record created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthRecord'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.austa.health/oauth/authorize
+          tokenUrl: https://auth.austa.health/oauth/token
+          scopes:
+            read:health_records: Read health records
+            write:health_records: Create/update health records
+            read:claims: Read insurance claims
+            write:claims: Submit insurance claims
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    mTLS:
+      type: mutualTLS
+      description: Client certificate authentication
+
+  schemas:
+    HealthRecord:
+      type: object
+      required: [id, patientId, providerId, type, date, content]
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [CONSULTATION, LAB_RESULT, PRESCRIPTION, IMAGING, VITAL_SIGNS, WEARABLE_DATA]
+        date:
+          type: string
+          format: date-time
+        content:
+          $ref: '#/components/schemas/FHIRResource'
+        metadata:
+          $ref: '#/components/schemas/HealthRecordMetadata'
+        status:
+          type: string
+          enum: [DRAFT, FINAL, AMENDED, DELETED, ENCRYPTED]
+        securityLabels:
+          type: array
+          items:
+            type: string
+
+    FHIRResource:
+      type: object
+      required: [resourceType, id, meta]
+      properties:
+        resourceType:
+          type: string
+        id:
+          type: string
+        meta:
+          type: object
+          properties:
+            versionId:
+              type: string
+            lastUpdated:
+              type: string
+              format: date-time
+            security:
+              type: array
+              items:
+                type: object
+                properties:
+                  system:
+                    type: string
+                  code:
+                    type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+        tokenType:
+          type: string
+          enum: [Bearer]
+        scope:
+          type: string
+
+  parameters:
+    PatientId:
+      name: patientId
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RecordType:
+      name: type
+      in: query
+      schema:
+        type: string
+        enum: [CONSULTATION, LAB_RESULT, PRESCRIPTION, IMAGING, VITAL_SIGNS, WEARABLE_DATA]
+    DateRange:
+      name: dateRange
+      in: query
+      schema:
+        type: object
+        properties:
+          start:
+            type: string
+            format: date
+          end:
+            type: string
+            format: date
+
+  responses:
+    UnauthorizedError:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimitError:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Authentication
+    description: Authentication and authorization endpoints
+  - name: Health Records
+    description: FHIR-compliant health records management
+  - name: Virtual Care
+    description: Telemedicine and virtual consultation services
+  - name: Claims
+    description: Insurance claims processing
+  - name: Marketplace
+    description: Digital healthcare services marketplace
+  - name: Monitoring
+    description: System health and performance monitoring
+  - name: Audit
+    description: Security audit and compliance logging
