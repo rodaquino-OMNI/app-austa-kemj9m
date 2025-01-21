@@ -1,0 +1,86 @@
+{{- define "generateCertificateName" -}}
+{{- . | lower | regexReplaceAll "\\." "-" -}}-tls-cert
+{{- end -}}
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ template "generateCertificateName" .Values.certificates.wildcardCert.domains[0] }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.Version }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/component: tls-certificate
+    app.kubernetes.io/part-of: austa-platform
+    security.austa.health/certificate-type: wildcard
+    security.austa.health/auto-renewal: enabled
+  annotations:
+    # Enable temporary certificates during renewal for zero downtime
+    cert-manager.io/issue-temporary-certificate: "true"
+    # Always rotate private keys during renewal
+    cert-manager.io/private-key-rotation-policy: "Always"
+    # Prometheus monitoring annotations
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "9402"
+
+spec:
+  # Secret name to store the certificate
+  secretName: {{ .Values.certificates.wildcardCert.secretName }}
+  
+  # Certificate validity duration (90 days)
+  duration: {{ .Values.certificates.wildcardCert.duration | default "2160h" }}
+  
+  # Renew 30 days before expiry
+  renewBefore: {{ .Values.certificates.wildcardCert.renewBefore | default "720h" }}
+  
+  # Private key configuration
+  privateKey:
+    algorithm: {{ .Values.certificates.wildcardCert.privateKey.algorithm | default "RSA" }}
+    size: {{ .Values.certificates.wildcardCert.privateKey.size | default 2048 }}
+    rotationPolicy: Always
+    encoding: PKCS1
+  
+  # DNS names for the certificate
+  dnsNames: 
+  {{- range .Values.certificates.wildcardCert.domains }}
+    - {{ . | quote }}
+  {{- end }}
+  
+  # Certificate issuer reference
+  issuerRef:
+    name: {{ .Values.certificates.wildcardCert.issuer.name }}
+    kind: {{ .Values.certificates.wildcardCert.issuer.kind }}
+    group: cert-manager.io
+  
+  # Certificate usages
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+    - client auth
+  
+  # PKCS12 keystore configuration for legacy system compatibility
+  keystores:
+    pkcs12:
+      create: true
+      passwordSecretRef:
+        name: {{ .Values.certificates.wildcardCert.secretName }}-keystore
+        key: password
+  
+  # Additional security options
+  isCA: false
+  commonName: {{ index .Values.certificates.wildcardCert.domains 0 }}
+  subject:
+    organizations:
+      - AUSTA Health
+    organizationalUnits:
+      - Platform Security
+    countries:
+      - BR
+    localities:
+      - Sao Paulo
+    provinces:
+      - SP
