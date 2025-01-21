@@ -1,0 +1,174 @@
+# AUSTA SuperApp Monitoring Stack Configuration
+# Version: 1.0.0
+# Dependencies:
+# - prometheus-community/prometheus v19.0.0
+# - grafana/grafana v10.0.0
+# - prometheus-community/alertmanager v1.5.0
+
+global:
+  namespace: monitoring
+  storageClass: gp2
+  labels:
+    app: austa-monitoring
+    environment: production
+  compliance:
+    hipaa: true
+    lgpd: true
+    phi_monitoring: true
+
+prometheus:
+  server:
+    retention: 365d
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+    persistentVolume:
+      enabled: true
+      size: 100Gi
+      storageClass: "{{ .Values.global.storageClass }}"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+    config:
+      global:
+        scrape_interval: 15s
+        evaluation_interval: 1m
+        external_labels:
+          environment: production
+          compliance_level: hipaa
+      rule_files:
+        - /etc/prometheus/rules/*.yml
+      scrape_configs: ${prometheus-config.scrape_configs}
+      alerting: ${prometheus-config.alerting}
+    extraVolumeMounts:
+      - name: rules-volume
+        mountPath: /etc/prometheus/rules
+      - name: certs-volume
+        mountPath: /etc/prometheus/certs
+    extraSecretMounts:
+      - name: certs-volume
+        secretName: prometheus-certs
+        defaultMode: 420
+
+grafana:
+  adminPassword: "${GRAFANA_ADMIN_PASSWORD}"
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: "{{ .Values.global.storageClass }}"
+  dashboards:
+    default:
+      system-overview:
+        json: ${grafana-dashboard.system_overview}
+      compliance-dashboard:
+        json: ${grafana-dashboard.compliance_dashboard}
+      phi-access:
+        json: ${grafana-dashboard.phi_access_dashboard}
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-server
+          access: proxy
+          isDefault: true
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 472
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname', 'service', 'severity']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: 'pagerduty-critical'
+      routes:
+        - match:
+            severity: critical
+          receiver: 'pagerduty-critical'
+        - match:
+            severity: warning
+          receiver: 'slack-warnings'
+        - match:
+            severity: info
+          receiver: 'email-notifications'
+    receivers:
+      - name: 'pagerduty-critical'
+        pagerduty_configs:
+          - service_key: "${PAGERDUTY_SERVICE_KEY}"
+            severity: "{{ .CommonLabels.severity }}"
+      - name: 'slack-warnings'
+        slack_configs:
+          - api_url: "${SLACK_WEBHOOK_URL}"
+            channel: '#monitoring-alerts'
+            title: "{{ .CommonLabels.alertname }}"
+            text: "{{ .CommonAnnotations.description }}"
+      - name: 'email-notifications'
+        email_configs:
+          - to: "monitoring@austa-superapp.com"
+            from: "alerts@austa-superapp.com"
+            smarthost: "smtp.austa-superapp.com:587"
+            auth_username: "${SMTP_USERNAME}"
+            auth_password: "${SMTP_PASSWORD}"
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: "{{ .Values.global.storageClass }}"
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+serviceMonitor:
+  enabled: true
+  selector:
+    matchLabels:
+      app: austa-superapp
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+
+prometheusRules:
+  enabled: true
+  additionalLabels:
+    app: austa-superapp
+  rules:
+    - name: system-alerts
+      rules: ${alerting-rules.system_alerts}
+    - name: compliance-alerts
+      rules: ${alerting-rules.compliance_alerts}
+    - name: phi-access-alerts
+      rules: ${alerting-rules.phi_access_alerts}
+
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: austa-superapp
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
