@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Application Name -->
+    <string name="app_name">AUSTA SuperApp</string>
+
+    <!-- Authentication Strings -->
+    <string name="auth_login_title">Welcome Back</string>
+    <string name="auth_login_subtitle">Sign in to access your healthcare services</string>
+    <string name="auth_email_hint">Email address</string>
+    <string name="auth_password_hint">Password</string>
+    <string name="auth_login_button">Sign In</string>
+    <string name="auth_forgot_password">Forgot Password?</string>
+    <string name="auth_register_prompt">Don\'t have an account? Sign Up</string>
+    <string name="auth_biometric_prompt">Use biometric authentication for secure access</string>
+    <string name="auth_biometric_error">Biometric authentication failed. Please try again or use password</string>
+    <string name="auth_invalid_credentials">Invalid email or password. Please check your credentials and try again</string>
+    <string name="auth_mfa_prompt">Enter the verification code sent to your device</string>
+    <string name="auth_privacy_notice">By signing in, you agree to our Privacy Policy and Terms of Service</string>
+
+    <!-- Dashboard Strings -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_welcome_message">Hello, %1$s</string>
+    <string name="dashboard_health_metrics">Your Health Metrics</string>
+    <string name="dashboard_appointments">Upcoming Appointments</string>
+    <string name="dashboard_quick_actions">Quick Actions</string>
+    <string name="dashboard_book_appointment">Book Appointment</string>
+    <string name="dashboard_start_consultation">Start Consultation</string>
+    <string name="dashboard_view_records">View Records</string>
+    <string name="dashboard_submit_claim">Submit Claim</string>
+    <string name="dashboard_health_summary">Health Summary</string>
+    <string name="dashboard_recent_activities">Recent Activities</string>
+    <string name="dashboard_notifications">Notifications</string>
+
+    <!-- Virtual Care Strings -->
+    <string name="virtual_care_title">Virtual Care</string>
+    <string name="virtual_care_connecting">Connecting to your healthcare provider…</string>
+    <string name="virtual_care_connection_error">Connection failed. Please check your internet connection and try again</string>
+    <string name="virtual_care_end_call">End Call</string>
+    <string name="virtual_care_toggle_camera">Toggle Camera</string>
+    <string name="virtual_care_toggle_mic">Toggle Microphone</string>
+    <string name="virtual_care_chat_placeholder">Type a message</string>
+    <string name="virtual_care_consultation_ended">Consultation ended</string>
+    <string name="virtual_care_prescription_sent">Digital prescription has been sent to your pharmacy</string>
+    <string name="virtual_care_recording_notice">This consultation may be recorded for quality purposes</string>
+    <string name="virtual_care_emergency_warning">For medical emergencies, please call emergency services immediately</string>
+
+    <!-- Health Records Strings -->
+    <string name="health_records_title">Health Records</string>
+    <string name="health_records_no_records">No health records found</string>
+    <string name="health_records_upload_record">Upload Record</string>
+    <string name="health_records_view_document">View Document</string>
+    <string name="health_records_share_record">Share Record</string>
+    <string name="health_records_privacy_warning">Sharing health records will be logged and audited</string>
+    <string name="health_records_download_success">Record downloaded successfully</string>
+    <string name="health_records_upload_instructions">Select or drag and drop files to upload</string>
+
+    <!-- Health Record Types -->
+    <string name="health_records_type_lab_results">Lab Results</string>
+    <string name="health_records_type_prescriptions">Prescriptions</string>
+    <string name="health_records_type_imaging">Imaging</string>
+    <string name="health_records_type_consultations">Consultation Notes</string>
+    <string name="health_records_type_vaccinations">Vaccination Records</string>
+    <string name="health_records_type_allergies">Allergy Information</string>
+    <string name="health_records_type_medications">Current Medications</string>
+
+    <!-- Accessibility Strings -->
+    <string name="accessibility_back_button">Navigate to previous screen</string>
+    <string name="accessibility_close_button">Close current screen</string>
+    <string name="accessibility_menu_button">Open navigation menu</string>
+    <string name="accessibility_profile_image">Profile picture of user</string>
+    <string name="accessibility_notification_icon">View notifications</string>
+    <string name="accessibility_search_button">Search content</string>
+    <string name="accessibility_upload_button">Upload new file</string>
+    <string name="accessibility_camera_button">Take photo using camera</string>
+    <string name="accessibility_gallery_button">Choose photo from gallery</string>
+    <string name="accessibility_health_metric">Health metric showing %1$s with value %2$s</string>
+    <string name="accessibility_navigation_drawer">Main navigation drawer</string>
+    <string name="accessibility_tab_selected">Selected tab: %1$s</string>
+    <string name="accessibility_loading_indicator">Content is loading</string>
+    <string name="accessibility_error_state">Error occurred: %1$s. Tap to retry</string>
+
+    <!-- String Arrays -->
+    <string-array name="appointment_types">
+        <item>General Consultation</item>
+        <item>Specialist Visit</item>
+        <item>Follow-up</item>
+        <item>Emergency Care</item>
+        <item>Preventive Check-up</item>
+        <item>Laboratory Visit</item>
+        <item>Imaging Appointment</item>
+    </string-array>
+
+    <string-array name="notification_types">
+        <item>Appointment Reminder</item>
+        <item>Prescription Renewal</item>
+        <item>Lab Results Available</item>
+        <item>Claim Status Update</item>
+        <item>Payment Due</item>
+        <item>Health Alert</item>
+        <item>Document Share</item>
+    </string-array>
+
+    <string-array name="error_messages">
+        <item>Network connection lost</item>
+        <item>Server temporarily unavailable</item>
+        <item>Session expired</item>
+        <item>Invalid input</item>
+        <item>Permission denied</item>
+        <item>Resource not found</item>
+        <item>Operation timed out</item>
+    </string-array>
+
+    <!-- Plurals -->
+    <plurals name="notification_count">
+        <item quantity="one">%d notification pending</item>
+        <item quantity="other">%d notifications pending</item>
+    </plurals>
+
+    <plurals name="appointment_count">
+        <item quantity="one">%d upcoming appointment</item>
+        <item quantity="other">%d upcoming appointments</item>
+    </plurals>
+
+    <plurals name="document_count">
+        <item quantity="one">%d document available</item>
+        <item quantity="other">%d documents available</item>
+    </plurals>
+
+    <plurals name="prescription_count">
+        <item quantity="one">%d active prescription</item>
+        <item quantity="other">%d active prescriptions</item>
+    </plurals>
+</resources>
