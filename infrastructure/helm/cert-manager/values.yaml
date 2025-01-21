@@ -1,0 +1,165 @@
+# cert-manager Helm values configuration
+# Version: v1.13.0
+# Purpose: Healthcare-grade certificate management for AUSTA SuperApp platform
+
+global:
+  # Set logging verbosity for healthcare compliance auditing
+  logLevel: 2
+  
+  # Leader election configuration
+  leaderElection:
+    namespace: cert-manager
+  
+  # RBAC configuration for secure access control
+  rbac:
+    create: true
+  
+  # Enhanced pod security policy
+  podSecurityPolicy:
+    enabled: true
+  
+  # Critical system priority for certificate operations
+  priorityClassName: system-cluster-critical
+  
+  # Health monitoring configuration
+  healthCheck:
+    enabled: true
+    port: 9402
+
+# Install Custom Resource Definitions
+installCRDs: true
+
+# Healthcare-compliant certificate issuer configurations
+clusterIssuers:
+  letsencrypt:
+    # Staging environment for testing
+    staging:
+      server: https://acme-staging-v02.api.letsencrypt.org/directory
+      email: platform@austa.health
+      privateKeySecretRef:
+        name: letsencrypt-staging-key
+      solvers:
+        - http01:
+            ingress:
+              class: nginx
+    
+    # Production environment for live certificates
+    production:
+      server: https://acme-v02.api.letsencrypt.org/directory
+      email: platform@austa.health
+      privateKeySecretRef:
+        name: letsencrypt-production-key
+      solvers:
+        - http01:
+            ingress:
+              class: nginx
+
+# Healthcare-grade TLS certificate configurations
+certificates:
+  wildcardCert:
+    domains:
+      - "*.austa.health"
+    secretName: austa-tls-cert
+    issuer:
+      name: letsencrypt-production
+      kind: ClusterIssuer
+    duration: "2160h"  # 90 days
+    renewBefore: "720h"  # 30 days
+    privateKey:
+      algorithm: RSA
+      size: 2048
+      rotationPolicy: Always
+    keyUsages:
+      - digitalSignature
+      - keyEncipherment
+    extendedKeyUsages:
+      - serverAuth
+      - clientAuth
+    isCA: false
+    usages:
+      - server auth
+      - client auth
+
+# Monitoring and alerting configuration
+monitoring:
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: "30s"
+      scrapeTimeout: "25s"
+      labels:
+        release: prometheus
+  
+  alerts:
+    enabled: true
+    renewalThreshold: "720h"  # Alert 30 days before expiry
+    failureThreshold: "24h"   # Alert after 24h of renewal failures
+
+# Security settings for healthcare compliance
+security:
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    fsGroup: 1001
+  
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+# Resource configuration for high availability
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# High availability configuration
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - cert-manager
+          topologyKey: kubernetes.io/hostname
+
+# Node selector for healthcare workload placement
+nodeSelector:
+  kubernetes.io/role: infrastructure
+
+# Tolerations for infrastructure nodes
+tolerations:
+  - key: "infrastructure"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"
+
+# Webhook configuration for validation
+webhook:
+  enabled: true
+  securePort: 10250
+  hostNetwork: false
+  timeoutSeconds: 30
+
+# DNS configuration for certificate validation
+dns01RecursiveNameservers: "8.8.8.8:53,1.1.1.1:53"
+dns01RecursiveNameserversOnly: true
+
+# Feature gates for enhanced security
+featureGates: ""
+
+# Extra arguments for healthcare-specific requirements
+extraArgs:
+  - --enable-certificate-owner-ref=true
+  - --max-concurrent-challenges=60
+  - --acme-http01-solver-image=quay.io/jetstack/cert-manager-acmesolver:v1.13.0
