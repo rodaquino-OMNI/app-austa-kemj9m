@@ -1,0 +1,136 @@
+# Helm chart values for Health Records Service
+# Version: 1.0.0
+# External Dependencies:
+# - helm: v3.12+
+# - mongodb-kubernetes-operator: v1.15.0
+
+# Number of pod replicas for high availability
+replicaCount: 3
+
+# Container image configuration
+image:
+  repository: austa/health-records-service
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Image pull secrets for private registry authentication
+imagePullSecrets:
+  - name: austa-registry-secret
+
+# Optional name overrides
+nameOverride: ""
+fullnameOverride: ""
+
+# Service account configuration
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789:role/health-records-service-role"
+  name: "health-records-service"
+
+# Pod annotations for monitoring and management
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/path: "/metrics"
+  prometheus.io/port: "8080"
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 1000
+
+# Container security context
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+
+# Resource allocation
+resources:
+  limits:
+    cpu: "1000m"
+    memory: "2Gi"
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+
+# Horizontal pod autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Node selection and scheduling
+nodeSelector:
+  kubernetes.io/role: application
+
+tolerations:
+  - key: "application"
+    operator: "Equal"
+    value: "health-records"
+    effect: "NoSchedule"
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - health-records
+          topologyKey: kubernetes.io/hostname
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: http
+  initialDelaySeconds: 20
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# FHIR configuration
+fhir:
+  version: "R4"
+  baseUrl: "http://health-records-service/fhir"
+  validation:
+    enabled: true
+    strictMode: true
+
+# MongoDB configuration
+mongodb:
+  uri: "mongodb://health-records-mongodb:27017"
+  database: "health_records"
+  options:
+    maxPoolSize: 100
+    retryWrites: true
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: "30s"
+    path: "/metrics"
