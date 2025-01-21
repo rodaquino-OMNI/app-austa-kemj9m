@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material Design 3.0 theme implementation for AUSTA SuperApp -->
+<!-- Version: Material3 1.9.0 -->
+<!-- WCAG 2.1 Level AA compliant with enhanced medical data visualization -->
+<resources>
+    <!-- Base application theme -->
+    <style name="Theme.AUSTA.Base" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Color attributes -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorError">@color/error</item>
+        <item name="colorEmergency">@color/status_critical</item>
+        <item name="colorCritical">@color/status_critical</item>
+
+        <!-- System bars -->
+        <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:navigationBarColor">@color/surface</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+
+    <!-- Main application theme -->
+    <style name="Theme.AUSTA" parent="Theme.AUSTA.Base">
+        <!-- Typography styles -->
+        <style name="TextAppearance.AUSTA.MedicalHeadline" parent="TextAppearance.Material3.HeadlineLarge">
+            <item name="fontFamily">sans-serif</item>
+            <item name="android:textSize">32sp</item>
+            <item name="android:textStyle">bold</item>
+            <item name="android:letterSpacing">0.5</item>
+            <item name="android:textColor">@color/on_background</item>
+            <item name="android:lineHeight">40sp</item>
+        </style>
+
+        <style name="TextAppearance.AUSTA.CriticalInfo" parent="TextAppearance.Material3.HeadlineMedium">
+            <item name="fontFamily">sans-serif-medium</item>
+            <item name="android:textSize">24sp</item>
+            <item name="android:textStyle">bold</item>
+            <item name="android:letterSpacing">0.25</item>
+            <item name="android:textColor">@color/status_critical</item>
+            <item name="android:lineHeight">32sp</item>
+        </style>
+
+        <style name="TextAppearance.AUSTA.MedicalBody" parent="TextAppearance.Material3.BodyLarge">
+            <item name="fontFamily">sans-serif</item>
+            <item name="android:textSize">16sp</item>
+            <item name="android:letterSpacing">0.15</item>
+            <item name="android:textColor">@color/on_background</item>
+            <item name="android:lineHeight">24sp</item>
+        </style>
+
+        <!-- Shape styles -->
+        <style name="ShapeAppearance.AUSTA.Emergency" parent="ShapeAppearance.Material3.Corner.ExtraLarge">
+            <item name="cornerFamily">rounded</item>
+            <item name="cornerSize">24dp</item>
+        </style>
+
+        <style name="ShapeAppearance.AUSTA.Medical" parent="ShapeAppearance.Material3.Corner.Large">
+            <item name="cornerFamily">rounded</item>
+            <item name="cornerSize">16dp</item>
+        </style>
+
+        <style name="ShapeAppearance.AUSTA.Standard" parent="ShapeAppearance.Material3.Corner.Medium">
+            <item name="cornerFamily">rounded</item>
+            <item name="cornerSize">8dp</item>
+        </style>
+
+        <!-- Component styles -->
+        <style name="Widget.AUSTA.EmergencyButton" parent="Widget.Material3.Button">
+            <item name="android:minHeight">56dp</item>
+            <item name="android:padding">16dp</item>
+            <item name="android:elevation">8dp</item>
+            <item name="backgroundTint">@color/status_critical</item>
+            <item name="android:textAppearance">@style/TextAppearance.AUSTA.CriticalInfo</item>
+            <item name="shapeAppearance">@style/ShapeAppearance.AUSTA.Emergency</item>
+        </style>
+
+        <style name="Widget.AUSTA.MedicalCard" parent="Widget.Material3.CardView">
+            <item name="cardElevation">4dp</item>
+            <item name="contentPadding">16dp</item>
+            <item name="cardBackgroundColor">@color/surface</item>
+            <item name="strokeWidth">1dp</item>
+            <item name="strokeColor">@color/primary</item>
+            <item name="shapeAppearance">@style/ShapeAppearance.AUSTA.Medical</item>
+        </style>
+
+        <style name="Widget.AUSTA.VitalSignsDisplay" parent="Widget.Material3.CardView">
+            <item name="cardElevation">2dp</item>
+            <item name="contentPadding">12dp</item>
+            <item name="cardBackgroundColor">@color/surface</item>
+            <item name="android:textAppearance">@style/TextAppearance.AUSTA.MedicalBody</item>
+            <item name="shapeAppearance">@style/ShapeAppearance.AUSTA.Standard</item>
+        </style>
+
+        <style name="Widget.AUSTA.MedicalDataTable" parent="Widget.Material3.MaterialCalendar.DayTextView">
+            <item name="android:background">@color/surface</item>
+            <item name="android:textAppearance">@style/TextAppearance.AUSTA.MedicalBody</item>
+            <item name="android:padding">8dp</item>
+            <item name="android:divider">@color/primary</item>
+            <item name="android:showDividers">middle</item>
+        </style>
+
+        <!-- Accessibility configurations -->
+        <item name="android:minTouchTargetSize">48dp</item>
+        <item name="android:textScaleX">1.0</item>
+        <item name="android:maxTextScaleX">2.0</item>
+        <item name="android:contentDescription">true</item>
+        <item name="android:importantForAccessibility">yes</item>
+
+        <!-- High contrast mode -->
+        <style name="ThemeOverlay.AUSTA.HighContrast">
+            <item name="colorEmergency">#FF0000</item>
+            <item name="android:textColor">#FFFFFF</item>
+            <item name="android:background">#000000</item>
+        </style>
+    </style>
+</resources>
