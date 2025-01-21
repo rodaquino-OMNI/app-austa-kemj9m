@@ -1,0 +1,29 @@
+apiVersion: v2
+name: cert-manager
+description: Certificate management controller for Kubernetes that automates TLS certificate management with healthcare-grade encryption standards, ensuring HIPAA and LGPD compliance for the AUSTA SuperApp platform
+version: 1.0.0
+appVersion: v1.13.0
+type: application
+
+keywords:
+  - certificates
+  - tls
+  - security
+  - encryption
+  - healthcare
+  - hipaa
+  - lgpd
+  - medical-data-protection
+  - automated-certificate-management
+
+maintainers:
+  - name: AUSTA Platform Team
+    email: platform@austa.health
+
+# External dependency on cert-manager chart from Jetstack repository
+# version: v1.13.0 - Latest stable version with security patches and healthcare-grade features
+dependencies:
+  - name: cert-manager
+    version: v1.13.0
+    repository: https://charts.jetstack.io
+    condition: cert-manager.enabled
