@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material Design 3.0 dark theme implementation for AUSTA SuperApp -->
+<!-- Version: Material3 1.9.0 -->
+<!-- WCAG 2.1 Level AA compliant with enhanced dark mode contrast ratios -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Base application dark theme -->
+    <style name="Theme.AUSTA.Base" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Color system -->
+        <item name="android:colorBackground">@color/background_dark</item>
+        <item name="colorSurface">@color/surface_dark</item>
+        <item name="colorPrimary">@color/primary_dark</item>
+        <item name="colorSecondary">@color/secondary_dark</item>
+        <item name="colorError">@color/error_dark</item>
+        <item name="android:textColorPrimary">@color/on_background_dark</item>
+        <item name="android:textColorSecondary">@color/on_surface_dark</item>
+
+        <!-- System bars -->
+        <item name="android:statusBarColor">@color/surface_dark</item>
+        <item name="android:navigationBarColor">@color/surface_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+
+        <!-- Elevation overlay -->
+        <item name="elevationOverlayEnabled">true</item>
+        <item name="elevationOverlayColor">#FFFFFF</item>
+
+        <!-- Disable force dark -->
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+
+    <!-- Main application theme -->
+    <style name="Theme.AUSTA" parent="Theme.AUSTA.Base">
+        <!-- Typography styles -->
+        <item name="textAppearanceHeadline1">@style/TextAppearance.AUSTA.Headline1</item>
+        <item name="textAppearanceHeadline2">@style/TextAppearance.AUSTA.Headline2</item>
+        <item name="textAppearanceBody1">@style/TextAppearance.AUSTA.Body1</item>
+        <item name="textAppearanceBody2">@style/TextAppearance.AUSTA.Body2</item>
+        <item name="textAppearanceButton">@style/TextAppearance.AUSTA.Button</item>
+
+        <!-- Component styles -->
+        <item name="materialButtonStyle">@style/Widget.AUSTA.Button</item>
+        <item name="materialCardViewStyle">@style/Widget.AUSTA.CardView</item>
+        <item name="bottomNavigationStyle">@style/Widget.AUSTA.BottomNavigation</item>
+        <item name="toolbarStyle">@style/Widget.AUSTA.Toolbar</item>
+    </style>
+
+    <!-- Typography styles -->
+    <style name="TextAppearance.AUSTA.Headline1" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">32sp</item>
+        <item name="android:textColor">@color/on_background_dark</item>
+        <item name="android:letterSpacing">-0.5</item>
+        <item name="android:lineHeight">40sp</item>
+    </style>
+
+    <style name="TextAppearance.AUSTA.Headline2" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textColor">@color/on_background_dark</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:lineHeight">32sp</item>
+    </style>
+
+    <style name="TextAppearance.AUSTA.Body1" parent="TextAppearance.Material3.BodyLarge">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/on_background_dark</item>
+        <item name="android:letterSpacing">0.15</item>
+        <item name="android:lineHeight">24sp</item>
+    </style>
+
+    <style name="TextAppearance.AUSTA.Body2" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/on_surface_dark</item>
+        <item name="android:letterSpacing">0.25</item>
+        <item name="android:lineHeight">20sp</item>
+    </style>
+
+    <style name="TextAppearance.AUSTA.Button" parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/on_primary</item>
+        <item name="android:letterSpacing">0.5</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- Component styles -->
+    <style name="Widget.AUSTA.Button" parent="Widget.Material3.Button">
+        <item name="cornerRadius">8dp</item>
+        <item name="elevation">2dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="rippleColor">@color/ripple_dark</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">64dp</item>
+    </style>
+
+    <style name="Widget.AUSTA.CardView" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">4dp</item>
+        <item name="contentPadding">16dp</item>
+        <item name="cardBackgroundColor">@color/surface_dark</item>
+        <item name="rippleColor">@color/ripple_dark</item>
+        <item name="checkedIconTint">@color/primary_dark</item>
+    </style>
+
+    <style name="Widget.AUSTA.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
+        <item name="elevation">8dp</item>
+        <item name="android:background">@color/surface_dark</item>
+        <item name="itemRippleColor">@color/ripple_dark</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.Material3.BottomNavigationView.ActiveIndicator</item>
+    </style>
+
+    <style name="Widget.AUSTA.Toolbar" parent="Widget.Material3.Toolbar">
+        <item name="elevation">4dp</item>
+        <item name="android:background">@color/surface_dark</item>
+        <item name="titleTextAppearance">@style/TextAppearance.AUSTA.Toolbar.Title</item>
+        <item name="subtitleTextAppearance">@style/TextAppearance.AUSTA.Toolbar.Subtitle</item>
+    </style>
+
+    <style name="TextAppearance.AUSTA.Toolbar.Title" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">@color/on_surface_dark</item>
+    </style>
+
+    <style name="TextAppearance.AUSTA.Toolbar.Subtitle" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/on_surface_dark</item>
+    </style>
+
+</resources>
