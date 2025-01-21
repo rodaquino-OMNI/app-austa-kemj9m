@@ -1,0 +1,35 @@
+{
+  "info": {
+    "version": 1,
+    "author": "xcode"
+  },
+  "properties": {
+    "provides-namespace": true,
+    "preserves-vector-representation": true
+  },
+  "images": {
+    "optimization": "space-optimized",
+    "compression": "automatic",
+    "preserves-vector-data": true,
+    "resizing-algorithm": "automatic"
+  },
+  "colors": {
+    "color-space": "srgb",
+    "management": "automatic",
+    "rendering-intent": "generic"
+  },
+  "symbols": {
+    "template-rendering-intent": "template",
+    "preserves-vector-representation": true
+  },
+  "idioms": {
+    "iphone": {
+      "minimum-system-version": "14.0",
+      "subtype": "retina"
+    },
+    "ipad": {
+      "minimum-system-version": "14.0",
+      "subtype": "retina"
+    }
+  }
+}
