@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme
+   LastUpgradeVersion = "1500"
+   version = "1.7">
+   <BuildAction
+      parallelizeBuildables = "YES"
+      buildImplicitDependencies = "YES">
+      <BuildActionEntries>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AUSTASuperApp"
+               BuildableName = "AUSTASuperApp.app"
+               BlueprintName = "AUSTASuperApp"
+               ReferencedContainer = "container:AUSTASuperApp.xcodeproj">
+            </BuildableReference>
+            <BuildSettings>
+               <ENABLE_TESTABILITY>YES</ENABLE_TESTABILITY>
+               <ENABLE_SECURITY_CHECKS>YES</ENABLE_SECURITY_CHECKS>
+               <HIPAA_COMPLIANCE_MODE>YES</HIPAA_COMPLIANCE_MODE>
+               <ENABLE_ADDRESS_SANITIZER>YES</ENABLE_ADDRESS_SANITIZER>
+               <ENABLE_THREAD_SANITIZER>YES</ENABLE_THREAD_SANITIZER>
+               <ENABLE_UNDEFINED_BEHAVIOR_SANITIZER>YES</ENABLE_UNDEFINED_BEHAVIOR_SANITIZER>
+            </BuildSettings>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AUSTASuperAppTests"
+               BuildableName = "AUSTASuperAppTests.xctest"
+               BlueprintName = "AUSTASuperAppTests"
+               ReferencedContainer = "container:AUSTASuperApp.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AUSTASuperAppUITests"
+               BuildableName = "AUSTASuperAppUITests.xctest"
+               BlueprintName = "AUSTASuperAppUITests"
+               ReferencedContainer = "container:AUSTASuperApp.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+      </BuildActionEntries>
+   </BuildAction>
+   <TestAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      codeCoverageEnabled = "YES"
+      enableAddressSanitizer = "YES"
+      enableThreadSanitizer = "YES"
+      enableUBSanitizer = "YES">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "AUSTASuperApp"
+            BuildableName = "AUSTASuperApp.app"
+            BlueprintName = "AUSTASuperApp"
+            ReferencedContainer = "container:AUSTASuperApp.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
+      <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AUSTASuperAppTests"
+               BuildableName = "AUSTASuperAppTests.xctest"
+               BlueprintName = "AUSTASuperAppTests"
+               ReferencedContainer = "container:AUSTASuperApp.xcodeproj">
+            </BuildableReference>
+            <SkippedTests>
+            </SkippedTests>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AUSTASuperAppUITests"
+               BuildableName = "AUSTASuperAppUITests.xctest"
+               BlueprintName = "AUSTASuperAppUITests"
+               ReferencedContainer = "container:AUSTASuperApp.xcodeproj">
+            </BuildableReference>
+            <SkippedTests>
+            </SkippedTests>
+         </TestableReference>
+      </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "TEST_MODE"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "UI_TEST_MODE"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "SECURE_TEST_MODE"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "PHI_PROTECTION"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
+   </TestAction>
+   <LaunchAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      enableAddressSanitizer = "YES"
+      enableThreadSanitizer = "YES"
+      enableUBSanitizer = "YES"
+      launchStyle = "0"
+      useCustomWorkingDirectory = "NO"
+      ignoresPersistentStateOnLaunch = "NO"
+      debugDocumentVersioning = "YES"
+      debugServiceExtension = "internal"
+      allowLocationSimulation = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "AUSTASuperApp"
+            BuildableName = "AUSTASuperApp.app"
+            BlueprintName = "AUSTASuperApp"
+            ReferencedContainer = "container:AUSTASuperApp.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "DEVELOPMENT_MODE"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "SECURE_MODE"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "LOGGING_ENABLED"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "SANITIZER_ENABLED"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
+   </LaunchAction>
+   <ProfileAction
+      buildConfiguration = "Release"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      savedToolIdentifier = ""
+      useCustomWorkingDirectory = "NO"
+      debugDocumentVersioning = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "AUSTASuperApp"
+            BuildableName = "AUSTASuperApp.app"
+            BlueprintName = "AUSTASuperApp"
+            ReferencedContainer = "container:AUSTASuperApp.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
+   </ProfileAction>
+   <AnalyzeAction
+      buildConfiguration = "Debug">
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "STATIC_ANALYZER_ENABLED"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "SECURITY_SCAN_ENABLED"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "HIPAA_COMPLIANCE_CHECK"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
+   </AnalyzeAction>
+   <ArchiveAction
+      buildConfiguration = "Release"
+      revealArchiveInOrganizer = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Security Validation"
+               scriptText = "# Security validation script&#10;if [ &quot;${SECURITY_VALIDATION_REQUIRED}&quot; = &quot;YES&quot; ]; then&#10;    echo &quot;Performing security validation...&quot;&#10;    # Add security validation logic here&#10;fi&#10;&#10;# Compliance check&#10;if [ &quot;${COMPLIANCE_CHECK_REQUIRED}&quot; = &quot;YES&quot; ]; then&#10;    echo &quot;Performing compliance check...&quot;&#10;    # Add compliance check logic here&#10;fi">
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
+   </ArchiveAction>
+</Scheme>
