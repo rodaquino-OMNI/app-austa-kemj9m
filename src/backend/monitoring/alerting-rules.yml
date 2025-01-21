@@ -1,0 +1,192 @@
+# Prometheus Alerting Rules Configuration for AUSTA SuperApp
+# Version: 2.45.0
+# Dependencies: prometheus v2.45.0, alertmanager v0.25.0
+
+groups:
+  # System Resource and Health Alerts
+  - name: system_alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+          alert_channel: pagerduty
+        annotations:
+          summary: High CPU usage detected
+          description: CPU usage is above 80% for 5 minutes
+          runbook_url: runbooks/high_cpu_usage.md
+
+      - alert: HighMemoryUsage
+        expr: memory_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+          alert_channel: slack
+        annotations:
+          summary: High memory usage detected
+          description: Memory usage is above 85% for 5 minutes
+          runbook_url: runbooks/high_memory_usage.md
+
+      - alert: DiskSpaceLow
+        expr: disk_free_percent < 15
+        for: 10m
+        labels:
+          severity: warning
+          alert_channel: email
+        annotations:
+          summary: Low disk space warning
+          description: Disk space is below 15% free
+          runbook_url: runbooks/disk_space_low.md
+
+  # Service Availability and Performance Alerts
+  - name: service_alerts
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          alert_channel: pagerduty
+        annotations:
+          summary: Healthcare service is down
+          description: '{{ $labels.service }} is not responding'
+          impact: Patient care may be affected
+          runbook_url: runbooks/service_down.md
+
+      - alert: HighLatency
+        expr: http_request_duration_seconds{quantile="0.9"} > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          alert_channel: slack
+        annotations:
+          summary: High service latency detected
+          description: 90th percentile latency is above 500ms SLA
+          sla_breach: true
+          runbook_url: runbooks/high_latency.md
+
+      - alert: ErrorRateHigh
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          alert_channel: pagerduty
+        annotations:
+          summary: High error rate detected
+          description: Error rate is above 5% for 5 minutes
+          runbook_url: runbooks/error_rate_high.md
+
+      - alert: SLABreach
+        expr: sla_uptime_percent < 99.99
+        for: 5m
+        labels:
+          severity: critical
+          alert_channel: pagerduty
+        annotations:
+          summary: SLA breach detected
+          description: Service availability dropped below 99.99%
+          impact: Contractual SLA violation
+          runbook_url: runbooks/sla_breach.md
+
+  # Security and Healthcare Compliance Alerts
+  - name: security_alerts
+    rules:
+      - alert: AuthFailures
+        expr: sum(rate(auth_failures_total[5m])) > 10
+        for: 5m
+        labels:
+          severity: critical
+          alert_channel: pagerduty
+        annotations:
+          summary: Multiple authentication failures
+          description: High rate of authentication failures detected
+          security_impact: Potential brute force attempt
+          runbook_url: runbooks/auth_failures.md
+
+      - alert: UnauthorizedAccess
+        expr: rate(unauthorized_access_attempts[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          alert_channel: pagerduty
+        annotations:
+          summary: Unauthorized access attempt
+          description: Detected attempt to access restricted resources
+          security_impact: Potential security breach
+          runbook_url: runbooks/unauthorized_access.md
+
+      - alert: EncryptionFailure
+        expr: encryption_status != 1
+        for: 0m
+        labels:
+          severity: critical
+          alert_channel: pagerduty
+        annotations:
+          summary: Encryption system failure
+          description: Data encryption system is not functioning properly
+          compliance_impact: HIPAA Security Rule violation
+          runbook_url: runbooks/encryption_failure.md
+
+      - alert: PHIAccessViolation
+        expr: rate(unauthorized_phi_access_total[1m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          alert_channel: pagerduty
+        annotations:
+          summary: PHI Access Violation
+          description: Unauthorized attempt to access Protected Health Information
+          compliance: HIPAA Security Rule § 164.312(b)
+          runbook_url: runbooks/phi_violation.md
+
+      - alert: HIPAAViolation
+        expr: sum(rate(hipaa_violation_events[5m])) > 0
+        for: 0m
+        labels:
+          severity: critical
+          alert_channel: pagerduty
+        annotations:
+          summary: HIPAA Compliance Violation
+          description: Potential HIPAA rule violation detected
+          compliance_impact: Immediate investigation required
+          runbook_url: runbooks/hipaa_violation.md
+
+  # Healthcare-Specific Monitoring
+  - name: healthcare_alerts
+    rules:
+      - alert: TelemedicineServiceDegraded
+        expr: telemedicine_quality_score < 0.9
+        for: 5m
+        labels:
+          severity: critical
+          alert_channel: pagerduty
+        annotations:
+          summary: Telemedicine service quality degraded
+          description: Video consultation service quality below acceptable threshold
+          patient_impact: May affect patient care quality
+          runbook_url: runbooks/telemedicine_degraded.md
+
+      - alert: HealthRecordAccessDelay
+        expr: health_record_access_latency_seconds > 2
+        for: 5m
+        labels:
+          severity: warning
+          alert_channel: slack
+        annotations:
+          summary: Health record access delays
+          description: EHR system response time exceeds 2 seconds
+          impact: Clinical workflow delays
+          runbook_url: runbooks/ehr_access_delay.md
+
+      - alert: PrescriptionSystemError
+        expr: prescription_system_errors_total > 0
+        for: 2m
+        labels:
+          severity: critical
+          alert_channel: pagerduty
+        annotations:
+          summary: Prescription system errors
+          description: Digital prescription system experiencing errors
+          patient_impact: May affect medication dispensing
+          runbook_url: runbooks/prescription_system_error.md
