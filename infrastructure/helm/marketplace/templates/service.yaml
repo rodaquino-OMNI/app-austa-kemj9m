@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "marketplace.fullname" . }}
+  labels:
+    {{- include "marketplace.labels" . | nindent 4 }}
+    app.kubernetes.io/component: marketplace
+    app.kubernetes.io/part-of: austa-superapp
+  annotations:
+    # Prometheus monitoring annotations
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.service.port }}"
+    # AWS Load Balancer configurations
+    {{- with .Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    # Service mesh integration
+    sidecar.istio.io/inject: "true"
+    # Health check annotations
+    health.check.enabled: "true"
+    health.check.path: "/health"
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+      {{- if eq .Values.service.type "NodePort" }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+  selector:
+    app.kubernetes.io/name: {{ include "marketplace.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  # Session affinity configuration for consistent routing
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3-hour session stickiness
+  # Load balancer configurations
+  {{- if eq .Values.service.type "LoadBalancer" }}
+  externalTrafficPolicy: Local
+  {{- end }}
+  # Health check configuration
+  publishNotReadyAddresses: false
