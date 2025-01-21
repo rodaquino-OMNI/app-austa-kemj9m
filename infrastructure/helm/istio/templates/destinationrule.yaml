@@ -1,0 +1,86 @@
+# Istio DestinationRule Template v1.19.0
+# Defines comprehensive traffic policies and security configurations for AUSTA SuperApp services
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.services.service.name }}-dr
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.services.service.name }}
+    app.kubernetes.io/part-of: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    istio.io/rev: {{ .Values.global.istioRevision }}
+spec:
+  host: {{ .Values.services.service.host }}
+  trafficPolicy:
+    # Advanced load balancing configuration with locality awareness
+    loadBalancer:
+      simple: {{ .Values.trafficPolicy.loadBalancer.type | default "ROUND_ROBIN" }}
+      consistentHash:
+        httpHeaderName: {{ .Values.trafficPolicy.loadBalancer.hashHeader | default "x-user-id" }}
+      localityLbSetting:
+        enabled: true
+        distribute:
+          - from: us-east/*
+            to:
+              "us-east/*": 80
+              "us-west/*": 20
+        failover:
+          - from: us-east/*
+            to: us-west/*
+          - from: us-west/*
+            to: us-east/*
+
+    # Enhanced connection pool settings for TCP and HTTP
+    connectionPool:
+      tcp:
+        maxConnections: {{ .Values.services.service.circuitBreaker.maxConnections | default 1000 }}
+        connectTimeout: {{ .Values.services.service.timeout | default "5s" }}
+        tcpKeepalive:
+          time: "7200s"
+          interval: "75s"
+          probes: 3
+      http:
+        http2MaxRequests: {{ .Values.services.service.circuitBreaker.maxRequests | default 1000 }}
+        maxRequestsPerConnection: {{ .Values.services.service.circuitBreaker.maxPendingRequests | default 100 }}
+        maxRetries: {{ .Values.services.service.retries | default 3 }}
+        idleTimeout: "15s"
+        h2UpgradePolicy: UPGRADE
+
+    # Advanced outlier detection and circuit breaking
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: "30s"
+      baseEjectionTime: "30s"
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+
+    # Zero-trust security with strict mTLS and enhanced TLS settings
+    tls:
+      mode: ISTIO_MUTUAL
+      sni: {{ .Values.services.service.host }}
+      cipherSuites:
+        - ECDHE-ECDSA-AES256-GCM-SHA384
+        - ECDHE-RSA-AES256-GCM-SHA384
+      minProtocolVersion: TLSV1_3
+      maxProtocolVersion: TLSV1_3
+
+  # Service subsets for different deployment versions
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+      trafficPolicy:
+        loadBalancer:
+          simple: LEAST_CONN
+    - name: v2
+      labels:
+        version: v2
+      trafficPolicy:
+        loadBalancer:
+          simple: LEAST_CONN
+
+  # Cross-region traffic management
+  exportTo:
+    - "."
+    - {{ .Release.Namespace }}
