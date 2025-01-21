@@ -1,0 +1,96 @@
+# Xcode
+## User settings and project files
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/xcshareddata/xcschemes/
+
+## Workspace files
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+
+## User-specific files
+xcuserdata/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+## Build generated
+DerivedData/
+build/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Dependencies
+## CocoaPods
+Pods/
+## Carthage
+Carthage/Build/
+Carthage/Checkouts/
+## Swift Package Manager
+.swiftpm/
+Package.resolved
+## Other dependency managers
+vendor/
+node_modules/
+
+# System files
+.DS_Store
+*.swp
+*.lock
+!Podfile.lock
+!Package.resolved
+profile
+._*
+.Spotlight-V100
+.Trashes
+*.log
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+fastlane/FastlaneRunner
+fastlane/README.md
+fastlane/builds
+
+# Security and Credentials
+## Certificates and provisioning
+*.cer
+*.mobileprovision
+*.p12
+*.key
+*.pem
+*.keystore
+*.jks
+keystore.properties
+
+## Configuration files
+GoogleService-Info.plist
+firebase_app_id_file.json
+.env
+.env.*
+secrets.xcconfig
+AuthKey_*.p8
+HealthKit.entitlements
+
+# Testing and Coverage
+coverage.xml
+*.xcresult/
+*.coverage
+*.profdata
+test-reports/
+*.gcno
+*.gcda
+sonar-reports/
+test_output/
+snapshot_test_results/
