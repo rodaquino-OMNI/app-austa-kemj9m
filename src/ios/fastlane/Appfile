@@ -1,0 +1,16 @@
+# fastlane 2.217.0
+
+# The bundle identifier of your iOS application
+app_identifier("com.austa.superapp")
+
+# Your Apple ID credentials used for App Store Connect authentication
+# Retrieved from environment variable for security
+apple_id(ENV["APPLE_ID"])
+
+# Your Apple Developer Portal team ID
+# Retrieved from environment variable for security
+team_id(ENV["TEAM_ID"])
+
+# Your App Store Connect team ID if different from Developer Portal team
+# Retrieved from environment variable for security
+itc_team_id(ENV["ITC_TEAM_ID"])
