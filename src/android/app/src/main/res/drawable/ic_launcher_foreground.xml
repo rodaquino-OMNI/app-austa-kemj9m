@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 
+    AUSTA SuperApp Launcher Icon Foreground
+    - Medical cross symbol following Material Design guidelines
+    - Scaled to 70% and centered within the safe zone
+    - White foreground color for contrast against background
+    -->
+    <group
+        android:scaleX="0.7"
+        android:scaleY="0.7"
+        android:translateX="32.4"
+        android:translateY="32.4">
+
+        <!-- Medical cross path using evenOdd fill type for clean edges -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M20,40H28V28H40V20H28V8H20V20H8V28H20V40Z" />
+
+    </group>
+
+</vector>
