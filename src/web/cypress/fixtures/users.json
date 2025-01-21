@@ -1,0 +1,254 @@
+{
+  "patientUser": {
+    "id": "pat-123456789",
+    "email": "patient@example.com",
+    "role": "PATIENT",
+    "status": "ACTIVE",
+    "profile": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "dateOfBirth": "1990-01-01T00:00:00.000Z",
+      "gender": "Male",
+      "phoneNumber": "+1-555-0123",
+      "address": {
+        "street": "123 Health St",
+        "city": "Medtown",
+        "state": "CA",
+        "zipCode": "90210",
+        "country": "USA",
+        "addressType": "HOME",
+        "isVerified": true
+      },
+      "emergencyContact": {
+        "name": "Jane Doe",
+        "relationship": "Spouse",
+        "phoneNumber": "+1-555-0124",
+        "email": "jane.doe@example.com",
+        "isVerified": true,
+        "lastVerifiedAt": "2023-01-01T00:00:00.000Z"
+      },
+      "preferredLanguage": "en",
+      "communicationPreferences": ["EMAIL", "SMS"],
+      "profileCompleteness": 100
+    },
+    "securitySettings": {
+      "mfaEnabled": false,
+      "mfaMethod": "none",
+      "lastPasswordChange": "2023-06-01T00:00:00.000Z",
+      "passwordResetRequired": false,
+      "loginAttempts": 0,
+      "lastLoginAt": "2023-12-01T00:00:00.000Z",
+      "securityQuestions": [
+        {
+          "question": "What was your first pet's name?",
+          "answer": "Spot"
+        }
+      ],
+      "deviceTrust": [
+        {
+          "deviceId": "device-123",
+          "trusted": true
+        }
+      ],
+      "ipWhitelist": ["192.168.1.1"]
+    },
+    "createdAt": "2023-01-01T00:00:00.000Z",
+    "updatedAt": "2023-12-01T00:00:00.000Z",
+    "lastAuditAt": "2023-12-01T00:00:00.000Z",
+    "consentHistory": [
+      {
+        "type": "TERMS_OF_SERVICE",
+        "givenAt": "2023-01-01T00:00:00.000Z"
+      }
+    ]
+  },
+  "providerUser": {
+    "id": "prov-987654321",
+    "email": "provider@hospital.com",
+    "role": "PROVIDER",
+    "status": "ACTIVE",
+    "profile": {
+      "firstName": "Dr. Sarah",
+      "lastName": "Smith",
+      "dateOfBirth": "1985-01-01T00:00:00.000Z",
+      "gender": "Female",
+      "phoneNumber": "+1-555-0125",
+      "address": {
+        "street": "456 Medical Center Blvd",
+        "city": "Medtown",
+        "state": "CA",
+        "zipCode": "90210",
+        "country": "USA",
+        "addressType": "WORK",
+        "isVerified": true
+      },
+      "emergencyContact": {
+        "name": "James Smith",
+        "relationship": "Spouse",
+        "phoneNumber": "+1-555-0126",
+        "email": "james.smith@example.com",
+        "isVerified": true,
+        "lastVerifiedAt": "2023-01-01T00:00:00.000Z"
+      },
+      "preferredLanguage": "en",
+      "communicationPreferences": ["EMAIL"],
+      "profileCompleteness": 100
+    },
+    "securitySettings": {
+      "mfaEnabled": true,
+      "mfaMethod": "authenticator",
+      "lastPasswordChange": "2023-11-01T00:00:00.000Z",
+      "passwordResetRequired": false,
+      "loginAttempts": 0,
+      "lastLoginAt": "2023-12-01T00:00:00.000Z",
+      "securityQuestions": [
+        {
+          "question": "Where did you complete your residency?",
+          "answer": "Metro Hospital"
+        }
+      ],
+      "deviceTrust": [
+        {
+          "deviceId": "device-456",
+          "trusted": true
+        }
+      ],
+      "ipWhitelist": ["10.0.0.1"]
+    },
+    "createdAt": "2023-01-01T00:00:00.000Z",
+    "updatedAt": "2023-12-01T00:00:00.000Z",
+    "lastAuditAt": "2023-12-01T00:00:00.000Z",
+    "consentHistory": [
+      {
+        "type": "HIPAA_COMPLIANCE",
+        "givenAt": "2023-01-01T00:00:00.000Z"
+      }
+    ]
+  },
+  "adminUser": {
+    "id": "admin-123456",
+    "email": "admin@austahealth.com",
+    "role": "ADMIN",
+    "status": "ACTIVE",
+    "profile": {
+      "firstName": "Admin",
+      "lastName": "User",
+      "dateOfBirth": "1980-01-01T00:00:00.000Z",
+      "gender": "Other",
+      "phoneNumber": "+1-555-0127",
+      "address": {
+        "street": "789 Admin Ave",
+        "city": "Medtown",
+        "state": "CA",
+        "zipCode": "90210",
+        "country": "USA",
+        "addressType": "WORK",
+        "isVerified": true
+      },
+      "emergencyContact": {
+        "name": "Emergency Admin",
+        "relationship": "Colleague",
+        "phoneNumber": "+1-555-0128",
+        "email": "emergency@austahealth.com",
+        "isVerified": true,
+        "lastVerifiedAt": "2023-01-01T00:00:00.000Z"
+      },
+      "preferredLanguage": "en",
+      "communicationPreferences": ["EMAIL", "SMS"],
+      "profileCompleteness": 100
+    },
+    "securitySettings": {
+      "mfaEnabled": true,
+      "mfaMethod": "authenticator",
+      "lastPasswordChange": "2023-11-15T00:00:00.000Z",
+      "passwordResetRequired": false,
+      "loginAttempts": 0,
+      "lastLoginAt": "2023-12-01T00:00:00.000Z",
+      "securityQuestions": [
+        {
+          "question": "What is your security clearance code?",
+          "answer": "ADM123"
+        }
+      ],
+      "deviceTrust": [
+        {
+          "deviceId": "device-789",
+          "trusted": true
+        }
+      ],
+      "ipWhitelist": ["10.0.0.2"]
+    },
+    "createdAt": "2023-01-01T00:00:00.000Z",
+    "updatedAt": "2023-12-01T00:00:00.000Z",
+    "lastAuditAt": "2023-12-01T00:00:00.000Z",
+    "consentHistory": [
+      {
+        "type": "ADMIN_RESPONSIBILITIES",
+        "givenAt": "2023-01-01T00:00:00.000Z"
+      }
+    ]
+  },
+  "mfaEnabledUser": {
+    "id": "mfa-789012",
+    "email": "mfa.user@example.com",
+    "role": "PATIENT",
+    "status": "ACTIVE",
+    "profile": {
+      "firstName": "MFA",
+      "lastName": "User",
+      "dateOfBirth": "1995-01-01T00:00:00.000Z",
+      "gender": "Female",
+      "phoneNumber": "+1-555-0129",
+      "address": {
+        "street": "321 Secure St",
+        "city": "Medtown",
+        "state": "CA",
+        "zipCode": "90210",
+        "country": "USA",
+        "addressType": "HOME",
+        "isVerified": true
+      },
+      "emergencyContact": {
+        "name": "Security Contact",
+        "relationship": "Parent",
+        "phoneNumber": "+1-555-0130",
+        "email": "security.contact@example.com",
+        "isVerified": true,
+        "lastVerifiedAt": "2023-01-01T00:00:00.000Z"
+      },
+      "preferredLanguage": "en",
+      "communicationPreferences": ["EMAIL", "SMS"],
+      "profileCompleteness": 100
+    },
+    "securitySettings": {
+      "mfaEnabled": true,
+      "mfaMethod": "sms",
+      "lastPasswordChange": "2023-11-30T00:00:00.000Z",
+      "passwordResetRequired": false,
+      "loginAttempts": 0,
+      "lastLoginAt": "2023-12-01T00:00:00.000Z",
+      "securityQuestions": [
+        {
+          "question": "What is your mother's maiden name?",
+          "answer": "Security"
+        }
+      ],
+      "deviceTrust": [
+        {
+          "deviceId": "device-mfa-123",
+          "trusted": true
+        }
+      ],
+      "ipWhitelist": ["192.168.1.2"]
+    },
+    "createdAt": "2023-01-01T00:00:00.000Z",
+    "updatedAt": "2023-12-01T00:00:00.000Z",
+    "lastAuditAt": "2023-12-01T00:00:00.000Z",
+    "consentHistory": [
+      {
+        "type": "MFA_ENROLLMENT",
+        "givenAt": "2023-01-01T00:00:00.000Z"
+      }
+    ]
+  }
+}
