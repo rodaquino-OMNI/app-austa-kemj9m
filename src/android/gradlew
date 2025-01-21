@@ -1,0 +1,99 @@
+#!/bin/sh
+
+# AUSTA SuperApp Gradle Wrapper
+# Version: 8.0.0
+# Purpose: Provides consistent Gradle build environment for Android development
+# Platform: Unix-like systems (Linux, macOS)
+
+# Fail on any error
+set -e
+
+# Detect script location and app home directory
+APP_HOME=$(cd "$(dirname "$0")" && pwd)
+CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+
+# Optimized JVM settings for large-scale healthcare app development
+DEFAULT_JVM_OPTS='""-Xmx4g" "-XX:MaxMetaspaceSize=2g" "-XX:+HeapDumpOnOutOfMemoryError" "-Dfile.encoding=UTF-8" "-XX:+UseParallelGC" "-Dorg.gradle.parallel=true" "-Dorg.gradle.caching=true"'
+
+# Warning function for non-critical issues
+warn() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] gradlew: $*" >&2
+}
+
+# Error function for critical issues
+die() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] gradlew: $*" >&2
+    echo "Please check your development environment setup and try again." >&2
+    exit 1
+}
+
+# Validate Java installation and requirements
+validate_java() {
+    if [ -n "$JAVA_HOME" ] ; then
+        if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+            JAVACMD="$JAVA_HOME/jre/sh/java"
+        else
+            JAVACMD="$JAVA_HOME/bin/java"
+        fi
+        if [ ! -x "$JAVACMD" ] ; then
+            die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
+
+Please ensure JAVA_HOME points to a valid Java installation directory."
+        fi
+    else
+        JAVACMD="java"
+        which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+
+Please set the JAVA_HOME variable in your environment or install Java."
+    fi
+}
+
+# Locate Java installation
+if [ -z "$JAVA_HOME" ] ; then
+    if [ -r /etc/gentoo-release ] ; then
+        JAVA_HOME=$(java-config --jre-home)
+    fi
+fi
+
+# OS specific support
+case "$(uname)" in
+    CYGWIN* )
+        cygwin=true
+        ;;
+    Darwin* )
+        darwin=true
+        ;;
+    MSYS* | MINGW* )
+        msys=true
+        ;;
+    *)
+        ;;
+esac
+
+# Setup environment variables
+if [ -n "$GRADLE_OPTS" ] ; then
+    GRADLE_OPTS="$GRADLE_OPTS \"-Xmx4g\" \"-XX:MaxMetaspaceSize=2g\" \"-XX:+HeapDumpOnOutOfMemoryError\" \"-Dfile.encoding=UTF-8\" \"-XX:+UseParallelGC\""
+else
+    GRADLE_OPTS="\"-Xmx4g\" \"-XX:MaxMetaspaceSize=2g\" \"-XX:+HeapDumpOnOutOfMemoryError\" \"-Dfile.encoding=UTF-8\" \"-XX:+UseParallelGC\""
+fi
+
+# Collect arguments for Gradle
+APP_ARGS=
+save() {
+    for i do printf %s\\n "$i" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/' \\\\/"; done
+    echo " "
+}
+APP_ARGS=$(save "$@")
+
+# Execute Gradle
+validate_java
+
+# Use exec to replace current process with Gradle
+exec "$JAVACMD" $DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS \
+  "-Dorg.gradle.appname=$(basename "$0")" \
+  -classpath "$CLASSPATH" \
+  org.gradle.wrapper.GradleWrapperMain \
+  "--stacktrace" \
+  "--configure-on-demand" \
+  "--daemon" \
+  $APP_ARGS
