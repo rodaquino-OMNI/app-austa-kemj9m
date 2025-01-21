@@ -1,0 +1,201 @@
+# Default values for AUSTA SuperApp marketplace service
+# This is a YAML-formatted file.
+
+replicaCount: 3
+
+image:
+  repository: austa/marketplace-service
+  tag: 1.0.0
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789:role/marketplace-service-role
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "3005"
+  prometheus.io/path: "/metrics"
+  fluentbit.io/parser: "json"
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/role: "marketplace"
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+
+service:
+  type: ClusterIP
+  port: 3005
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+  hosts:
+    - host: marketplace.austa.health
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: marketplace-tls
+      hosts:
+        - marketplace.austa.health
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+
+nodeSelector:
+  kubernetes.io/os: linux
+  node-type: application
+
+tolerations:
+  - key: node-type
+    operator: Equal
+    value: application
+    effect: NoSchedule
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - marketplace
+          topologyKey: kubernetes.io/hostname
+
+env:
+  NODE_ENV: production
+  PORT: "3005"
+  ELASTICSEARCH_URL: http://elasticsearch-master:9200
+  REDIS_URL: redis://redis-master:6379
+  CACHE_TTL: "3600"
+  LOG_LEVEL: info
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"
+  MAX_PAYLOAD_SIZE: "8mb"
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+mongodb:
+  enabled: true
+  architecture: replicaset
+  replicaCount: 3
+  auth:
+    enabled: true
+    rootPassword: ""
+    username: marketplace
+    password: ""
+    database: marketplace
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: gp3
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: ""
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+      storageClass: gp3
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+elasticsearch:
+  enabled: true
+  replicas: 3
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  volumeClaimTemplate:
+    resources:
+      requests:
+        storage: 30Gi
+    storageClassName: gp3
+  antiAffinity: hard
+  esJavaOpts: "-Xmx1g -Xms1g"
+  monitoring:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
