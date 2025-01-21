@@ -1,0 +1,150 @@
+---
+# AUSTA SuperApp Common System Configuration Tasks
+# Version: 1.0.0
+# Dependencies: ansible.posix 1.5.0, community.general 6.0.0
+
+- name: Validate system requirements
+  block:
+    - name: Check minimum system requirements
+      assert:
+        that:
+          - ansible_memtotal_mb >= 8192
+          - ansible_processor_vcpus >= 2
+        msg: "System does not meet minimum requirements for HIPAA-compliant deployment"
+      tags: ['validation', 'security']
+
+    - name: Verify encryption capabilities
+      command: openssl version
+      register: openssl_check
+      failed_when: openssl_check.rc != 0
+      changed_when: false
+      tags: ['security', 'encryption']
+
+- name: Update system packages with security validation
+  block:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Apply security updates
+      apt:
+        upgrade: security
+        force_apt_get: yes
+      when: ansible_os_family == "Debian"
+      notify: Restart services securely
+  tags: ['system', 'security', 'update']
+
+- name: Configure system for high performance
+  block:
+    - name: Set kernel parameters for high performance
+      sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        sysctl_file: /etc/sysctl.d/99-austa-performance.conf
+      with_items:
+        - {key: 'net.core.somaxconn', value: '65535'}
+        - {key: 'net.ipv4.tcp_max_syn_backlog', value: '65535'}
+        - {key: 'net.ipv4.tcp_fin_timeout', value: '30'}
+        - {key: 'net.ipv4.tcp_keepalive_time', value: '60'}
+        - {key: 'vm.swappiness', value: '10'}
+        - {key: 'fs.file-max', value: '2097152'}
+      notify: Apply sysctl changes
+      tags: ['performance', 'tuning']
+
+    - name: Configure system limits
+      pam_limits:
+        domain: '*'
+        limit_type: "{{ item.type }}"
+        limit_item: "{{ item.item }}"
+        value: "{{ item.value }}"
+      with_items:
+        - {type: 'soft', item: 'nofile', value: '65535'}
+        - {type: 'hard', item: 'nofile', value: '65535'}
+        - {type: 'soft', item: 'nproc', value: '65535'}
+        - {type: 'hard', item: 'nproc', value: '65535'}
+      tags: ['performance', 'limits']
+
+- name: Implement HIPAA security baseline
+  block:
+    - name: Configure audit logging
+      include_tasks: "{{ role_path }}/tasks/configure-audit.yml"
+      vars:
+        audit_log_path: /var/log/hipaa
+        retention_days: 180
+
+    - name: Setup encrypted storage
+      include_tasks: "{{ role_path }}/tasks/configure-encryption.yml"
+      vars:
+        encryption_type: "aes-256-gcm"
+        key_rotation_days: 90
+
+    - name: Configure HIPAA-compliant logging
+      include_tasks: "{{ monitoring_tasks }}"
+      vars:
+        log_retention: 180
+        encryption_enabled: true
+  tags: ['security', 'hipaa', 'compliance']
+
+- name: Install system dependencies
+  block:
+    - name: Install required packages
+      apt:
+        name:
+          - curl
+          - wget
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - auditd
+          - fail2ban
+          - unattended-upgrades
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Configure automatic security updates
+      template:
+        src: "{{ role_path }}/templates/20auto-upgrades.j2"
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        mode: '0644'
+      when: ansible_os_family == "Debian"
+  tags: ['system', 'dependencies']
+
+- name: Setup secure directories
+  block:
+    - name: Create application directories
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: "{{ item.mode }}"
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+      with_items:
+        - {path: '/opt/austa/app', mode: '0750', owner: 'austa', group: 'austa'}
+        - {path: '/opt/austa/data', mode: '0700', owner: 'austa', group: 'austa'}
+        - {path: '/opt/austa/logs', mode: '0750', owner: 'austa', group: 'austa'}
+        - {path: '/opt/austa/backup', mode: '0700', owner: 'austa', group: 'austa'}
+      tags: ['directories', 'security']
+
+handlers:
+  - name: Restart services securely
+    service:
+      name: "{{ item }}"
+      state: restarted
+    with_items:
+      - auditd
+      - fail2ban
+    tags: ['services', 'security']
+
+  - name: Apply sysctl changes
+    command: sysctl -p /etc/sysctl.d/99-austa-performance.conf
+    tags: ['system', 'performance']
+
+  - name: Update security state
+    command: update-ca-certificates
+    when: ansible_os_family == "Debian"
+    tags: ['security', 'certificates']
