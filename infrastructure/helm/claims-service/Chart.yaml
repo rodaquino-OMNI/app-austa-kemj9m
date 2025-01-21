@@ -1,0 +1,31 @@
+apiVersion: v2
+name: claims-service
+description: Claims processing and management service for AUSTA SuperApp platform
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+keywords:
+  - claims
+  - insurance
+  - healthcare
+  - austa-superapp
+home: https://github.com/austa/superapp
+sources:
+  - https://github.com/austa/superapp/tree/main/src/backend/claims-service
+maintainers:
+  - name: AUSTA Platform Team
+    email: platform@austa.com
+
+# Dependencies required for claims service
+dependencies:
+  # PostgreSQL for claims data persistence
+  - name: postgresql
+    version: 12.1.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  
+  # Redis for caching and queue management
+  - name: redis
+    version: 17.3.0 
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
