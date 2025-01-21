@@ -1,0 +1,173 @@
+name: Web CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths: ['src/web/**']
+  pull_request:
+    branches: [main, develop]
+    paths: ['src/web/**']
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: austa-superapp-web
+  NODE_ENV: production
+  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  DD_API_KEY: ${{ secrets.DD_API_KEY }}
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd src/web
+          npm ci --ignore-scripts
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          languages: javascript
+          queries: security-extended,security-and-quality
+
+      - name: Run Snyk Security Scan
+        uses: snyk/actions/node@v3
+        with:
+          args: --severity-threshold=high --all-projects
+          command: test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Run HIPAA Compliance Check
+        run: |
+          cd src/web
+          npm run security-audit
+          npm run validate
+
+  test:
+    needs: [security-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd src/web
+          npm ci --ignore-scripts
+
+      - name: Run Tests
+        run: |
+          cd src/web
+          npm run test:coverage
+          npm run type-check
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-reports
+          path: src/web/coverage
+
+  build-and-push:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: Build and push container
+        uses: docker/build-push-action@v4
+        with:
+          context: src/web
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            BUILD_VERSION=${{ github.sha }}
+          platforms: linux/amd64,linux/arm64
+          provenance: true
+          sbom: true
+
+  deploy:
+    needs: [build-and-push]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Update EKS deployment
+        run: |
+          aws eks update-kubeconfig --name austa-superapp-cluster
+          kubectl set image deployment/web-deployment \
+            web=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ github.sha }}
+
+      - name: Monitor deployment
+        uses: datadog/action@v1
+        with:
+          api_key: ${{ secrets.DD_API_KEY }}
+          monitor_deployment: true
+          deployment_name: web-deployment
+          environment: production
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/web-deployment
+          kubectl get deployment web-deployment -o wide
+
+      - name: Run post-deployment tests
+        run: |
+          curl -f https://api.austa.health/health || exit 1
