@@ -1,0 +1,126 @@
+# Istio Service Mesh Configuration Values v1.19.0
+# Enterprise-grade configuration for AUSTA SuperApp platform
+
+global:
+  # Global mesh configuration
+  mtls:
+    enabled: true
+    mode: "STRICT"
+    autoMTLS: true
+    minProtocolVersion: "TLSV1_3"
+
+  proxy:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "2000m"
+        memory: "1024Mi"
+    
+    accessLogging:
+      enabled: true
+      format: "JSON"
+      outputPath: "/dev/stdout"
+    
+    lifecycle:
+      waitForGracefulShutdown: true
+      terminationDrainDuration: "30s"
+
+  monitoring:
+    enabled: true
+    prometheus:
+      enabled: true
+      scrapeInterval: "15s"
+      retention: "15d"
+    grafana:
+      enabled: true
+      persistence: true
+    jaeger:
+      enabled: true
+      storage: "elasticsearch"
+
+ingress:
+  enabled: true
+  replicaCount: 3
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+  
+  service:
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    ports:
+      - name: http
+        port: 80
+        targetPort: 80
+        protocol: TCP
+      - name: https
+        port: 443
+        targetPort: 443
+        protocol: TCP
+      - name: wss
+        port: 443
+        targetPort: 443
+        protocol: TCP
+  
+  tls:
+    enabled: true
+    certProvider: "cert-manager"
+    secretName: "austa-tls-cert"
+    minProtocolVersion: "TLSV1_3"
+    cipherSuites:
+      - "ECDHE-ECDSA-AES256-GCM-SHA384"
+      - "ECDHE-RSA-AES256-GCM-SHA384"
+
+security:
+  certificateAuthority:
+    type: "istiod"
+    workloadCertTTL: "24h"
+    rootCertTTL: "168h"
+    enableNamespacesByDefault: true
+  
+  peerAuthentication:
+    enabled: true
+    mode: "STRICT"
+    portLevelMtls:
+      "8080":
+        mode: "STRICT"
+  
+  rbac:
+    enabled: true
+    mode: "ON"
+    enableClusterRbac: true
+  
+  jwt:
+    enabled: true
+    issuer: "https://auth.austa.health"
+    jwksUri: "https://auth.austa.health/.well-known/jwks.json"
+
+services:
+  auth:
+    host: "auth-service"
+    port: 8080
+    timeout: "5s"
+    retries: 3
+    circuitBreaker:
+      maxConnections: 1000
+      maxPendingRequests: 100
+      maxRequests: 1000
+      maxRetries: 3
+  
+  virtualCare:
+    host: "virtual-care-service"
+    port: 8080
+    timeout: "30s"
+    retries: 1
+    circuitBreaker:
+      maxConnections: 2000
+      maxPendingRequests: 200
+      maxRequests: 2000
+      maxRetries: 1
