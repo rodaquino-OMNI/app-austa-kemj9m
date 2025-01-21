@@ -1,0 +1,72 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["shared/*"],
+      "@auth/*": ["auth-service/src/*"],
+      "@claims/*": ["claims-service/src/*"],
+      "@health-records/*": ["health-records-service/src/*"],
+      "@marketplace/*": ["marketplace-service/src/*"],
+      "@virtual-care/*": ["virtual-care-service/src/*"],
+      "@api-gateway/*": ["api-gateway/src/*"]
+    },
+    "typeRoots": [
+      "./node_modules/@types",
+      "./shared/types"
+    ],
+    "types": [
+      "node",
+      "jest",
+      "express",
+      "ws"
+    ]
+  },
+  "include": [
+    "api-gateway/src/**/*",
+    "auth-service/src/**/*",
+    "virtual-care-service/src/**/*",
+    "health-records-service/src/**/*",
+    "claims-service/src/**/*",
+    "marketplace-service/src/**/*",
+    "shared/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.mock.ts",
+    "coverage",
+    "**/__tests__/**"
+  ]
+}
