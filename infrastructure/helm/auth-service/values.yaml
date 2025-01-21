@@ -1,0 +1,173 @@
+# Authentication Service Helm Chart Values
+# Version: 1.0.0
+# HIPAA & LGPD Compliant Configuration
+
+# Number of replicas for high availability
+replicaCount: 3
+
+# Container image configuration
+image:
+  repository: austa/auth-service
+  tag: latest
+  pullPolicy: Always
+
+# Image pull secrets for private registry
+imagePullSecrets:
+  - name: registry-credentials
+
+# Optional name overrides
+nameOverride: ""
+fullnameOverride: ""
+
+# Service account configuration with AWS IAM role
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/auth-service-role
+  name: auth-service-account
+
+# Pod annotations for monitoring, service mesh, and vault integration
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "3001"
+  prometheus.io/path: "/metrics"
+  sidecar.istio.io/inject: "true"
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/role: "auth-service"
+
+# Enhanced security context for HIPAA compliance
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  fsGroupChangePolicy: "OnRootMismatch"
+  seccompProfile:
+    type: "RuntimeDefault"
+
+# Container security context with least privilege
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+
+# Service configuration with internal load balancer
+service:
+  type: ClusterIP
+  port: 3001
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+
+# Horizontal pod autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+
+# Node selection and affinity rules
+nodeSelector:
+  kubernetes.io/os: linux
+  node-type: auth-service
+
+# Pod tolerations
+tolerations:
+  - key: "dedicated"
+    operator: "Equal"
+    value: "auth-service"
+    effect: "NoSchedule"
+
+# Pod anti-affinity for high availability
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - auth-service
+        topologyKey: kubernetes.io/hostname
+
+# Environment variables with secure secret references
+env:
+  - name: NODE_ENV
+    value: "production"
+  - name: PORT
+    value: "3001"
+  - name: JWT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: auth-secrets
+        key: jwt-secret
+  - name: OAUTH_CLIENT_ID
+    valueFrom:
+      secretKeyRef:
+        name: auth-secrets
+        key: oauth-client-id
+  - name: OAUTH_CLIENT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: auth-secrets
+        key: oauth-client-secret
+  - name: REDIS_HOST
+    value: "auth-redis"
+  - name: REDIS_PORT
+    value: "6379"
+  - name: REDIS_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: auth-redis
+        key: redis-password
+
+# Health check probes
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3001
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3001
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+startupProbe:
+  httpGet:
+    path: /health
+    port: 3001
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+  successThreshold: 1
