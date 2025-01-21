@@ -1,0 +1,184 @@
+{{/* Prometheus Helm Template for AUSTA SuperApp Platform */}}
+{{/* Version: 19.0.0 */}}
+{{/* Dependencies: prometheus-community/prometheus@19.0.0 */}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-prometheus-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: prometheus
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    compliance: hipaa
+data:
+  prometheus.yml: |
+    {{- include "prometheus.config" . | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-prometheus
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: prometheus
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    compliance: hipaa
+spec:
+  replicas: {{ .Values.prometheus.replicas | default 2 }}
+  selector:
+    matchLabels:
+      app: prometheus
+      release: {{ .Release.Name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/prometheus-config.yaml") . | sha256sum }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      serviceAccountName: {{ .Release.Name }}-prometheus
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+        - name: prometheus
+          image: "prom/prometheus:v2.45.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time=30d
+            - --storage.tsdb.retention.size=50GB
+            - --web.console.libraries=/usr/share/prometheus/console_libraries
+            - --web.console.templates=/usr/share/prometheus/consoles
+            - --web.enable-lifecycle
+            - --web.enable-admin-api
+            {{- if .Values.hipaaCompliance.enabled }}
+            - --storage.tsdb.wal-compression=true
+            - --storage.tsdb.min-block-duration=2h
+            - --storage.tsdb.max-block-duration=24h
+            {{- end }}
+          ports:
+            - containerPort: 9090
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+              scheme: HTTPS
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+              scheme: HTTPS
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 4
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: {{ .Values.prometheus.resources.limits.cpu | default "1000m" }}
+              memory: {{ .Values.prometheus.resources.limits.memory | default "2Gi" }}
+            requests:
+              cpu: {{ .Values.prometheus.resources.requests.cpu | default "500m" }}
+              memory: {{ .Values.prometheus.resources.requests.memory | default "1Gi" }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: storage
+              mountPath: /prometheus
+            - name: tls
+              mountPath: /etc/prometheus/certs
+              readOnly: true
+            - name: audit-logs
+              mountPath: /var/log/prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-prometheus-config
+        - name: storage
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-prometheus-storage
+        - name: tls
+          secret:
+            secretName: {{ .Release.Name }}-prometheus-tls
+        - name: audit-logs
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-prometheus-audit
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-prometheus
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: prometheus
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9090
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: prometheus
+    release: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-prometheus-storage
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: prometheus
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.prometheus.persistence.size | default "50Gi" }}
+  storageClassName: {{ .Values.prometheus.persistence.storageClass | default "gp2" }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-prometheus-audit
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: prometheus
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.prometheus.auditLogs.size | default "10Gi" }}
+  storageClassName: {{ .Values.prometheus.persistence.storageClass | default "gp2" }}
+---
+{{- define "prometheus.config" -}}
+{{ .Files.Get "src/backend/monitoring/prometheus.yml" | nindent 2 }}
+{{- end -}}
