@@ -1,0 +1,97 @@
+# Istio Gateway Configuration v1.19.0
+# Enterprise-grade gateway configuration for AUSTA SuperApp platform
+# Dependencies:
+# - istio: v1.19.0
+# - cert-manager: v1.12.0
+
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ .Release.Name }}-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/component: gateway
+    app.kubernetes.io/part-of: austa-superapp
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/version: {{ .Chart.Version }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.security.certificateAuthority.type }}
+    monitoring.istio.io/scrape: "true"
+    prometheus.io/port: "15020"
+    prometheus.io/scrape: "true"
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    # HTTP port configuration with HTTPS redirect
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        {{- range .Values.ingress.hosts | default (list "*") }}
+        - {{ . | quote }}
+        {{- end }}
+      tls:
+        httpsRedirect: true
+
+    # HTTPS port configuration with enhanced security
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        {{- range .Values.ingress.hosts | default (list "*") }}
+        - {{ . | quote }}
+        {{- end }}
+      tls:
+        mode: SIMPLE
+        credentialName: {{ .Values.ingress.tls.secretName }}
+        minProtocolVersion: {{ .Values.ingress.tls.minProtocolVersion }}
+        cipherSuites:
+        {{- range .Values.ingress.tls.cipherSuites }}
+        - {{ . | quote }}
+        {{- end }}
+
+    # WebSocket Secure (WSS) configuration for real-time features
+    - port:
+        number: 443
+        name: wss
+        protocol: HTTPS
+      hosts:
+        {{- range .Values.ingress.hosts | default (list "*") }}
+        - {{ . | quote }}
+        {{- end }}
+      tls:
+        mode: SIMPLE
+        credentialName: {{ .Values.ingress.tls.secretName }}
+        minProtocolVersion: {{ .Values.ingress.tls.minProtocolVersion }}
+        cipherSuites:
+        {{- range .Values.ingress.tls.cipherSuites }}
+        - {{ . | quote }}
+        {{- end }}
+
+  # Advanced security settings
+  {{- if .Values.security.peerAuthentication.enabled }}
+  peerAuthentication:
+    mtls:
+      mode: {{ .Values.security.peerAuthentication.mode }}
+    portLevelMtls:
+      {{- range $port, $config := .Values.security.peerAuthentication.portLevelMtls }}
+      {{ $port }}:
+        mode: {{ $config.mode }}
+      {{- end }}
+  {{- end }}
+
+  # Connection and protocol settings
+  {{- with .Values.ingress.service }}
+  loadBalancer:
+    {{- if .annotations }}
+    annotations:
+      {{- toYaml .annotations | nindent 6 }}
+    {{- end }}
+  {{- end }}
