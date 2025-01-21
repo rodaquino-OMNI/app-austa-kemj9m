@@ -1,0 +1,201 @@
+---
+# AUSTA SuperApp Backup Management Playbook
+# Version: 1.0.0
+# Purpose: Manages automated backups of critical system components with HIPAA compliance
+# Dependencies: 
+#   - community.postgresql 2.4.0
+#   - community.mongodb 1.6.0
+#   - amazon.aws 5.0.0
+
+- name: Manage HIPAA-Compliant System Backups
+  hosts: databases
+  become: true
+  vars_files:
+    - ../inventory/prod.yml
+
+  vars:
+    backup_root: /var/backups/austa
+    s3_bucket: austa-backups
+    retention_days: 30
+    archive_years: 20
+    audit_years: 7
+    encryption_key_id: "{{ lookup('env', 'AWS_KMS_KEY_ID') }}"
+    backup_compression_level: 9
+    max_concurrent_backups: 3
+    verification_timeout: 3600
+
+  pre_tasks:
+    - name: Validate HIPAA compliance prerequisites
+      block:
+        - name: Verify encryption configuration
+          assert:
+            that:
+              - encryption_key_id is defined
+              - encryption_key_id != ''
+            msg: "KMS encryption key must be configured for HIPAA compliance"
+
+        - name: Verify backup directories
+          file:
+            path: "{{ item }}"
+            state: directory
+            mode: '0700'
+            owner: postgres
+            group: postgres
+          with_items:
+            - "{{ backup_root }}"
+            - "{{ backup_root }}/postgresql"
+            - "{{ backup_root }}/mongodb"
+            - "{{ backup_root }}/audit"
+
+  roles:
+    - common
+    - monitoring
+
+  tasks:
+    - name: Setup encrypted backup environment
+      block:
+        - name: Configure backup encryption
+          include_tasks: "{{ role_path }}/tasks/configure-encryption.yml"
+          vars:
+            encryption_type: "aes-256-gcm"
+            key_rotation_days: 90
+
+        - name: Setup backup monitoring
+          include_tasks: "{{ monitoring_tasks }}"
+          vars:
+            log_retention: "{{ retention_days }}"
+            encryption_enabled: true
+      tags: ['setup', 'encryption']
+
+    - name: Backup PostgreSQL databases
+      block:
+        - name: Get PostgreSQL databases
+          community.postgresql.postgresql_query:
+            query: "SELECT datname FROM pg_database WHERE datistemplate = false;"
+          register: pg_databases
+
+        - name: Execute PostgreSQL backups
+          community.postgresql.postgresql_db:
+            name: "{{ item.datname }}"
+            state: dump
+            target: "{{ backup_root }}/postgresql/{{ item.datname }}_{{ ansible_date_time.date }}.sql.gz"
+            target_opts: "-Z{{ backup_compression_level }}"
+            login_host: "{{ hostvars[inventory_hostname].db_host }}"
+            login_user: "{{ lookup('env', 'POSTGRES_USER') }}"
+            login_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+          with_items: "{{ pg_databases.query_result }}"
+          environment:
+            PGPASSWORD: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+      tags: ['postgresql', 'backup']
+
+    - name: Backup MongoDB databases
+      block:
+        - name: Get MongoDB databases
+          community.mongodb.mongodb_info:
+            login_host: "{{ hostvars[inventory_hostname].mongo_host }}"
+            login_user: "{{ lookup('env', 'MONGO_USER') }}"
+            login_password: "{{ lookup('env', 'MONGO_PASSWORD') }}"
+          register: mongo_databases
+
+        - name: Execute MongoDB backups
+          command: >
+            mongodump 
+            --host={{ hostvars[inventory_hostname].mongo_host }}
+            --username={{ lookup('env', 'MONGO_USER') }}
+            --password={{ lookup('env', 'MONGO_PASSWORD') }}
+            --db={{ item }}
+            --out={{ backup_root }}/mongodb/{{ item }}_{{ ansible_date_time.date }}
+            --gzip
+          with_items: "{{ mongo_databases.databases }}"
+          environment:
+            MONGO_PASSWORD: "{{ lookup('env', 'MONGO_PASSWORD') }}"
+      tags: ['mongodb', 'backup']
+
+    - name: Sync backups to S3
+      block:
+        - name: Upload PostgreSQL backups
+          amazon.aws.aws_s3:
+            bucket: "{{ s3_bucket }}"
+            object: "postgresql/{{ ansible_date_time.year }}/{{ ansible_date_time.month }}/{{ item | basename }}"
+            src: "{{ item }}"
+            mode: put
+            encryption: aws:kms
+            kms_key_id: "{{ encryption_key_id }}"
+          with_fileglob:
+            - "{{ backup_root }}/postgresql/*.gz"
+
+        - name: Upload MongoDB backups
+          amazon.aws.aws_s3:
+            bucket: "{{ s3_bucket }}"
+            object: "mongodb/{{ ansible_date_time.year }}/{{ ansible_date_time.month }}/{{ item | basename }}"
+            src: "{{ item }}"
+            mode: put
+            encryption: aws:kms
+            kms_key_id: "{{ encryption_key_id }}"
+          with_fileglob:
+            - "{{ backup_root }}/mongodb/*"
+      tags: ['s3', 'sync']
+
+    - name: Sync to DR region
+      block:
+        - name: Configure cross-region replication
+          amazon.aws.aws_s3:
+            bucket: "{{ s3_bucket }}-dr"
+            mode: create
+            region: "{{ dr_region }}"
+            versioning: yes
+            encryption: aws:kms
+            kms_key_id: "{{ dr_encryption_key_id }}"
+
+        - name: Setup replication rules
+          amazon.aws.aws_s3:
+            bucket: "{{ s3_bucket }}"
+            mode: put_replication
+            dest_bucket: "{{ s3_bucket }}-dr"
+            dest_region: "{{ dr_region }}"
+            rule_id: "backup-replication"
+      tags: ['dr', 'replication']
+
+    - name: Manage backup retention
+      block:
+        - name: Remove old local backups
+          file:
+            path: "{{ item }}"
+            state: absent
+          with_fileglob:
+            - "{{ backup_root }}/postgresql/*_{{ (ansible_date_time.date | to_datetime('%Y-%m-%d') - retention_days * 86400) | strftime('%Y-%m-%d') }}.sql.gz"
+            - "{{ backup_root }}/mongodb/*_{{ (ansible_date_time.date | to_datetime('%Y-%m-%d') - retention_days * 86400) | strftime('%Y-%m-%d') }}"
+
+        - name: Configure S3 lifecycle rules
+          amazon.aws.aws_s3:
+            bucket: "{{ s3_bucket }}"
+            mode: put_lifecycle_rule
+            name: backup-lifecycle
+            transitions:
+              - days: "{{ retention_days }}"
+                storage_class: STANDARD_IA
+              - days: "{{ retention_days * 2 }}"
+                storage_class: GLACIER
+            expiration_days: "{{ archive_years * 365 }}"
+      tags: ['retention']
+
+  handlers:
+    - name: Restart monitoring services
+      service:
+        name: prometheus
+        state: restarted
+      notify: Send backup status alert
+
+    - name: Send backup status alert
+      include_tasks: "{{ monitoring_tasks }}"
+      vars:
+        alert_type: backup_completion
+        alert_severity: info
+        alert_message: "Backup completed successfully"
+
+    - name: Update backup status
+      command: >
+        curl -X POST 
+        -H "Content-Type: application/json" 
+        -d '{"status": "completed", "timestamp": "{{ ansible_date_time.iso8601 }}"}' 
+        http://localhost:9090/api/v1/backup_status
