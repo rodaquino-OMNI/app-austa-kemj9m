@@ -1,0 +1,38 @@
+platform :ios, '14.0'
+use_frameworks!
+inhibit_all_warnings!
+
+target 'AUSTASuperApp' do
+  pod 'Alamofire', '~> 5.8.0'
+  pod 'KeychainAccess', '~> 4.2.0'
+  pod 'TwilioVideo', '~> 5.5.0'
+  pod 'SwiftJWT', '~> 3.6.0'
+  pod 'CryptoSwift', '~> 1.8.0'
+  pod 'SwiftLint', '0.52.0'
+
+  target 'AUSTASuperAppTests' do
+    inherit! :search_paths
+    pod 'Quick'
+    pod 'Nimble'
+  end
+
+  target 'AUSTASuperAppUITests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+      config.build_settings['OTHER_LDFLAGS'] = '$(inherited) -ObjC'
+      config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+      config.build_settings['SWIFT_VERSION'] = '5.0'
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      config.build_settings['APPLICATION_EXTENSION_API_ONLY'] = 'NO'
+      config.build_settings['ENABLE_TESTABILITY'] = 'YES'
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', 'ENCRYPTION_ENABLED=1']
+    end
+  end
+end
