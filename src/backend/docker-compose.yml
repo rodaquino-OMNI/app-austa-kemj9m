@@ -1,0 +1,248 @@
+version: '3.9'
+
+services:
+  # API Gateway Service
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - API_VERSION=v1
+      - RATE_LIMIT_PER_MINUTE=60
+      - ENABLE_MTLS=true
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+      - auth-service
+    networks:
+      - frontend_network
+      - backend_network
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "node", "./healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Authentication Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/auth
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=/run/secrets/jwt_secret
+      - SESSION_SECRET=/run/secrets/session_secret
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - backend_network
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:4000/health || exit 1
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - auth_logs:/app/dist/logs
+    secrets:
+      - jwt_secret
+      - session_secret
+
+  # Virtual Care Service
+  virtual-care:
+    build:
+      context: ./virtual-care-service
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/virtual-care
+      - REDIS_URL=redis://redis:6379
+      - TWILIO_ACCOUNT_SID=/run/secrets/twilio_sid
+      - TWILIO_AUTH_TOKEN=/run/secrets/twilio_token
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - backend_network
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    healthcheck:
+      test: curl -f http://localhost:3002/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - virtual_care_logs:/app/logs
+    secrets:
+      - twilio_sid
+      - twilio_token
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=/run/secrets/postgres_user
+      - POSTGRES_PASSWORD=/run/secrets/postgres_password
+      - POSTGRES_DB=austa
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    secrets:
+      - postgres_user
+      - postgres_password
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    command: ["--auth", "--bind_ip_all"]
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=/run/secrets/mongo_root_user
+      - MONGO_INITDB_ROOT_PASSWORD=/run/secrets/mongo_root_password
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - backend_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    secrets:
+      - mongo_root_user
+      - mongo_root_password
+
+  # Redis Cache
+  redis:
+    image: redis:7.0-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 2gb --maxmemory-policy allkeys-lru
+    environment:
+      - REDIS_PASSWORD=/run/secrets/redis_password
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    secrets:
+      - redis_password
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /data/postgres
+      o: bind,encrypted
+  mongodb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /data/mongodb
+      o: bind,encrypted
+  redis_data:
+    driver: local
+  auth_logs:
+    driver: local
+  virtual_care_logs:
+    driver: local
+
+networks:
+  frontend_network:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.1.0/24
+  backend_network:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.0.0/24
+
+secrets:
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  session_secret:
+    file: ./secrets/session_secret.txt
+  postgres_user:
+    file: ./secrets/postgres_user.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  mongo_root_user:
+    file: ./secrets/mongo_root_user.txt
+  mongo_root_password:
+    file: ./secrets/mongo_root_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
+  twilio_sid:
+    file: ./secrets/twilio_sid.txt
+  twilio_token:
+    file: ./secrets/twilio_token.txt
