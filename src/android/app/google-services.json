@@ -1,0 +1,141 @@
+{
+  "project_info": {
+    "project_number": "123456789012",
+    "project_id": "austa-superapp",
+    "storage_bucket": "austa-superapp.appspot.com",
+    "firebase_url": "https://austa-superapp.firebaseio.com",
+    "hipaa_compliant": true,
+    "data_retention_days": 2555,
+    "audit_logging_enabled": true,
+    "security_level": "high",
+    "region": "us-east1"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123456789012:android:abc123def456",
+        "android_client_info": {
+          "package_name": "com.austa.superapp",
+          "certificate_hash": "sha256_certificate_hash_here",
+          "min_sdk_version": 24,
+          "target_sdk_version": 34
+        },
+        "security_config": {
+          "require_ssl": true,
+          "ssl_pinning_enabled": true,
+          "data_encryption_enabled": true,
+          "app_verification_enabled": true,
+          "integrity_enforcement": "enforced"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "123456789012-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.austa.superapp",
+            "certificate_hash": "sha256_certificate_hash_here"
+          },
+          "healthcare_scopes": [
+            "https://www.googleapis.com/auth/healthcare",
+            "https://www.googleapis.com/auth/healthcare.clinical",
+            "https://www.googleapis.com/auth/healthcare.research"
+          ],
+          "oauth2_config": {
+            "allowed_providers": ["google", "microsoft_health", "apple_health"],
+            "force_mfa": true,
+            "session_length_minutes": 15,
+            "refresh_token_enabled": true
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ123456",
+          "rotation_policy": {
+            "rotation_period_days": 90,
+            "automatic_rotation": true,
+            "key_version_retention_days": 7,
+            "require_manual_approval": false
+          }
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1,
+          "hipaa_mode": true,
+          "data_retention_days": 2555,
+          "pii_protection": "enforced",
+          "sampling_rate": 1.0,
+          "excluded_parameters": [
+            "device_id",
+            "advertising_id",
+            "user_id"
+          ],
+          "anonymization_enabled": true
+        },
+        "messaging_service": {
+          "status": 1,
+          "priority": "high",
+          "delivery_metrics_enabled": true,
+          "encryption_enabled": true,
+          "direct_boot_enabled": true,
+          "message_retention_seconds": 86400,
+          "delivery_tracking": {
+            "enabled": true,
+            "retry_interval_minutes": 15,
+            "max_retries": 3
+          }
+        },
+        "auth_service": {
+          "status": 1,
+          "enforce_mfa": true,
+          "session_timeout_minutes": 15,
+          "allowed_auth_domains": [
+            "austa.health",
+            "auth.austa.health"
+          ],
+          "password_policy": {
+            "min_length": 12,
+            "require_special_char": true,
+            "require_number": true,
+            "require_uppercase": true,
+            "require_lowercase": true,
+            "max_age_days": 90
+          }
+        },
+        "hipaa_compliance": {
+          "enabled": true,
+          "audit_logging": {
+            "enabled": true,
+            "retention_days": 2555,
+            "include_user_actions": true,
+            "include_system_events": true
+          },
+          "data_handling": {
+            "encryption_at_rest": true,
+            "encryption_in_transit": true,
+            "data_classification": "phi",
+            "access_controls": "strict"
+          },
+          "security_controls": {
+            "ip_filtering": true,
+            "device_validation": true,
+            "anomaly_detection": true,
+            "breach_notification": true
+          }
+        }
+      },
+      "test_client": false,
+      "client_capabilities": {
+        "analytics": true,
+        "authentication": true,
+        "cloud_messaging": true,
+        "crash_reporting": true,
+        "performance_monitoring": true,
+        "remote_config": true
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
