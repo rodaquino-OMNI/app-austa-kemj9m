@@ -1,0 +1,149 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: health-records-service
+  namespace: austa
+  labels:
+    app: health-records-service
+    component: backend
+    part-of: austa-superapp
+    version: 1.0.0
+    tier: backend
+    managed-by: kubectl
+spec:
+  replicas: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: health-records-service
+  template:
+    metadata:
+      labels:
+        app: health-records-service
+        version: 1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3002"
+        prometheus.io/path: "/metrics"
+        seccomp.security.alpha.kubernetes.io/pod: "runtime/default"
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "health-records"
+    spec:
+      containers:
+      - name: health-records-service
+        image: docker.io/austa/health-records-service:1.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3002
+          protocol: TCP
+          name: http
+        - containerPort: 9090
+          protocol: TCP
+          name: metrics
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "1Gi"
+          limits:
+            cpu: "2000m"
+            memory: "2Gi"
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 3002
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 3002
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 2
+          successThreshold: 1
+        startupProbe:
+          httpGet:
+            path: /health/startup
+            port: 3002
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 30
+          successThreshold: 1
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3002"
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: austa-superapp-secrets
+              key: mongodb_uri
+        - name: FHIR_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: austa-superapp-secrets
+              key: fhir_client_secret
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: austa-superapp-secrets
+              key: phi_encryption_key
+        volumeMounts:
+        - name: health-records-data
+          mountPath: /app/data
+          readOnly: false
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: tmp-volume
+          mountPath: /tmp
+          readOnly: false
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+            add: ["NET_BIND_SERVICE"]
+          seccompProfile:
+            type: RuntimeDefault
+      volumes:
+      - name: health-records-data
+        persistentVolumeClaim:
+          claimName: health-records-pvc
+      - name: config-volume
+        configMap:
+          name: austa-superapp-config
+      - name: tmp-volume
+        emptyDir: {}
+      serviceAccountName: health-records-sa
+      securityContext:
+        fsGroup: 1000
+        supplementalGroups: [1000]
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - health-records-service
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
