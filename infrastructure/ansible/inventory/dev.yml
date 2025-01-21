@@ -1,0 +1,81 @@
+---
+all:
+  vars:
+    # Global environment settings
+    env: development
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_connection: ssh
+    ansible_user: ansible
+    ansible_become: true
+    ansible_become_method: sudo
+    
+    # Deployment configuration
+    deployment_type: single_region
+    monitoring_enabled: true
+    backup_enabled: true
+    debug_mode: true
+    log_level: DEBUG
+    retention_period: 15d
+
+  children:
+    kubernetes_clusters:
+      hosts:
+        dev-k8s-master:
+          ansible_host: 10.0.1.10
+          kubernetes_role: master
+          node_type: control_plane
+        dev-k8s-worker-1:
+          ansible_host: 10.0.1.11
+          kubernetes_role: worker
+          node_type: application
+        dev-k8s-worker-2:
+          ansible_host: 10.0.1.12
+          kubernetes_role: worker
+          node_type: application
+      vars:
+        kubernetes_version: "1.27"
+        container_runtime: docker
+        pod_network_cidr: "10.244.0.0/16"
+        service_cidr: "10.96.0.0/12"
+        metrics_enabled: true
+        debug_enabled: true
+
+    databases:
+      hosts:
+        dev-postgres:
+          ansible_host: 10.0.2.10
+          db_type: postgresql
+          db_version: "15"
+          db_role: primary
+        dev-mongodb:
+          ansible_host: 10.0.2.11
+          db_type: mongodb
+          db_version: "6.0"
+          db_role: primary
+        dev-redis:
+          ansible_host: 10.0.2.12
+          db_type: redis
+          db_version: "7.0"
+          db_role: primary
+      vars:
+        backup_retention: 7d
+        monitoring_interval: 30s
+        max_connections: 100
+        debug_mode: true
+
+    monitoring:
+      hosts:
+        dev-prometheus:
+          ansible_host: 10.0.3.10
+          monitoring_role: metrics
+        dev-grafana:
+          ansible_host: 10.0.3.11
+          monitoring_role: visualization
+        dev-elasticsearch:
+          ansible_host: 10.0.3.12
+          monitoring_role: logging
+      vars:
+        retention_period: 15d
+        scrape_interval: 15s
+        alert_interval: 1m
+        debug_logging: true
