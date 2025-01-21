@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "auth-service.fullname" . }}
+  labels:
+    {{- include "auth-service.labels" . | nindent 4 }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.metrics.port }}"
+    prometheus.io/path: "/metrics"
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    rollme: {{ randAlphaNum 5 | quote }}
+
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
+  selector:
+    matchLabels:
+      {{- include "auth-service.selectorLabels" . | nindent 6 }}
+  
+  template:
+    metadata:
+      labels:
+        {{- include "auth-service.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    
+    spec:
+      serviceAccountName: {{ include "auth-service.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      
+      # Pod distribution for high availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  {{- include "auth-service.selectorLabels" . | nindent 18 }}
+              topologyKey: kubernetes.io/hostname
+      
+      # Node selection criteria
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      
+      # Pod tolerations
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      
+      # Container definitions
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.metrics.port }}
+              protocol: TCP
+          
+          # Environment variables from ConfigMap and Secrets
+          envFrom:
+            - configMapRef:
+                name: {{ include "auth-service.fullname" . }}-config
+            - secretRef:
+                name: {{ include "auth-service.fullname" . }}-secrets
+          
+          # Health check probes
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+          
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          
+          # Resource limits and requests
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          
+          # Volume mounts for sensitive data
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: auth-certs
+              mountPath: /etc/auth-service/certs
+              readOnly: true
+            - name: auth-config
+              mountPath: /etc/auth-service/config
+              readOnly: true
+      
+      # Volumes definition
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: auth-certs
+          secret:
+            secretName: {{ include "auth-service.fullname" . }}-certs
+        - name: auth-config
+          configMap:
+            name: {{ include "auth-service.fullname" . }}-config
+      
+      # Image pull secrets
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      # Pod termination grace period
+      terminationGracePeriodSeconds: 60
