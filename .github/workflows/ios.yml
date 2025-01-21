@@ -1,0 +1,165 @@
+name: iOS CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/ios/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/ios/**'
+
+env:
+  XCODE_VERSION: '15.0'
+  DEVELOPER_APP_ID: ${{ secrets.APPLE_DEVELOPER_APP_ID }}
+  DEVELOPER_APP_IDENTIFIER: ${{ secrets.APPLE_DEVELOPER_APP_IDENTIFIER }}
+  PROVISIONING_PROFILE_SPECIFIER: ${{ secrets.PROVISIONING_PROFILE_SPECIFIER }}
+  APPLE_DEVELOPER_PORTAL_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_PORTAL_TEAM_ID }}
+  APPLE_DEVELOPER_CERTIFICATE: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE }}
+  APPLE_DEVELOPER_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+  MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+  HIPAA_COMPLIANCE_KEY: ${{ secrets.HIPAA_COMPLIANCE_KEY }}
+  SECURITY_SCAN_TOKEN: ${{ secrets.SECURITY_SCAN_TOKEN }}
+  WORKSPACE: "AUSTASuperApp.xcworkspace"
+  SCHEME: "AUSTASuperApp"
+
+jobs:
+  security-compliance:
+    name: Security and Compliance Validation
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Ruby Environment
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          
+      - name: Cache Ruby Dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
+
+      - name: Install Fastlane
+        run: |
+          gem install bundler
+          bundle config path vendor/bundle
+          bundle install --jobs 4 --retry 3
+
+      - name: Run HIPAA Compliance Check
+        run: bundle exec fastlane hipaa_compliance_check
+        env:
+          HIPAA_COMPLIANCE_KEY: ${{ env.HIPAA_COMPLIANCE_KEY }}
+
+      - name: Run Security Scan
+        uses: AppThreat/sast-scan-action@v1
+        with:
+          type: "ios"
+          src: "src/ios"
+          output: "security-reports"
+          token: ${{ env.SECURITY_SCAN_TOKEN }}
+
+  build:
+    name: Build iOS App
+    needs: security-compliance
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Xcode
+        run: sudo xcode-select -switch /Applications/Xcode_${{ env.XCODE_VERSION }}.app
+
+      - name: Install Dependencies
+        run: |
+          gem install bundler
+          bundle install
+          pod install
+
+      - name: Setup Provisioning Profile
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ env.APPLE_DEVELOPER_CERTIFICATE }}
+          P12_PASSWORD: ${{ env.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -l build.keychain
+
+          # Import certificate
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output certificate.p12
+          security import certificate.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+      - name: Build iOS App
+        run: |
+          bundle exec fastlane build
+
+  test:
+    name: Test iOS App
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Test Environment
+        run: |
+          gem install bundler
+          bundle install
+          pod install
+
+      - name: Run Unit Tests
+        run: bundle exec fastlane test
+
+      - name: Run Security Tests
+        run: bundle exec fastlane security_scan
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: test_output
+
+  deploy:
+    name: Deploy to TestFlight
+    needs: test
+    runs-on: macos-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Deploy Environment
+        run: |
+          gem install bundler
+          bundle install
+
+      - name: Deploy to TestFlight
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: bundle exec fastlane beta
+
+      - name: Upload HIPAA Compliance Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: compliance-report
+          path: fastlane/compliance-report.pdf
+
+      - name: Notify Team
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "Deployment successful - Notifying team"
+          else
+            echo "Deployment failed - Notifying team for immediate attention"
+          fi
