@@ -1,0 +1,184 @@
+# Virtual Care Service Helm Values
+# Version: 1.0.0
+# Helm Version: v3
+
+# Replica configuration for high availability (99.99% uptime)
+replicaCount: 3
+
+# Container image configuration
+image:
+  repository: austa/virtual-care-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Service account configuration for AWS IAM integration
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789:role/virtual-care-service
+
+# Enhanced security context for HIPAA compliance
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+
+# Resource allocation for optimal performance (<500ms response time)
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 1000m
+    memory: 1Gi
+
+# Horizontal Pod Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 75
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+    scaleUp:
+      stabilizationWindowSeconds: 60
+
+# High availability pod distribution
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchLabels:
+            app: virtual-care
+
+# Node selection for healthcare workloads
+nodeSelector:
+  purpose: virtual-care
+  compliance: hipaa
+
+# Pod disruption budget for availability
+podDisruptionBudget:
+  minAvailable: 2
+
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 20
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: http
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+
+# Ingress configuration for external access
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-protocol: "true"
+    nginx.ingress.kubernetes.io/websocket-services: "virtual-care"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: virtual-care.austa.health
+      paths:
+        - path: /
+          pathType: Prefix
+
+# TLS configuration
+tls:
+  enabled: true
+  secretName: virtual-care-tls
+
+# Monitoring and observability configuration
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+  prometheusRules:
+    enabled: true
+    rules:
+      - alert: HighLatency
+        expr: http_request_duration_seconds > 0.5
+        for: 5m
+        labels:
+          severity: warning
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.*"}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+
+# WebRTC configuration for video consultations
+webrtc:
+  iceServers:
+    - urls: stun:stun.austa.health:3478
+    - urls: turn:turn.austa.health:3478
+      username: "${TURN_USERNAME}"
+      credential: "${TURN_CREDENTIAL}"
+  maxBitrate: 2000
+  maxFramerate: 30
+  videoCodec: VP8
+
+# Environment-specific configurations
+env:
+  - name: NODE_ENV
+    value: production
+  - name: LOG_LEVEL
+    value: info
+  - name: METRICS_ENABLED
+    value: "true"
+  - name: MAX_CONCURRENT_SESSIONS
+    value: "100"
+  - name: SESSION_TIMEOUT_SECONDS
+    value: "3600"
+
+# Volume mounts for temporary session data
+volumes:
+  - name: tmp-data
+    emptyDir: {}
+  - name: session-data
+    persistentVolumeClaim:
+      claimName: virtual-care-session-data
+
+volumeMounts:
+  - name: tmp-data
+    mountPath: /tmp
+  - name: session-data
+    mountPath: /data/sessions
