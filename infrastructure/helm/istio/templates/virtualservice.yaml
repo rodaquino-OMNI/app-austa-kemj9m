@@ -1,0 +1,120 @@
+# Istio VirtualService Configuration Template v1.19.0
+# Defines comprehensive traffic routing rules for AUSTA SuperApp microservices
+
+{{- range .Values.services }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-{{ .service }}-vs
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    monitoring.istio.io/scrape: "true"
+    sidecar.istio.io/inject: "true"
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.Version }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  hosts:
+    - {{ .Values.ingress.host }}
+  gateways:
+    - {{ .Release.Name }}-gateway
+  http:
+    # Auth Service Routes
+    - match:
+        - uri:
+            prefix: "/api/auth"
+          headers:
+            version:
+              exact: "v1"
+      route:
+        - destination:
+            host: {{ .Values.services.auth.host }}
+            subset: "v1"
+            port:
+              number: {{ .Values.services.auth.port }}
+          weight: 90
+          timeout: {{ .Values.services.auth.timeout }}
+          retries:
+            attempts: {{ .Values.services.auth.retries }}
+            perTryTimeout: "2s"
+            retryOn: "connect-failure,refused-stream,unavailable,5xx"
+      fault:
+        delay:
+          percentage:
+            value: 0.1
+          fixedDelay: "5s"
+      mirror:
+        host: {{ .Values.services.auth.host }}-canary
+        subset: "canary"
+      mirrorPercentage:
+        value: 10
+
+    # Virtual Care Service Routes
+    - match:
+        - uri:
+            prefix: "/api/virtual-care"
+          headers:
+            version:
+              exact: "v1"
+      route:
+        - destination:
+            host: {{ .Values.services.virtualCare.host }}
+            subset: "v1"
+            port:
+              number: {{ .Values.services.virtualCare.port }}
+          weight: 95
+          timeout: {{ .Values.services.virtualCare.timeout }}
+          retries:
+            attempts: {{ .Values.services.virtualCare.retries }}
+            perTryTimeout: "5s"
+            retryOn: "connect-failure,refused-stream,unavailable,5xx"
+      corsPolicy:
+        allowOrigins:
+          - exact: "https://{{ .Values.ingress.host }}"
+        allowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        allowHeaders:
+          - Authorization
+          - Content-Type
+        maxAge: "24h"
+      headers:
+        request:
+          set:
+            x-request-id: "%REQ(x-request-id)%"
+            x-b3-traceid: "%REQ(x-b3-traceid)%"
+            x-b3-spanid: "%REQ(x-b3-spanid)%"
+
+    # WebSocket Routes for Virtual Care
+    - match:
+        - uri:
+            prefix: "/ws/virtual-care"
+      route:
+        - destination:
+            host: {{ .Values.services.virtualCare.host }}
+            subset: "v1"
+            port:
+              number: {{ .Values.services.virtualCare.port }}
+      websocketUpgrade: true
+      timeout: "3600s"  # 1 hour for WebSocket connections
+
+    # Default Catch-all Route
+    - match:
+        - uri:
+            prefix: "/"
+      route:
+        - destination:
+            host: default-backend
+            port:
+              number: 80
+      timeout: "5s"
+      fault:
+        abort:
+          percentage:
+            value: 0.1
+          httpStatus: 503
+{{- end }}
