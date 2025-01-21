@@ -1,0 +1,109 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+yarn.lock
+package-lock.json
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Build Output
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+.turbo/
+storybook-static/
+.vercel/
+.netlify/
+public/sw.js*
+public/workbox-*.js*
+public/worker-*.js*
+
+# Environment and Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.cert
+*config.local.*
+.secret*
+*.jwk
+credentials.json
+*auth.config*
+
+# Testing and Coverage
+coverage/
+.nyc_output/
+cypress/videos/
+cypress/screenshots/
+**/__snapshots__/
+*.test.local.*
+test-results/
+playwright-report/
+
+# IDE and Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+.history/
+*.sublime-*
+.project
+.settings/
+
+# Logs and Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+debug.log
+debug/
+logs/
+*.heapsnapshot
+*.cpuprofile
+
+# Cache
+.cache/
+.eslintcache
+.stylelintcache
+*.cache
+.webpack/
+.temp/
+tmp/
+.sass-cache/
+.babel-cache/
+
+# Healthcare Compliance and Sensitive Data
+**/phi/
+**/patient-data/
+**/*-audit.json
+**/*-phi.*
+**/hipaa-logs/
+**/compliance-reports/
+**/*-sensitive.*
+**/audit-trails/
+
+# Local Development
+*.local
+local/
+dev.config.*
+
+# Generated API Documentation
+api-docs/
+swagger/
+openapi/
+
+# Miscellaneous
+.DS_Store
+*.bak
+*.tmp
+*~
