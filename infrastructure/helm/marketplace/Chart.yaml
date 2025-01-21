@@ -1,0 +1,44 @@
+apiVersion: v2
+name: marketplace
+version: 1.0.0
+appVersion: 1.0.0
+description: AUSTA SuperApp Marketplace Service for digital therapeutic programs, wellness resources, and provider services
+type: application
+kubeVersion: ">=1.21.0-0"
+
+# Chart dependencies
+dependencies:
+  - name: mongodb
+    version: "13.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: mongodb.enabled
+  - name: redis
+    version: "17.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+  - name: elasticsearch
+    version: "8.x.x"
+    repository: "https://helm.elastic.co"
+    condition: elasticsearch.enabled
+
+# Chart metadata
+keywords:
+  - healthcare
+  - marketplace
+  - digital-therapeutics
+  - wellness
+  - provider-services
+
+home: https://marketplace.austa.health
+sources:
+  - https://github.com/austa/superapp
+
+maintainers:
+  - name: AUSTA SuperApp Team
+    email: devops@austa.health
+
+# ArtifactHub annotations
+annotations:
+  artifacthub.io/changes: "Initial release of the marketplace service chart"
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/prerelease: "false"
