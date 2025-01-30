@@ -1,6 +1,6 @@
-import React from 'react'; // ^18.2.0
-import styled from '@emotion/styled'; // ^11.11.0
-import { Box, Container, Typography, Link, Grid } from '@mui/material'; // ^5.14.0
+import React from 'react';
+import styled from '@emotion/styled';
+import { Box, Container, Typography, Link, Grid, Theme } from '@mui/material';
 import { theme } from '../../styles/theme';
 
 // Helper function to get current year
@@ -21,7 +21,7 @@ const SOCIAL_LINKS = [
 ] as const;
 
 // Styled footer component with responsive design
-const StyledFooter = styled(Box)(({ theme }) => ({
+const StyledFooter = styled(Box)<{ theme: Theme }>(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   borderTop: `1px solid ${theme.palette.grey[200]}`,
   padding: theme.spacing(3, 2),
