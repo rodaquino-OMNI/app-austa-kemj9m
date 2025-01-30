@@ -97,17 +97,18 @@ export function useHealthRecords(
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
 
-      const response = await fetch(`/api/health-records/${patientId}`, {
+      const searchParams = new URLSearchParams({
+        page: page.toString(),
+        pageSize: (options.pageSize || DEFAULT_PAGE_SIZE).toString(),
+        types: state.activeFilters.join(','),
+        search: debouncedSearch
+      });
+
+      const response = await fetch(`/api/health-records/${patientId}?${searchParams.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'X-Security-Classification': SecurityClassification.HIGHLY_CONFIDENTIAL
-        },
-        params: {
-          page,
-          pageSize: options.pageSize || DEFAULT_PAGE_SIZE,
-          types: state.activeFilters,
-          search: debouncedSearch
         }
       });
 
