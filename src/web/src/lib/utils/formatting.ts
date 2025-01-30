@@ -30,7 +30,7 @@ const formatCache = new Map<string, string>();
  */
 export function formatDate(
   date: Date | string,
-  format: string = 'PPP',
+  formatStr: string = 'PPP',
   locale: string = 'en-US'
 ): string {
   try {
@@ -40,7 +40,7 @@ export function formatDate(
       throw new Error(ErrorCode.INVALID_INPUT);
     }
 
-    const formattedDate = format(dateObj, format, {
+    const formattedDate = format(dateObj, formatStr, {
       locale: LOCALE_MAP[locale] || enUS
     });
 
