@@ -8,7 +8,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react'; // v18.0.0
 import { Suspense } from 'react'; // v18.0.0
-import { audit-log } from '@austa/audit-log'; // v1.0.0
+import { audit_log } from '@austa/audit-log'; // v1.0.0
 
 // Internal imports
 import RecordsList from '../../components/health-records/RecordsList';
