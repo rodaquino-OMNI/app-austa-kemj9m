@@ -84,7 +84,7 @@ const RecordsList: React.FC<RecordsListProps> = ({
       header: 'Date',
       accessor: 'date',
       sortable: true,
-      render: (value: any) => format(new Date(value), 'PPP'),
+      render: (value: Date) => format(new Date(value), 'PPP'),
     },
     {
       id: 'type',
@@ -97,7 +97,7 @@ const RecordsList: React.FC<RecordsListProps> = ({
       header: 'Provider',
       accessor: 'providerId',
       sortable: true,
-      render: (value: any) => maskPHIData(value, accessLevel),
+      render: (value: string) => maskPHIData(value, accessLevel),
     },
     {
       id: 'status',
@@ -109,11 +109,11 @@ const RecordsList: React.FC<RecordsListProps> = ({
       id: 'actions',
       header: 'Actions',
       accessor: 'id',
-      render: (value: any, row: Record<string, any>) => (
+      render: (_: any, record: IHealthRecord) => (
         <div role="group" aria-label="Record actions">
           <button
-            onClick={() => handleRecordSelect(row as IHealthRecord)}
-            aria-label={`View record from ${format(new Date(row.date), 'PPP')}`}
+            onClick={() => handleRecordSelect(record)}
+            aria-label={`View record from ${format(new Date(record.date), 'PPP')}`}
           >
             View
           </button>
@@ -123,14 +123,14 @@ const RecordsList: React.FC<RecordsListProps> = ({
   ], [accessLevel]);
 
   // Handlers
-  const handleSort = useCallback((sortConfig: { column: string; direction: 'asc' | 'desc' }) => {
+  const handleSort = useCallback(async (columnId: string, direction: 'asc' | 'desc') => {
     try {
-      setSortConfig(sortConfig);
+      setSortConfig({ column: columnId, direction });
       
       // Audit log for sorting operation
-      auditLogger.log({
+      await auditLogger.log({
         action: 'RECORDS_SORT',
-        details: { columnId: sortConfig.column, direction: sortConfig.direction }
+        details: { columnId, direction }
       });
     } catch (error) {
       onError(new Error(ErrorCode.INTERNAL_SERVER_ERROR));
