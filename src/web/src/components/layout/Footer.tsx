@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { Box, Container, Typography, Link, Grid, Theme } from '@mui/material';
+import { Box, Container, Typography, Link, Grid } from '@mui/material';
 import { theme } from '../../styles/theme';
 
 // Helper function to get current year
@@ -21,17 +21,17 @@ const SOCIAL_LINKS = [
 ] as const;
 
 // Styled footer component with responsive design
-const StyledFooter = styled(Box)<{ theme: Theme }>(({ theme }) => ({
+const StyledFooter = styled(Box)({
   backgroundColor: theme.palette.background.paper,
   borderTop: `1px solid ${theme.palette.grey[200]}`,
   padding: theme.spacing(3, 2),
   color: theme.palette.text.primary,
 
-  [theme.breakpoints.up('sm')]: {
+  [`${theme.breakpoints.up('sm')}`]: {
     padding: theme.spacing(4, 3),
   },
 
-  [theme.breakpoints.up('md')]: {
+  [`${theme.breakpoints.up('md')}`]: {
     padding: theme.spacing(5, 4),
   },
 
@@ -44,7 +44,7 @@ const StyledFooter = styled(Box)<{ theme: Theme }>(({ theme }) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(2),
-    [theme.breakpoints.up('sm')]: {
+    [`${theme.breakpoints.up('sm')}`]: {
       flexDirection: 'row',
       gap: theme.spacing(4),
     },
@@ -54,11 +54,11 @@ const StyledFooter = styled(Box)<{ theme: Theme }>(({ theme }) => ({
     display: 'flex',
     gap: theme.spacing(3),
     marginTop: theme.spacing(2),
-    [theme.breakpoints.up('sm')]: {
+    [`${theme.breakpoints.up('sm')}`]: {
       marginTop: 0,
     },
   },
-}));
+});
 
 const Footer: React.FC = () => {
   return (
