@@ -8,6 +8,7 @@ import React, { useCallback, useState, useRef, useEffect } from 'react';
 import classnames from 'classnames'; // v2.3.2
 import { Input as StyledInput } from '../../styles/components';
 import { validateForm, sanitizeInput } from '../../lib/utils/validation';
+import * as yup from 'yup';
 
 interface InputProps {
   // Core props
@@ -110,10 +111,15 @@ const Input: React.FC<InputProps> = ({
     // Debounced full validation
     validationTimeoutRef.current = setTimeout(async () => {
       try {
+        const schema = yup.object().shape({
+          [name]: yup.string().required(required ? 'This field is required' : undefined)
+        });
+
         const validationResult = await validateForm(
           { [name]: sanitizedValue },
-          { [name]: sanitizedValue },
+          schema,
           {
+            abortEarly: false,
             context: {
               isPHI,
               dataType,
