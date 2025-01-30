@@ -97,6 +97,12 @@ export interface Product {
     
     /** Total number of reviews */
     reviewCount: number;
+
+    /** Indicates if the product is covered by insurance */
+    insuranceCovered: boolean;
+
+    /** Special badges or labels associated with the product */
+    badges: string[];
 }
 
 /**
