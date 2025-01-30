@@ -112,8 +112,8 @@ const Input: React.FC<InputProps> = ({
       try {
         const validationResult = await validateForm(
           { [name]: sanitizedValue },
+          { [name]: sanitizedValue },
           {
-            abortEarly: false,
             context: {
               isPHI,
               dataType,
