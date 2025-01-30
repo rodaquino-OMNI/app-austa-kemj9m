@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'; // v18.2.0
-import { Room, LocalTrack, RemoteParticipant, ConnectionQualityStats } from 'twilio-video'; // v2.27.0
+import { Room, LocalTrack, RemoteParticipant, StatsReport } from 'twilio-video'; // v2.27.0
 
 import { virtualCareApi } from '../lib/api/virtualCare';
 import {
@@ -60,10 +60,19 @@ export const useWebRTC = (
     if (!room?.room) return;
 
     try {
-      const stats = await room.room.getStats();
-      const audioLevel = stats.audioInputLevel || 0;
-      const videoBitrate = stats.videoBitrate || 0;
-      const packetLoss = stats.packetLoss || 0;
+      const stats: StatsReport[] = await room.room.getStats();
+      
+      // Parse audio stats
+      const audioStats = stats.find(stat => stat.kind === 'audio');
+      const audioLevel = audioStats?.audioLevel || 0;
+      
+      // Parse video stats
+      const videoStats = stats.find(stat => stat.kind === 'video');
+      const videoBitrate = videoStats?.bitrate || 0;
+      
+      // Parse connection stats
+      const connectionStats = stats.find(stat => stat.kind === 'connection');
+      const packetLoss = connectionStats?.packetLossRate || 0;
 
       let quality = ConnectionQuality.GOOD;
       if (packetLoss > 5) {
@@ -213,7 +222,7 @@ export const useWebRTC = (
   /**
    * Retrieves current connection quality statistics
    */
-  const getConnectionStats = useCallback(async (): Promise<ConnectionQualityStats> => {
+  const getConnectionStats = useCallback(async (): Promise<StatsReport[]> => {
     if (!room?.room) {
       throw new Error('Room not connected');
     }
