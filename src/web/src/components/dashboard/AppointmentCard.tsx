@@ -13,8 +13,8 @@ import { Card } from '../../styles/components';
 import { theme } from '../../styles/theme';
 
 interface AppointmentCardProps {
-  appointment: IConsultation;
-  provider: IUser;
+  appointment: IConsultation & { isEmergency?: boolean };
+  provider: IUser & { specialization?: string };
   onJoin: (appointmentId: string) => Promise<void>;
   onCancel: (appointmentId: string) => Promise<void>;
   onReschedule: (appointmentId: string) => Promise<void>;
@@ -151,7 +151,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         <div 
           className="appointment-type"
           aria-label={t('appointment.type')}
-          style={{ color: getStatusColor(appointment.status, appointment.isEmergency, theme) }}
+          style={{ color: getStatusColor(appointment.status, appointment.isEmergency || false, theme) }}
         >
           {appointment.type === ConsultationType.VIDEO && '📹'}
           {appointment.type === ConsultationType.AUDIO && '🎤'}
@@ -176,7 +176,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           className="status-indicator"
           role="status"
           aria-live="polite"
-          style={{ color: getStatusColor(appointment.status, appointment.isEmergency, theme) }}
+          style={{ color: getStatusColor(appointment.status, appointment.isEmergency || false, theme) }}
         >
           {t(`appointment.status.${appointment.status.toLowerCase()}`)}
         </div>
@@ -230,7 +230,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: ${theme.spacing.md}px;
+          margin-bottom: ${theme.spacing(2)}px;
         }
 
         .provider-info {
@@ -250,7 +250,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         }
 
         .appointment-details {
-          margin: ${theme.spacing.md}px 0;
+          margin: ${theme.spacing(2)}px 0;
         }
 
         .time-info {
@@ -260,18 +260,18 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
         .status-indicator {
           font-weight: ${theme.typography.fontWeightMedium};
-          margin-top: ${theme.spacing.sm}px;
+          margin-top: ${theme.spacing(1)}px;
         }
 
         .appointment-actions {
           display: flex;
-          gap: ${theme.spacing.md}px;
-          margin-top: ${theme.spacing.lg}px;
+          gap: ${theme.spacing(2)}px;
+          margin-top: ${theme.spacing(3)}px;
         }
 
         button {
-          padding: ${theme.spacing.sm}px ${theme.spacing.md}px;
-          border-radius: ${theme.shape.buttonRadius}px;
+          padding: ${theme.spacing(1)}px ${theme.spacing(2)}px;
+          border-radius: ${theme.shape.borderRadius}px;
           font-weight: ${theme.typography.fontWeightMedium};
           transition: all 0.2s ease-in-out;
           min-height: 44px;
@@ -298,11 +298,11 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         }
 
         .connection-warning {
-          margin-top: ${theme.spacing.md}px;
-          padding: ${theme.spacing.sm}px;
+          margin-top: ${theme.spacing(2)}px;
+          padding: ${theme.spacing(1)}px;
           background-color: ${theme.palette.warning.light};
           color: ${theme.palette.warning.dark};
-          border-radius: ${theme.shape.borderRadiusSmall}px;
+          border-radius: ${theme.shape.borderRadius}px;
         }
 
         .visually-hidden {
