@@ -9,7 +9,8 @@ import {
   VIRTUAL_CARE_ROUTES,
   HEALTH_RECORDS_ROUTES,
   CLAIMS_ROUTES,
-  MARKETPLACE_ROUTES 
+  MARKETPLACE_ROUTES,
+  EMERGENCY_ROUTES 
 } from '../../lib/constants/routes';
 import useAuth from '../../hooks/useAuth';
 
@@ -130,7 +131,7 @@ const Header: React.FC<HeaderProps> = ({
   clinicalEnvironment = 'STANDARD'
 }) => {
   const router = useRouter();
-  const { user, logout: secureLogout, sessionTimeout } = useAuth();
+  const { user, secureLogout, sessionTimeout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Handle scroll transparency
@@ -221,7 +222,7 @@ const Header: React.FC<HeaderProps> = ({
       <UserSection>
         {emergencyMode && (
           <EmergencyButton
-            onClick={() => handleEmergencyNavigation('/emergency/triage', 'HIGH')}
+            onClick={() => handleEmergencyNavigation(EMERGENCY_ROUTES.TRIAGE, 'HIGH')}
             aria-label="Emergency access"
           >
             Emergency Mode
