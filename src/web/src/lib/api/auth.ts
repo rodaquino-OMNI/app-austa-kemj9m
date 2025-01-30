@@ -15,10 +15,11 @@ import {
   IAuthTokens, 
   IMFACredentials, 
   IAuthError, 
+  IBiometricCredentials,
   AuthState,
   SecurityEvent
 } from '../types/auth';
-import { encryptData, WebEncryptionService, EncryptionConfig } from '../utils/encryption';
+import { encryptData, WebEncryptionService } from '../utils/encryption';
 
 // Initialize secure logger for authentication events
 const securityLogger = winston.createLogger({
@@ -37,7 +38,10 @@ interface SecurityConfig {
   tokenRefreshThreshold: number;
   maxRetries: number;
   timeout: number;
-  encryptionConfig: EncryptionConfig;
+  encryptionConfig: {
+    algorithm: string;
+    keySize: number;
+  };
 }
 
 /**
@@ -49,22 +53,9 @@ const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   timeout: 30000,
   encryptionConfig: {
     algorithm: 'AES-GCM',
-    keySize: 256,
-    ivSize: 96,
-    tagLength: 128,
-    iterations: 100000,
-    saltLength: 32
+    keySize: 256
   }
 };
-
-/**
- * Interface for biometric credentials
- */
-interface IBiometricCredentials {
-  deviceId: string;
-  type: string;
-  data: string;
-}
 
 /**
  * HIPAA-compliant authentication API client
@@ -257,7 +248,7 @@ export class AuthAPI {
       );
 
       const response = await this.client.post(
-        `${AuthEndpoints.VERIFY_TOKEN}/biometric`,
+        AuthEndpoints.VERIFY_BIOMETRIC,
         { biometric: encryptedBiometric }
       );
 
