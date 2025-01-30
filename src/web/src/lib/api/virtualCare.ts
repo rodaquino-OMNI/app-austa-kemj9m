@@ -113,6 +113,71 @@ class VirtualCareApi {
   }
 
   /**
+   * Reports connection quality metrics for a consultation
+   * @param consultationId ID of the consultation
+   * @param quality Connection quality level
+   * @param metrics Connection metrics data
+   */
+  public async reportConnectionQuality(
+    consultationId: string,
+    quality: ConnectionQuality,
+    metrics: Record<string, any>
+  ): Promise<void> {
+    try {
+      await this.axiosInstance.post(
+        `${VirtualCareEndpoints.UPDATE_SESSION_STATUS}/${consultationId}/quality`,
+        {
+          quality,
+          metrics,
+          timestamp: new Date().toISOString()
+        }
+      );
+
+      logger.info('Connection quality reported', {
+        consultationId,
+        quality,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      logger.error('Failed to report connection quality', {
+        error,
+        consultationId,
+        quality,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Verifies encryption status of a consultation
+   * @param consultationId ID of the consultation to verify
+   * @returns Encryption verification status
+   */
+  public async verifyEncryption(consultationId: string): Promise<boolean> {
+    try {
+      const response = await this.axiosInstance.get(
+        `${VirtualCareEndpoints.GET_SESSION_TOKEN}/${consultationId}/encryption`
+      );
+
+      logger.info('Encryption verification completed', {
+        consultationId,
+        status: response.data.verified,
+        timestamp: new Date().toISOString()
+      });
+
+      return response.data.verified;
+    } catch (error) {
+      logger.error('Encryption verification failed', {
+        error,
+        consultationId,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Joins an existing virtual consultation with security verification
    * @param consultationId ID of the consultation to join
    * @param securityContext Security context for the session
