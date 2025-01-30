@@ -1,30 +1,5 @@
 import { createTheme, Theme, ThemeOptions } from '@mui/material'; // @mui/material ^5.14.0
 
-// Augment the Theme and ThemeOptions interfaces
-declare module '@mui/material/styles' {
-  interface Palette {
-    clinical: Palette['primary'];
-  }
-  interface PaletteOptions {
-    clinical?: PaletteOptions['primary'];
-  }
-
-  interface Shape {
-    borderRadiusSmall: number;
-    borderRadiusLarge: number;
-    clinicalCard: number;
-    buttonRadius: number;
-  }
-
-  interface ThemeOptions {
-    shape?: Partial<Shape>;
-  }
-
-  interface Theme {
-    shape: Shape;
-  }
-}
-
 // Healthcare-specific color palette with WCAG 2.1 AA compliant contrast ratios
 const palette = {
   primary: {
@@ -131,7 +106,16 @@ const breakpoints = {
 };
 
 // Healthcare-optimized spacing system
-const createSpacing = (factor: number) => factor * 8;
+const spacing = {
+  unit: 8,
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
+  section: 64,
+};
 
 // Medical interface shape configurations
 const shape = {
@@ -149,44 +133,15 @@ const shadows = {
   modal: '0px 16px 32px rgba(0, 0, 0, 0.16)',
 };
 
-// Default MUI shadows with clinical shadow
-const defaultShadows = [
-  'none',
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-];
-
 // Component-specific overrides for healthcare context
 const components = {
   MuiButton: {
     styleOverrides: {
-      root: ({ theme }: { theme: Theme }) => ({
+      root: {
         borderRadius: shape.buttonRadius,
         textTransform: 'none',
         fontWeight: typography.fontWeightMedium,
-      }),
+      },
       containedPrimary: {
         '&:hover': {
           backgroundColor: palette.primary.dark,
@@ -228,12 +183,41 @@ const components = {
   },
 };
 
+// Create array of 25 shadows as required by Material-UI
+const defaultShadows = [
+  'none',
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+] as const;
+
 // Create the theme with all configurations
 const themeOptions: ThemeOptions = {
   palette,
   typography,
   breakpoints,
-  spacing: createSpacing,
+  spacing,
   shape,
   components,
   shadows: defaultShadows,
