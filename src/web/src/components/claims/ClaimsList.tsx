@@ -17,9 +17,9 @@ import { theme } from '../../styles/theme';
 
 // Styled components with accessibility enhancements
 const ClaimsContainer = styled.section`
-  padding: ${theme.spacing(2)}px;
+  padding: ${theme.spacing.md}px;
   background: ${theme.palette.background.paper};
-  border-radius: ${theme.shape.borderRadius}px;
+  border-radius: ${theme.shape.borderRadiusSmall}px;
 
   @media (prefers-reduced-motion: reduce) {
     * {
@@ -32,8 +32,8 @@ const ClaimsContainer = styled.section`
 const StatusBadge = styled.span<{ status: ClaimStatus }>`
   display: inline-flex;
   align-items: center;
-  padding: ${theme.spacing(1)}px ${theme.spacing(2)}px;
-  border-radius: ${theme.shape.borderRadius}px;
+  padding: ${theme.spacing.xs}px ${theme.spacing.sm}px;
+  border-radius: ${theme.shape.borderRadiusSmall}px;
   font-size: ${theme.typography.caption.fontSize};
   font-weight: ${theme.typography.fontWeightMedium};
   color: ${theme.palette.background.paper};
@@ -162,24 +162,21 @@ export const ClaimsList: React.FC<ClaimsListProps> = ({
   ], [a11yProps, formatCurrency, formatDate]);
 
   // Handle secure sorting with audit logging
-  const handleSort = useCallback((sortConfig: { column: string; direction: 'asc' | 'desc' }) => {
+  const handleSort = useCallback((columnId: string, direction: 'asc' | 'desc') => {
     auditLog.log('CLAIMS_SORT', {
-      columnId: sortConfig.column,
-      direction: sortConfig.direction,
+      columnId,
+      direction,
       accessLevel
     });
   }, [auditLog, accessLevel]);
 
   // Handle secure claim selection with audit logging
-  const handleClaimSelect = useCallback((selectedRows: Record<string, any>[]) => {
-    if (selectedRows.length > 0) {
-      const selectedClaim = selectedRows[0] as IClaim;
-      auditLog.log('CLAIM_SELECT', {
-        claimId: selectedClaim.id,
-        accessLevel
-      });
-      onClaimSelect(selectedClaim);
-    }
+  const handleClaimSelect = useCallback((claim: IClaim) => {
+    auditLog.log('CLAIM_SELECT', {
+      claimId: claim.id,
+      accessLevel
+    });
+    onClaimSelect(claim);
   }, [onClaimSelect, auditLog, accessLevel]);
 
   // Fetch claims on mount and when filters change
