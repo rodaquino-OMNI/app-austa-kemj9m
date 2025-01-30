@@ -3,8 +3,8 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // ^13.0.0
 import styled from '@emotion/styled'; // ^11.11.0
-import Button from '../../components/common/Button';
-import { Analytics } from '../../lib/utils/analytics';
+import Button from '../components/common/Button';
+import { Analytics } from '../lib/utils/analytics';
 
 // Styled components with Material Design 3.0 and WCAG compliance
 const NotFoundContainer = styled.main`
