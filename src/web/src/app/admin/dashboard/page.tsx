@@ -28,6 +28,7 @@ import HealthMetrics from '../../../components/dashboard/HealthMetrics';
 import { useAnalytics } from '../../../hooks/useAnalytics';
 import { UserRole } from '../../../lib/types/user';
 import { SecurityClassification } from '../../../lib/types/healthRecord';
+import { AccessLevel, ThemePreference } from '../../../lib/types/healthRecord';
 
 // Constants
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -128,7 +129,14 @@ MetricCard.displayName = 'MetricCard';
 
 // Admin Dashboard Page Component
 const AdminDashboardPage = () => {
-  const [metrics, setMetrics] = useState({
+  const [metrics, setMetrics] = useState<{
+    userGrowth: { value: number; trend: number[]; loading: boolean; error: null | string };
+    retention: { value: number; trend: number[]; loading: boolean; error: null | string };
+    nps: { value: number; trend: number[]; loading: boolean; error: null | string };
+    availability: { value: number; trend: number[]; loading: boolean; error: null | string };
+    responseTime: { value: number; trend: number[]; loading: boolean; error: null | string };
+    securityEvents: { value: number; trend: number[]; loading: boolean; error: null | string };
+  }>({
     userGrowth: { value: 0, trend: [], loading: true, error: null },
     retention: { value: 0, trend: [], loading: true, error: null },
     nps: { value: 0, trend: [], loading: true, error: null },
@@ -314,8 +322,8 @@ const AdminDashboardPage = () => {
               refreshInterval={REFRESH_INTERVAL}
               showHistory={true}
               encryptionKey={process.env.NEXT_PUBLIC_ENCRYPTION_KEY || ''}
-              accessLevel="admin"
-              theme="light"
+              accessLevel={AccessLevel.ADMIN}
+              theme={ThemePreference.LIGHT}
             />
           </Grid>
         </Grid>
