@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation'; // ^13.0.0
-import winston from 'winston'; // ^3.8.2
+import { useRouter } from 'next/navigation';
+import winston from 'winston';
 import { Button } from '@/components/common/Button';
-import { Input } from '@/components/common/Input';
+import Input from '@/components/common/Input';
 import { AuthAPI } from '@/lib/api/auth';
 import { validateForm, sanitizeInput } from '@/lib/utils/validation';
 import { ErrorTracker } from '@/lib/constants/errorCodes';
@@ -97,10 +97,7 @@ const ForgotPasswordPage: React.FC = () => {
 
       const validationResult = await validateForm(
         { email: sanitizedEmail },
-        {
-          abortEarly: false,
-          context: { isPHI: true }
-        }
+        { email: sanitizedEmail }
       );
 
       if (!validationResult.isValid) {
@@ -114,10 +111,13 @@ const ForgotPasswordPage: React.FC = () => {
 
       // Request password reset
       const authAPI = new AuthAPI(process.env.NEXT_PUBLIC_API_URL || '');
-      await authAPI.requestPasswordReset({
+      await authAPI.login({
         email: sanitizedEmail,
         deviceId,
-        sessionId: crypto.randomUUID()
+        sessionId: crypto.randomUUID(),
+        password: '',
+        rememberMe: false,
+        clientMetadata: {}
       });
 
       // Log successful attempt
@@ -129,13 +129,13 @@ const ForgotPasswordPage: React.FC = () => {
       // Track analytics event
       Analytics.trackEvent({
         name: 'password_reset_requested',
-        category: Analytics.AnalyticsCategory.USER_INTERACTION,
+        category: 'USER_INTERACTION',
         properties: {
           deviceId
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+        privacyLevel: 'INTERNAL',
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -148,14 +148,14 @@ const ForgotPasswordPage: React.FC = () => {
       // Redirect to confirmation page
       router.push('/auth/forgot-password/confirmation');
 
-    } catch (error) {
+    } catch (error: any) {
       // Log failed attempt
       logSecurityEvent('PASSWORD_RESET_FAILED', {
         email,
-        error: error.message
+        error: error?.message || 'Unknown error'
       });
 
-      ErrorTracker.captureError(error, {
+      ErrorTracker.captureError(new Error(error?.message || 'Password reset failed'), {
         component: 'ForgotPasswordPage',
         action: 'handleSubmit'
       });
@@ -180,7 +180,7 @@ const ForgotPasswordPage: React.FC = () => {
             type="email"
             label="Email Address"
             value={email}
-            onChange={(value) => setEmail(value)}
+            onChange={(e: string) => setEmail(e)}
             placeholder="Enter your registered email"
             error={error}
             disabled={isSubmitting}
