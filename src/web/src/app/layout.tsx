@@ -33,7 +33,7 @@ const SkipLink = styled.a`
   background: ${theme.palette.primary.main};
   color: ${theme.palette.primary.contrastText};
   text-decoration: none;
-  border-radius: ${theme.shape.borderRadius}px;
+  border-radius: ${theme.shape.buttonRadius}px;
 
   &:focus {
     left: 20px;
@@ -43,7 +43,7 @@ const SkipLink = styled.a`
 const MainContent = styled.main<{ clinicalMode?: boolean }>`
   min-height: ${MAIN_CONTENT_MIN_HEIGHT};
   background-color: ${({ clinicalMode }) =>
-    clinicalMode ? theme.palette.background.paper : theme.palette.background.default};
+    clinicalMode ? theme.palette.background.clinical : theme.palette.background.default};
   padding-top: var(--header-height);
   transition: background-color 0.3s ease;
 
@@ -59,7 +59,7 @@ const ErrorFallback = styled.div`
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: ${theme.spacing(4)}px;
+  padding: ${theme.spacing.lg}px;
   background-color: ${theme.palette.error.light};
   color: ${theme.palette.error.contrastText};
 `;
