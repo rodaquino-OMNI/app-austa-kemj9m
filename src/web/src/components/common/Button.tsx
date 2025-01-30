@@ -1,7 +1,7 @@
 import React from 'react'; // ^18.0.0
 import styled from '@emotion/styled'; // ^11.11.0
 import { theme } from '../../styles/theme';
-import { Analytics } from '../../lib/utils/analytics';
+import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../lib/utils/analytics';
 
 // Button size configurations with clinical touch targets
 const BUTTON_SIZES = {
@@ -189,7 +189,7 @@ const handleClick = (
   // Track HIPAA-compliant interaction
   Analytics.trackEvent({
     name: 'button_click',
-    category: Analytics.AnalyticsCategory.USER_INTERACTION,
+    category: AnalyticsCategory.USER_INTERACTION,
     properties: {
       variant: props.variant,
       size: props.size,
@@ -199,8 +199,8 @@ const handleClick = (
     timestamp: Date.now(),
     userConsent: true,
     privacyLevel: props.criticalAction ? 
-      Analytics.PrivacyLevel.SENSITIVE : 
-      Analytics.PrivacyLevel.PUBLIC,
+      PrivacyLevel.SENSITIVE : 
+      PrivacyLevel.PUBLIC,
     auditInfo: {
       eventId: crypto.randomUUID(),
       timestamp: Date.now(),
@@ -235,7 +235,7 @@ export const Button: React.FC<ButtonProps> = ({
       fullWidth={fullWidth}
       highContrast={highContrast}
       criticalAction={criticalAction}
-      onClick={(e) => handleClick(e, { variant, size, disabled, criticalAction, onClick, className })}
+      onClick={(e) => handleClick(e, { variant, size, disabled, criticalAction, onClick, className, children })}
       type={type}
       className={className}
       role="button"
