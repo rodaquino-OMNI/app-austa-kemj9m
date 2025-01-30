@@ -14,7 +14,6 @@ import useAuth from '../hooks/useAuth';
 import theme from '../styles/theme';
 import { UserRole } from '../lib/types/user';
 import { SecurityClassification } from '../lib/types/healthRecord';
-import { AccessLevel, ThemePreference } from '../components/dashboard/HealthMetrics';
 
 // Constants
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -26,25 +25,17 @@ const ERROR_BOUNDARY_CONFIG = { maxRetries: 3, fallbackUI: true };
  * Enhanced security check for authentication and role validation
  */
 const checkAuth = () => {
-  const { user, state } = useAuth();
+  const { user, isAuthenticated, userRole } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (state !== 'AUTHENTICATED') {
+    if (!isAuthenticated) {
       router.push('/auth/login');
       return;
     }
+  }, [isAuthenticated, userRole, router]);
 
-    // Track secure page view
-    Analytics.track('page_view', {
-      page: 'dashboard',
-      userRole: user?.role,
-      timestamp: Date.now(),
-      isAuthenticated: true
-    });
-  }, [state, user?.role, router]);
-
-  return { user, userRole: user?.role };
+  return { user, userRole };
 };
 
 /**
@@ -64,12 +55,7 @@ const HomePage = () => {
 
   // Handle component errors with audit logging
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
-    Analytics.track('error_boundary_triggered', {
-      error: error.message,
-      component: 'HomePage',
-      userRole,
-      timestamp: Date.now()
-    });
+    console.error('Error in HomePage:', error, errorInfo);
   };
 
   return (
@@ -122,8 +108,8 @@ const HomePage = () => {
                     refreshInterval={REFRESH_INTERVAL}
                     showHistory={true}
                     encryptionKey={user?.securitySettings?.lastLoginAt.toString() || ''}
-                    accessLevel={AccessLevel.READ}
-                    theme={ThemePreference.LIGHT}
+                    accessLevel="read"
+                    theme="light"
                   />
                 </Suspense>
               </Grid>
@@ -145,9 +131,9 @@ const HomePage = () => {
           </Grid>
         </Container>
       </ErrorBoundary>
+      <Analytics />
     </ThemeProvider>
   );
 };
 
-// Export with analytics wrapper
-export default Analytics.withAnalytics(HomePage);
+export default HomePage;
