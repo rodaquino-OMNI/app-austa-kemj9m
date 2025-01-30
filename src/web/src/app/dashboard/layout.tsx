@@ -12,7 +12,7 @@ import { useRouter } from 'next/router'; // v13.0.0
 // Internal imports
 import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 
 // Constants
 const SIDEBAR_WIDTH = 280;
@@ -38,7 +38,7 @@ const StyledDashboardLayout = styled.div<{
 }>`
   display: flex;
   min-height: 100vh;
-  background: ${({ theme }) => theme.colors?.background?.default || '#ffffff'};
+  background: ${({ theme }) => theme.palette.background.default};
   transition: padding 0.3s ease;
   padding-left: ${({ sidebarCollapsed }) =>
     sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH}px;
@@ -86,9 +86,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   emergencyMode = false
 }) => {
   const router = useRouter();
-  const { user, isAuthenticated, checkAccess } = useAuth();
+  const { user, state, tokens } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
+
+  const isAuthenticated = state === 'AUTHENTICATED' && !!tokens;
 
   /**
    * Securely toggles sidebar state with audit logging
@@ -121,11 +123,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       return;
     }
 
-    const hasAccess = await checkAccess(accessLevel);
+    const hasAccess = user.role === 'ADMIN' || 
+      (accessLevel === 'LOW' && user.status === 'ACTIVE');
+      
     if (!hasAccess) {
       router.push('/403');
     }
-  }, [isAuthenticated, user, accessLevel, router, checkAccess]);
+  }, [isAuthenticated, user, accessLevel, router]);
 
   /**
    * Monitors user activity for session management
