@@ -7,11 +7,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react'; // v18.0.0
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser'; // v7.0.0
-import { MdFingerprint, MdFace, MdError, MdCheckCircle } from '@material/web/icon'; // v1.0.0
-import { Button, CircularProgress, Alert } from '@material/web/components'; // v1.0.0
-import { SecurityLogger } from '@logger/security'; // v2.0.0
+import { MdFingerprint, MdFace, MdError, MdCheckCircle } from 'react-icons/md'; // v4.0.0
+import { Button, CircularProgress, Alert } from '@mui/material'; // v5.0.0
+import { SecurityLogger } from '@austa/security-logger'; // v2.0.0
 
-import { useAuth, useSecurityContext } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
+import useSecurityContext from '../../hooks/useAuth';
 import { AuthState } from '../../lib/types/auth';
 
 // Security and clinical environment constants
@@ -112,13 +113,14 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
       } else {
         setIsAvailable(isSupported);
       }
-    } catch (error) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError({
         code: 'BIOMETRIC_UNAVAILABLE',
-        message: error.message,
+        message: errorMessage,
         timestamp: Date.now()
       });
-      securityLogger.error('Biometric availability check failed', { error });
+      securityLogger.error('Biometric availability check failed', { error: errorMessage });
     }
   }, [clinicalMode, deviceType]);
 
@@ -148,6 +150,7 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
 
       // Start biometric authentication
       const authOptions = {
+        challenge: await crypto.getRandomValues(new Uint8Array(32)),
         timeout: BIOMETRIC_TIMEOUT,
         userVerification: 'required' as UserVerificationRequirement,
         attestation: clinicalMode ? 'direct' : 'none'
@@ -182,13 +185,13 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
 
         onSuccess(authResult);
       }
-    } catch (error) {
+    } catch (err) {
       setAttemptCount(prev => prev + 1);
       
       const biometricError: BiometricError = {
-        code: error.code || 'BIOMETRIC_ERROR',
-        message: error.message,
-        details: error.details,
+        code: err instanceof Error ? err.name : 'BIOMETRIC_ERROR',
+        message: err instanceof Error ? err.message : 'Authentication failed',
+        details: err instanceof Error ? { stack: err.stack } : undefined,
         timestamp: Date.now()
       };
 
