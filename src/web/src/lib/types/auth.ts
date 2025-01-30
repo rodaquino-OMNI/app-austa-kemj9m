@@ -67,6 +67,21 @@ export interface IMFACredentials {
 }
 
 /**
+ * Interface for MFA setup configuration
+ * Defines the structure for multi-factor authentication setup
+ */
+export interface IMFASetup {
+    method: MFAMethod;
+    phoneNumber?: string;
+    email?: string;
+    qrCodeUrl?: string;
+    secretKey?: string;
+    backupCodes?: string[];
+    setupCompletedAt?: number;
+    verificationRequired: boolean;
+}
+
+/**
  * Interface for authentication errors with detailed tracking
  * Implements comprehensive error logging for security auditing
  */
@@ -154,10 +169,10 @@ export interface IOAuthProviderConfig {
 }
 
 /**
- * Type for security event logging
+ * Interface for security event logging
  * Implements comprehensive security audit tracking
  */
-export type SecurityEvent = {
+export interface ISecurityEvent {
     eventType: string;
     timestamp: number;
     userId: string;
@@ -165,4 +180,4 @@ export type SecurityEvent = {
     metadata: Record<string, any>;
     severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
     outcome: 'SUCCESS' | 'FAILURE' | 'ERROR';
-};
+}
