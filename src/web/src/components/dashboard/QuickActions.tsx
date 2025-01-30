@@ -2,7 +2,7 @@ import React from 'react'; // ^18.0.0
 import styled from '@emotion/styled'; // ^11.11.0
 import { Button } from '../common/Button';
 import { UserRole } from '../../lib/types/user';
-import { Analytics } from '../../lib/utils/analytics';
+import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../lib/utils/analytics';
 import { theme } from '../../styles/theme';
 
 // Security level enum for action classification
@@ -42,19 +42,19 @@ interface QuickAction {
 const ActionsContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: ${theme.spacing.md}px;
-  padding: ${theme.spacing.md}px;
-  background: ${theme.palette.background.clinical};
-  border-radius: ${theme.shape.clinicalCard}px;
-  box-shadow: ${theme.shadows.clinical};
+  gap: 16px;
+  padding: 16px;
+  background: #F8FBFF;
+  border-radius: 16px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
 `;
 
 const ActionButton = styled(Button)`
   width: 100%;
   height: 64px;
   justify-content: flex-start;
-  padding: ${theme.spacing.md}px;
-  gap: ${theme.spacing.sm}px;
+  padding: 16px;
+  gap: 8px;
   
   svg {
     width: 24px;
@@ -139,7 +139,7 @@ const handleActionClick = async (
   // Track secure analytics event
   await Analytics.trackEvent({
     name: 'quick_action_click',
-    category: Analytics.AnalyticsCategory.USER_INTERACTION,
+    category: AnalyticsCategory.USER_INTERACTION,
     properties: {
       actionId: action.id,
       securityLevel: action.securityLevel,
@@ -148,8 +148,8 @@ const handleActionClick = async (
     timestamp: Date.now(),
     userConsent: true,
     privacyLevel: action.securityLevel === SecurityLevel.CRITICAL ? 
-      Analytics.PrivacyLevel.SENSITIVE : 
-      Analytics.PrivacyLevel.INTERNAL,
+      PrivacyLevel.SENSITIVE : 
+      PrivacyLevel.INTERNAL,
     auditInfo: {
       eventId: crypto.randomUUID(),
       timestamp: Date.now(),
