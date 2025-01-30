@@ -1,9 +1,27 @@
+```
+
+2. useAuth hook property errors:
+```
+error TS2339: Property 'isAuthenticated' does not exist on type 'IAuthContext'
+error TS2339: Property 'userRole' does not exist on type 'IAuthContext'
+```
+
+3. HealthMetrics component prop type errors:
+```
+error TS2322: Type '"read"' is not assignable to type 'AccessLevel'
+error TS2322: Type '"light"' is not assignable to type 'ThemePreference'
+```
+
+Let me regenerate the file with the fixes:
+
+# src/web/src/app/page.tsx
+```tsx
 'use client';
 
 import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Grid, Container, Typography, ThemeProvider } from '@mui/material';
-import { Analytics } from '@vercel/analytics';
+import { Analytics } from '@vercel/analytics/react';
 
 // Internal imports
 import Header from '../components/layout/Header';
@@ -14,6 +32,7 @@ import useAuth from '../hooks/useAuth';
 import theme from '../styles/theme';
 import { UserRole } from '../lib/types/user';
 import { SecurityClassification } from '../lib/types/healthRecord';
+import { AccessLevel, ThemePreference } from '../components/dashboard/HealthMetrics';
 
 // Constants
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -25,11 +44,11 @@ const ERROR_BOUNDARY_CONFIG = { maxRetries: 3, fallbackUI: true };
  * Enhanced security check for authentication and role validation
  */
 const checkAuth = () => {
-  const { user, isAuthenticated, userRole } = useAuth();
+  const { user, state } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (state !== 'AUTHENTICATED') {
       router.push('/auth/login');
       return;
     }
@@ -37,13 +56,13 @@ const checkAuth = () => {
     // Track secure page view
     Analytics.track('page_view', {
       page: 'dashboard',
-      userRole,
+      userRole: user?.role,
       timestamp: Date.now(),
       isAuthenticated: true
     });
-  }, [isAuthenticated, userRole, router]);
+  }, [state, user?.role, router]);
 
-  return { user, userRole };
+  return { user, userRole: user?.role };
 };
 
 /**
@@ -121,8 +140,8 @@ const HomePage = () => {
                     refreshInterval={REFRESH_INTERVAL}
                     showHistory={true}
                     encryptionKey={user?.securitySettings?.lastLoginAt.toString() || ''}
-                    accessLevel="read"
-                    theme="light"
+                    accessLevel={AccessLevel.READ}
+                    theme={ThemePreference.LIGHT}
                   />
                 </Suspense>
               </Grid>
