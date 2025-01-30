@@ -165,7 +165,7 @@ const ProvidersPage: React.FC = () => {
   }, [filters.page, logAudit]);
 
   // Handle sort changes with audit logging
-  const handleSort = useCallback(({ column, direction }: { column: string; direction: 'asc' | 'desc' }) => {
+  const handleSort = useCallback(({ column, direction }) => {
     logAudit('PROVIDER_SORT_CHANGE', {
       action: 'SORT',
       column,
