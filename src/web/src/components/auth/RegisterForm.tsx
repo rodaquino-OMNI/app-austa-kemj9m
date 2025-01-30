@@ -14,7 +14,7 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs'; // v3.4.0
 import { Logger } from 'winston'; // v3.8.0
 
 // Internal imports
-import { ILoginCredentials } from '../../lib/types/auth';
+import { ILoginCredentials, IMFASetup, IUser, IAuthError, ISecurityEvent } from '../../lib/types/auth';
 import { validateForm } from '../../lib/utils/validation';
 import { ErrorCode, ErrorTracker } from '../../lib/constants/errorCodes';
 
@@ -127,15 +127,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   }, []);
 
   // Secure input handling with sanitization
-  const handleSecureInput = useCallback(async (
-    event: React.ChangeEvent<HTMLInputElement>
+  const handleSecureInput = useCallback((
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type, checked } = event.target;
-    const fieldValue = type === 'checkbox' ? checked : value;
+    const { name, value, type } = event.target;
+    const isCheckbox = type === 'checkbox';
+    const fieldValue = isCheckbox ? (event.target as HTMLInputElement).checked : value;
 
     try {
       // Sanitize input
-      const sanitizedValue = type === 'checkbox' 
+      const sanitizedValue = isCheckbox 
         ? fieldValue 
         : CryptoJS.AES.encrypt(fieldValue as string, process.env.REACT_APP_ENCRYPTION_KEY!).toString();
 
@@ -167,9 +168,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       if (!validationResult.isValid) {
         setFormState(prev => ({
           ...prev,
-          errors: validationResult.errors.reduce((acc, error) => ({
+          errors: validationResult.errors.reduce((acc: Record<string, string>, error) => ({
             ...acc,
-            [error.field]: error.message
+            [error]: validationResult.errors[error]
           }), {}),
           loading: false
         }));
