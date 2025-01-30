@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import winston from 'winston';
 import { Button } from '@/components/common/Button';
-import Input from '@/components/common/Input';
+import { Input } from '@/components/common/Input';
 import { AuthAPI } from '@/lib/api/auth';
 import { validateForm, sanitizeInput } from '@/lib/utils/validation';
 import { ErrorTracker } from '@/lib/constants/errorCodes';
@@ -38,7 +38,7 @@ const ForgotPasswordPage: React.FC = () => {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>(null);
   const [deviceId] = useState(() => crypto.randomUUID());
 
   // Check rate limiting for the device
@@ -78,7 +78,7 @@ const ForgotPasswordPage: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      setError(null);
+      setError(undefined);
 
       // Check rate limiting
       if (!checkRateLimit(deviceId)) {
@@ -97,7 +97,10 @@ const ForgotPasswordPage: React.FC = () => {
 
       const validationResult = await validateForm(
         { email: sanitizedEmail },
-        { email: sanitizedEmail }
+        {
+          abortEarly: false,
+          context: { isPHI: true }
+        }
       );
 
       if (!validationResult.isValid) {
@@ -111,13 +114,10 @@ const ForgotPasswordPage: React.FC = () => {
 
       // Request password reset
       const authAPI = new AuthAPI(process.env.NEXT_PUBLIC_API_URL || '');
-      await authAPI.login({
+      await authAPI.requestPasswordReset({
         email: sanitizedEmail,
         deviceId,
-        sessionId: crypto.randomUUID(),
-        password: '',
-        rememberMe: false,
-        clientMetadata: {}
+        sessionId: crypto.randomUUID()
       });
 
       // Log successful attempt
@@ -129,13 +129,13 @@ const ForgotPasswordPage: React.FC = () => {
       // Track analytics event
       Analytics.trackEvent({
         name: 'password_reset_requested',
-        category: 'USER_INTERACTION',
+        category: Analytics.AnalyticsCategory.USER_INTERACTION,
         properties: {
           deviceId
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'INTERNAL',
+        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -148,14 +148,14 @@ const ForgotPasswordPage: React.FC = () => {
       // Redirect to confirmation page
       router.push('/auth/forgot-password/confirmation');
 
-    } catch (error: any) {
+    } catch (error) {
       // Log failed attempt
       logSecurityEvent('PASSWORD_RESET_FAILED', {
         email,
-        error: error?.message || 'Unknown error'
+        error: error.message
       });
 
-      ErrorTracker.captureError(new Error(error?.message || 'Password reset failed'), {
+      ErrorTracker.captureError(error, {
         component: 'ForgotPasswordPage',
         action: 'handleSubmit'
       });
@@ -180,7 +180,7 @@ const ForgotPasswordPage: React.FC = () => {
             type="email"
             label="Email Address"
             value={email}
-            onChange={(e: string) => setEmail(e)}
+            onChange={(value) => setEmail(value)}
             placeholder="Enter your registered email"
             error={error}
             disabled={isSubmitting}
