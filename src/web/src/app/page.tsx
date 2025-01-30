@@ -1,21 +1,3 @@
-```
-
-2. useAuth hook property errors:
-```
-error TS2339: Property 'isAuthenticated' does not exist on type 'IAuthContext'
-error TS2339: Property 'userRole' does not exist on type 'IAuthContext'
-```
-
-3. HealthMetrics component prop type errors:
-```
-error TS2322: Type '"read"' is not assignable to type 'AccessLevel'
-error TS2322: Type '"light"' is not assignable to type 'ThemePreference'
-```
-
-Let me regenerate the file with the fixes:
-
-# src/web/src/app/page.tsx
-```tsx
 'use client';
 
 import React, { useEffect, Suspense } from 'react';
