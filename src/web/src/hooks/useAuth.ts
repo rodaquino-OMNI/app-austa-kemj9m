@@ -11,8 +11,10 @@ import CryptoJS from 'crypto-js'; // v4.1.1
 
 import {
   login,
-  verifyBiometric,
-  validateDeviceFingerprint
+  verifyMFA,
+  refreshToken,
+  logout,
+  verifyBiometric
 } from '../lib/api/auth';
 
 import {
@@ -43,9 +45,9 @@ const encryptionService = new WebEncryptionService();
  */
 const useAuth = (): IAuthContext & {
   login: (credentials: ILoginCredentials) => Promise<void>;
-  secureLogout: () => Promise<void>;
+  logout: () => Promise<void>;
   verifyMFA: (credentials: IMFACredentials) => Promise<void>;
-  verifyBiometric: (credentials: IBiometricCredentials) => Promise<void>;
+  verifyBiometric: (credentials: IMFACredentials) => Promise<void>;
   refreshSession: () => Promise<void>;
 } => {
   // State management with security context
@@ -60,9 +62,169 @@ const useAuth = (): IAuthContext & {
   // Security references
   const refreshTokenTimeoutRef = useRef<NodeJS.Timeout>();
   const sessionTimeoutRef = useRef<NodeJS.Timeout>();
-  const deviceFingerprintRef = useRef<string>('');
 
-  // Rest of the implementation remains the same until the handleLogout function
+  /**
+   * Securely stores encrypted tokens in localStorage
+   */
+  const securelyStoreTokens = useCallback(async (tokens: IAuthTokens) => {
+    try {
+      const encryptedTokens = await encryptionService.encryptField(
+        JSON.stringify(tokens),
+        'auth'
+      );
+      localStorage.setItem('auth_tokens', encryptedTokens);
+    } catch (error) {
+      console.error('Token encryption failed:', error);
+      throw error;
+    }
+  }, []);
+
+  /**
+   * Validates token expiration and integrity
+   */
+  const validateToken = useCallback((token: string): boolean => {
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      return decoded.exp > currentTime + TOKEN_EXPIRY_BUFFER / 1000;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  /**
+   * Handles security event logging
+   */
+  const logSecurityEvent = useCallback((event: SecurityEvent) => {
+    // Implementation would typically send to security monitoring service
+    console.info('Security Event:', {
+      ...event,
+      timestamp: Date.now(),
+      sessionId: tokens?.accessToken
+    });
+  }, [tokens]);
+
+  /**
+   * Sets up automatic token refresh
+   */
+  const setupTokenRefresh = useCallback(() => {
+    if (refreshTokenTimeoutRef.current) {
+      clearTimeout(refreshTokenTimeoutRef.current);
+    }
+
+    refreshTokenTimeoutRef.current = setTimeout(async () => {
+      try {
+        if (tokens?.refreshToken) {
+          const newTokens = await refreshToken(tokens.refreshToken);
+          await securelyStoreTokens(newTokens);
+          setTokens(newTokens);
+          setupTokenRefresh();
+        }
+      } catch (error) {
+        handleAuthError(error);
+      }
+    }, TOKEN_REFRESH_INTERVAL);
+  }, [tokens, securelyStoreTokens]);
+
+  /**
+   * Monitors session activity and timeout
+   */
+  const setupSessionMonitoring = useCallback(() => {
+    const resetTimeout = () => {
+      setLastActivity(Date.now());
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+      }
+      sessionTimeoutRef.current = setTimeout(() => {
+        handleSessionTimeout();
+      }, SESSION_TIMEOUT);
+    };
+
+    window.addEventListener('mousemove', resetTimeout);
+    window.addEventListener('keypress', resetTimeout);
+
+    return () => {
+      window.removeEventListener('mousemove', resetTimeout);
+      window.removeEventListener('keypress', resetTimeout);
+    };
+  }, []);
+
+  /**
+   * Handles session timeout
+   */
+  const handleSessionTimeout = useCallback(async () => {
+    logSecurityEvent({
+      eventType: 'SESSION_TIMEOUT',
+      userId: user?.id || '',
+      sessionId: tokens?.accessToken || '',
+      severity: 'MEDIUM',
+      outcome: 'SUCCESS',
+      metadata: { lastActivity }
+    });
+
+    await handleLogout();
+    setState(AuthState.SESSION_EXPIRED);
+  }, [user, lastActivity, logSecurityEvent]);
+
+  /**
+   * Handles authentication errors with security logging
+   */
+  const handleAuthError = useCallback((error: any) => {
+    const authError: IAuthError = {
+      code: error.code || 'AUTH_ERROR',
+      message: error.message || 'Authentication failed',
+      details: error.details || {},
+      timestamp: Date.now(),
+      requestId: error.requestId || ''
+    };
+
+    setError(authError);
+    logSecurityEvent({
+      eventType: 'AUTH_ERROR',
+      userId: user?.id || '',
+      sessionId: tokens?.accessToken || '',
+      severity: 'HIGH',
+      outcome: 'FAILURE',
+      metadata: authError
+    });
+  }, [user, tokens, logSecurityEvent]);
+
+  /**
+   * Enhanced login handler with security measures
+   */
+  const handleLogin = async (credentials: ILoginCredentials): Promise<void> => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        setState(AuthState.LOCKED);
+        throw new Error('Account locked due to multiple failed attempts');
+      }
+
+      const authTokens = await login(credentials);
+      await securelyStoreTokens(authTokens);
+      setTokens(authTokens);
+      setState(AuthState.AUTHENTICATED);
+      setupTokenRefresh();
+      setupSessionMonitoring();
+      setLoginAttempts(0);
+
+      logSecurityEvent({
+        eventType: 'LOGIN_SUCCESS',
+        userId: credentials.email,
+        sessionId: authTokens.accessToken,
+        severity: 'MEDIUM',
+        outcome: 'SUCCESS',
+        metadata: { deviceId: credentials.deviceId }
+      });
+    } catch (error) {
+      setLoginAttempts(prev => prev + 1);
+      handleAuthError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   /**
    * Secure logout handler
@@ -70,6 +232,9 @@ const useAuth = (): IAuthContext & {
   const handleLogout = async (): Promise<void> => {
     try {
       setIsLoading(true);
+      if (tokens?.accessToken) {
+        await logout(tokens.accessToken);
+      }
       
       // Clear security context
       localStorage.removeItem('auth_tokens');
@@ -86,12 +251,11 @@ const useAuth = (): IAuthContext & {
 
       logSecurityEvent({
         eventType: 'LOGOUT',
-        timestamp: Date.now(),
         userId: user?.id || '',
         sessionId: tokens?.accessToken || '',
-        metadata: { timestamp: Date.now() },
         severity: 'LOW',
-        outcome: 'SUCCESS'
+        outcome: 'SUCCESS',
+        metadata: { timestamp: Date.now() }
       });
     } catch (error) {
       handleAuthError(error);
@@ -100,7 +264,34 @@ const useAuth = (): IAuthContext & {
     }
   };
 
-  // Rest of the implementation remains the same until the return statement
+  // Initialize authentication state
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const storedTokens = localStorage.getItem('auth_tokens');
+        if (storedTokens && validateToken(storedTokens)) {
+          const decryptedTokens = JSON.parse(storedTokens) as IAuthTokens;
+          setTokens(decryptedTokens);
+          setState(AuthState.AUTHENTICATED);
+          setupTokenRefresh();
+          setupSessionMonitoring();
+        }
+      } catch (error) {
+        handleAuthError(error);
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      if (refreshTokenTimeoutRef.current) {
+        clearTimeout(refreshTokenTimeoutRef.current);
+      }
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return {
     state,
@@ -111,15 +302,11 @@ const useAuth = (): IAuthContext & {
     lastActivity,
     sessionTimeout: SESSION_TIMEOUT,
     login: handleLogin,
-    secureLogout: handleLogout,
-    verifyMFA: async (credentials: IMFACredentials) => {
-      // Implement MFA verification logic
-      throw new Error('MFA verification not implemented');
-    },
+    logout: handleLogout,
+    verifyMFA,
     verifyBiometric,
     refreshSession: setupTokenRefresh
   };
 };
 
-export const useSecurityContext = useAuth;
 export default useAuth;
