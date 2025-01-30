@@ -26,22 +26,21 @@ import {
 import { useHealthRecords } from '../../hooks/useHealthRecords';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { Analytics } from '../../lib/utils/analytics';
-import { themePalette, themeSpacing, themeShape, themeShadows } from '../../styles/theme';
 
 // Styled components with Material Design 3.0 patterns
-const TimelineContainer = styled(Box)(() => ({
+const TimelineContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
-  backgroundColor: themePalette.background.paper,
-  borderRadius: themeShape.borderRadius,
-  boxShadow: themeShadows.clinical,
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: theme.shadows[1],
   overflow: 'hidden'
 }));
 
-const TimelineGroup = styled(Box)(() => ({
-  padding: themeSpacing(2),
-  borderBottom: `1px solid ${themePalette.divider}`,
+const TimelineGroup = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderBottom: `1px solid ${theme.palette.divider}`,
   '&:last-child': {
     borderBottom: 'none'
   }
@@ -49,17 +48,17 @@ const TimelineGroup = styled(Box)(() => ({
 
 const TimelineItem = styled(Box, {
   shouldForwardProp: prop => prop !== 'isHighlighted'
-})<{ isHighlighted?: boolean }>(({ isHighlighted }) => ({
+})<{ isHighlighted?: boolean }>(({ theme, isHighlighted }) => ({
   display: 'flex',
-  padding: themeSpacing(2),
-  backgroundColor: isHighlighted ? themePalette.background.clinical : 'transparent',
+  padding: theme.spacing(2),
+  backgroundColor: isHighlighted ? theme.palette.action.hover : 'transparent',
   transition: 'background-color 0.2s ease',
   cursor: 'pointer',
   '&:hover': {
-    backgroundColor: themePalette.background.clinical
+    backgroundColor: theme.palette.action.hover
   },
   '&:focus-visible': {
-    outline: `2px solid ${themePalette.primary.main}`,
+    outline: `2px solid ${theme.palette.primary.main}`,
     outlineOffset: '-2px'
   }
 }));
@@ -134,14 +133,14 @@ const Timeline: React.FC<TimelineProps> = ({
     // Track interaction with sanitized data
     Analytics.trackEvent({
       name: 'health_record_viewed',
-      category: Analytics.AnalyticsCategory.USER_INTERACTION,
+      category: 'USER_INTERACTION',
       properties: {
         recordType: record.type,
         securityLevel: record.securityClassification
       },
       timestamp: Date.now(),
       userConsent: true,
-      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+      privacyLevel: 'INTERNAL',
       auditInfo: {
         eventId: `record_view_${Date.now()}`,
         timestamp: Date.now(),
@@ -153,7 +152,7 @@ const Timeline: React.FC<TimelineProps> = ({
   }, [onRecordClick, securityContext]);
 
   // Render timeline item with accessibility support
-  const renderTimelineItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
+  const renderTimelineItem = useCallback(({ index, style }) => {
     const dateKeys = Array.from(groupedRecords.keys());
     const dateKey = dateKeys[index];
     const dayRecords = groupedRecords.get(dateKey) || [];
@@ -169,7 +168,7 @@ const Timeline: React.FC<TimelineProps> = ({
           {format(new Date(dateKey), 'PPPP', { timeZone: timezone })}
         </Typography>
         
-        {dayRecords.map((record: IHealthRecord) => (
+        {dayRecords.map(record => (
           <TimelineItem
             key={record.id}
             isHighlighted={record.id === selectedRecordId}
