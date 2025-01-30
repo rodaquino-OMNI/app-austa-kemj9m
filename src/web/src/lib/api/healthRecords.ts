@@ -57,7 +57,7 @@ const DEFAULT_CONFIG = {
  */
 const validateHIPAACompliance = (record: Partial<IHealthRecord>): void => {
   if (!record.patientId || !record.content) {
-    throw new Error(HealthRecordErrorType.PHI_VALIDATION_ERROR);
+    throw new Error(HealthRecordErrorType.PHI_VALIDATION_ERROR.toString());
   }
 
   // Additional HIPAA validation logic
@@ -72,7 +72,7 @@ const validateHIPAACompliance = (record: Partial<IHealthRecord>): void => {
     let obj: any = record.metadata;
     return keys.every(key => (obj = obj?.[key]) !== undefined);
   })) {
-    throw new Error(HealthRecordErrorType.PHI_VALIDATION_ERROR);
+    throw new Error(HealthRecordErrorType.PHI_VALIDATION_ERROR.toString());
   }
 };
 
