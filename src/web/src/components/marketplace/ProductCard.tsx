@@ -1,8 +1,9 @@
 import React, { useCallback, useRef, useState, memo } from 'react';
-import styled from '@emotion/styled'; // @emotion/styled ^11.11.0
-import Image from 'next/image'; // next/image ^13.0.0
+import styled from '@emotion/styled';
+import Image from 'next/image';
 import { Product, ProductCategory } from '../../lib/types/product';
 import { Card } from '../../styles/components';
+import { Theme } from '@mui/material';
 
 // Constants
 const MAX_DESCRIPTION_LENGTH = 150;
@@ -12,7 +13,7 @@ const MIN_TOUCH_TARGET_SIZE = 44;
 
 // Types
 interface ProductCardProps {
-  product: Product;
+  product: Product & { insuranceCovered?: boolean; badges?: string[] };
   onClick?: (product: Product) => void;
   clinicalMode?: boolean;
 }
@@ -27,8 +28,8 @@ const StyledCard = styled(Card)<{ isHovered: boolean; clinicalMode: boolean }>`
   transform: ${({ isHovered }) => isHovered ? 'translateY(-4px)' : 'none'};
   
   ${({ clinicalMode, theme }) => clinicalMode && `
-    border-left: 4px solid ${theme.palette.clinical.main};
-    background-color: ${theme.palette.background.clinical};
+    border-left: 4px solid ${(theme as Theme).palette.clinical.main};
+    background-color: ${(theme as Theme).palette.background.clinical};
   `}
 
   @media (prefers-reduced-motion: reduce) {
@@ -52,14 +53,14 @@ const Title = styled.h3`
   margin: 0 0 8px 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: ${({ theme }) => theme.palette.text.primary};
+  color: ${({ theme }) => (theme as Theme).palette.text.primary};
   min-height: 44px;
 `;
 
 const Description = styled.p`
   margin: 0 0 16px 0;
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.palette.text.secondary};
+  color: ${({ theme }) => (theme as Theme).palette.text.secondary};
   line-height: 1.5;
 `;
 
@@ -74,7 +75,7 @@ const Price = styled.span<{ insuranceCovered: boolean }>`
   font-size: 1.25rem;
   font-weight: 600;
   color: ${({ theme, insuranceCovered }) => 
-    insuranceCovered ? theme.palette.success.main : theme.palette.text.primary};
+    insuranceCovered ? (theme as Theme).palette.success.main : (theme as Theme).palette.text.primary};
 `;
 
 const BadgeContainer = styled.div`
@@ -89,26 +90,24 @@ const BadgeContainer = styled.div`
 const Badge = styled.span`
   padding: 4px 8px;
   border-radius: 4px;
-  background-color: ${({ theme }) => theme.palette.primary.main};
-  color: ${({ theme }) => theme.palette.primary.contrastText};
+  background-color: ${({ theme }) => (theme as Theme).palette.primary.main};
+  color: ${({ theme }) => (theme as Theme).palette.primary.contrastText};
   font-size: 0.75rem;
   font-weight: 500;
 `;
 
 // Helper Functions
-const formatPrice = memo((price: number, insuranceCovered: boolean): string => {
-  const formattedPrice = new Intl.NumberFormat('en-US', {
+const formatPrice = (price: number): string => {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
   }).format(price / 100);
+};
 
-  return insuranceCovered ? `${formattedPrice} (Covered)` : formattedPrice;
-});
-
-const truncateText = memo((text: string, maxLength: number): string => {
-  if (text.length <= maxLength) return text;
-  return `${text.substring(0, maxLength - 3)}...`;
-});
+const truncateText = (text: string): string => {
+  if (text.length <= MAX_DESCRIPTION_LENGTH) return text;
+  return `${text.substring(0, MAX_DESCRIPTION_LENGTH - 3)}...`;
+};
 
 // Main Component
 const ProductCard: React.FC<ProductCardProps> = memo(({ 
@@ -150,6 +149,8 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
     }
   }, []);
 
+  const priceDisplay = formatPrice(product.price);
+
   return (
     <StyledCard
       elevation={isHovered ? 'elevated' : 'clinical'}
@@ -159,7 +160,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
       role="article"
-      aria-label={`${product.name} - ${formatPrice(product.price, product.insuranceCovered)}`}
+      aria-label={`${product.name} - ${priceDisplay}`}
     >
       <ImageContainer>
         <Image
@@ -173,7 +174,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
           sizes="(max-width: 768px) 100vw, 360px"
         />
         <BadgeContainer>
-          {product.badges?.map((badge) => (
+          {product.badges?.map((badge: string) => (
             <Badge key={badge} role="status">
               {badge}
             </Badge>
@@ -186,14 +187,14 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
           {product.name}
         </Title>
         <Description aria-label={product.description}>
-          {truncateText(product.description, MAX_DESCRIPTION_LENGTH)}
+          {truncateText(product.description)}
         </Description>
         <PriceContainer>
           <Price 
-            insuranceCovered={product.insuranceCovered}
-            aria-label={`Price: ${formatPrice(product.price, product.insuranceCovered)}`}
+            insuranceCovered={product.insuranceCovered || false}
+            aria-label={`Price: ${priceDisplay}`}
           >
-            {formatPrice(product.price, product.insuranceCovered)}
+            {priceDisplay}
           </Price>
         </PriceContainer>
       </ContentContainer>
