@@ -85,7 +85,7 @@ const Controls: React.FC<IControlsProps> = ({
       await toggleAudio();
       setIsAudioEnabled(prev => !prev);
     } catch (error) {
-      onError(new Error(`Failed to toggle audio: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      onError(new Error('Failed to toggle audio: ' + error.message));
     }
   }, [toggleAudio, onError]);
 
@@ -97,7 +97,7 @@ const Controls: React.FC<IControlsProps> = ({
       await toggleVideo();
       setIsVideoEnabled(prev => !prev);
     } catch (error) {
-      onError(new Error(`Failed to toggle video: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      onError(new Error('Failed to toggle video: ' + error.message));
     }
   }, [toggleVideo, onError]);
 
@@ -109,7 +109,7 @@ const Controls: React.FC<IControlsProps> = ({
       await shareScreen();
       setIsScreenSharing(prev => !prev);
     } catch (error) {
-      onError(new Error(`Failed to toggle screen sharing: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      onError(new Error('Failed to toggle screen sharing: ' + error.message));
     }
   }, [shareScreen, onError]);
 
@@ -121,7 +121,7 @@ const Controls: React.FC<IControlsProps> = ({
       await disconnect();
       onEnd();
     } catch (error) {
-      onError(new Error(`Failed to end consultation: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      onError(new Error('Failed to end consultation: ' + error.message));
     }
   }, [disconnect, onEnd, onError]);
 
@@ -132,15 +132,26 @@ const Controls: React.FC<IControlsProps> = ({
     const monitorConnection = async () => {
       try {
         const stats = await getConnectionStats();
-        const qualityStats = stats.find(stat => stat.kind === 'connection');
-        const quality = qualityStats?.quality || ConnectionQuality.GOOD;
-        const latency = qualityStats?.latency || 0;
+        const statsArray = Array.from(stats.values());
         
+        // Extract connection quality metrics
+        const connectionStats = statsArray.find(stat => stat.type === 'remote-inbound-rtp');
+        const packetLoss = connectionStats?.fractionLost ?? 0;
+        const latency = connectionStats?.roundTripTime ?? 0;
+
+        // Determine connection quality based on packet loss
+        let quality = ConnectionQuality.GOOD;
+        if (packetLoss > 0.05) {
+          quality = ConnectionQuality.POOR;
+        } else if (packetLoss > 0.02) {
+          quality = ConnectionQuality.FAIR;
+        }
+
         setConnectionState(prev => ({
           ...prev,
           quality,
           latency,
-          encrypted: true
+          encrypted: true // Encryption is enforced by the WebRTC hook
         }));
       } catch (error) {
         console.error('Connection monitoring error:', error);
