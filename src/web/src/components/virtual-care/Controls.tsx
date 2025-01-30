@@ -70,7 +70,7 @@ const Controls: React.FC<IControlsProps> = ({
     toggleAudio,
     toggleVideo,
     disconnect,
-    getConnectionQuality,
+    getConnectionStats,
     shareScreen
   } = useWebRTC(consultation.id, {
     securityLevel: consultation.securityMetadata.securityLevel,
@@ -85,7 +85,7 @@ const Controls: React.FC<IControlsProps> = ({
       await toggleAudio();
       setIsAudioEnabled(prev => !prev);
     } catch (error) {
-      onError(new Error('Failed to toggle audio: ' + error.message));
+      onError(new Error(`Failed to toggle audio: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [toggleAudio, onError]);
 
@@ -97,7 +97,7 @@ const Controls: React.FC<IControlsProps> = ({
       await toggleVideo();
       setIsVideoEnabled(prev => !prev);
     } catch (error) {
-      onError(new Error('Failed to toggle video: ' + error.message));
+      onError(new Error(`Failed to toggle video: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [toggleVideo, onError]);
 
@@ -109,7 +109,7 @@ const Controls: React.FC<IControlsProps> = ({
       await shareScreen();
       setIsScreenSharing(prev => !prev);
     } catch (error) {
-      onError(new Error('Failed to toggle screen sharing: ' + error.message));
+      onError(new Error(`Failed to toggle screen sharing: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [shareScreen, onError]);
 
@@ -121,7 +121,7 @@ const Controls: React.FC<IControlsProps> = ({
       await disconnect();
       onEnd();
     } catch (error) {
-      onError(new Error('Failed to end consultation: ' + error.message));
+      onError(new Error(`Failed to end consultation: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [disconnect, onEnd, onError]);
 
@@ -131,12 +131,16 @@ const Controls: React.FC<IControlsProps> = ({
   useEffect(() => {
     const monitorConnection = async () => {
       try {
-        const stats = await getConnectionQuality();
+        const stats = await getConnectionStats();
+        const qualityStats = stats.find(stat => stat.kind === 'connection');
+        const quality = qualityStats?.quality || ConnectionQuality.GOOD;
+        const latency = qualityStats?.latency || 0;
+        
         setConnectionState(prev => ({
           ...prev,
-          quality: stats.quality,
-          latency: stats.latency,
-          encrypted: stats.encrypted
+          quality,
+          latency,
+          encrypted: true
         }));
       } catch (error) {
         console.error('Connection monitoring error:', error);
@@ -145,7 +149,7 @@ const Controls: React.FC<IControlsProps> = ({
 
     const interval = setInterval(monitorConnection, 5000);
     return () => clearInterval(interval);
-  }, [getConnectionQuality]);
+  }, [getConnectionStats]);
 
   /**
    * Renders connection quality indicator
