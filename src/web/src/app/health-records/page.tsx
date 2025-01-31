@@ -1,3 +1,17 @@
+```
+
+2. ViewerAccessLevel is not exported from healthRecord.ts - we need to use the one from DocumentViewer.tsx.
+
+3. subscribeToUpdates is not available in useHealthRecords hook.
+
+4. Analytics.AnalyticsCategory and Analytics.PrivacyLevel are not accessed correctly.
+
+5. Multiple null/undefined checks needed for selectedRecord and its attachments.
+
+Let me regenerate the file with all fixes:
+
+# src/web/src/app/health-records/page.tsx
+```typescript
 'use client';
 
 /**
@@ -12,7 +26,7 @@ import { AuditLogger } from '@austa/audit-log'; // v1.0.0
 
 // Internal imports
 import RecordsList from '../../components/health-records/RecordsList';
-import DocumentViewer from '../../components/health-records/DocumentViewer';
+import DocumentViewer, { ViewerAccessLevel } from '../../components/health-records/DocumentViewer';
 import Timeline from '../../components/health-records/Timeline';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import { useHealthRecords } from '../../hooks/useHealthRecords';
@@ -21,9 +35,9 @@ import { useHealthRecords } from '../../hooks/useHealthRecords';
 import { 
   IHealthRecord, 
   HealthRecordType, 
-  SecurityClassification 
+  SecurityClassification
 } from '../../lib/types/healthRecord';
-import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../lib/utils/analytics';
+import { Analytics } from '../../lib/utils/analytics';
 
 // Constants
 const DEFAULT_VIEW = 'list';
@@ -85,14 +99,14 @@ const HealthRecordsPage: React.FC<{
       // Track interaction
       Analytics.trackEvent({
         name: 'health_record_selected',
-        category: AnalyticsCategory.USER_INTERACTION,
+        category: 'USER_INTERACTION',
         properties: {
           recordType: record.type,
           viewType
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: PrivacyLevel.SENSITIVE,
+        privacyLevel: 'SENSITIVE',
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -192,9 +206,10 @@ const HealthRecordsPage: React.FC<{
             contentType={selectedRecord.attachments[0].contentType}
             url={selectedRecord.attachments[0].url}
             onClose={() => setSelectedRecord(null)}
-            accessLevel={DocumentViewer.ViewerAccessLevel.READ_ONLY}
+            accessLevel={ViewerAccessLevel.READ_ONLY}
             watermarkText="CONFIDENTIAL"
             highContrastMode={false}
+            patientId={params.patientId}
           />
         )}
       </main>
