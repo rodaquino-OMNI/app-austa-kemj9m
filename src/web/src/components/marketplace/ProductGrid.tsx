@@ -49,7 +49,7 @@ const GridContainer = styled.div<{ clinicalMode?: boolean }>`
   ${({ clinicalMode }) => clinicalMode && `
     gap: ${theme.spacing(3)}px;
     padding: ${theme.spacing(3)}px;
-    background-color: ${theme.palette.background.default};
+    background-color: ${theme.palette.background.paper};
   `}
 
   @media (max-width: ${GRID_BREAKPOINTS.tablet}px) {
