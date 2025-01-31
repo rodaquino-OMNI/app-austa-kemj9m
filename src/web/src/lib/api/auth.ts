@@ -15,6 +15,7 @@ import {
   IAuthTokens, 
   IMFACredentials, 
   IAuthError, 
+  IBiometricCredentials,
   AuthState,
   SecurityEvent
 } from '../types/auth';
@@ -40,10 +41,6 @@ interface SecurityConfig {
   encryptionConfig: {
     algorithm: string;
     keySize: number;
-    ivSize: number;
-    tagLength: number;
-    iterations: number;
-    saltLength: number;
   };
 }
 
@@ -56,11 +53,7 @@ const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   timeout: 30000,
   encryptionConfig: {
     algorithm: 'AES-GCM',
-    keySize: 256,
-    ivSize: 96,
-    tagLength: 128,
-    iterations: 100000,
-    saltLength: 32
+    keySize: 256
   }
 };
 
@@ -169,7 +162,8 @@ export class AuthAPI {
    * Authenticates user with enhanced security measures
    */
   public async login(
-    credentials: ILoginCredentials
+    credentials: ILoginCredentials,
+    biometricData?: IBiometricCredentials
   ): Promise<IAuthTokens> {
     try {
       // Encrypt sensitive credentials
@@ -177,6 +171,11 @@ export class AuthAPI {
         JSON.stringify(credentials),
         'credentials'
       );
+
+      // Verify biometric data if provided
+      if (biometricData) {
+        await this.verifyBiometric(biometricData);
+      }
 
       const response = await this.client.post(
         AuthEndpoints.LOGIN,
@@ -191,7 +190,8 @@ export class AuthAPI {
         userId: credentials.email,
         sessionId: tokens.accessToken,
         metadata: {
-          deviceId: credentials.deviceId
+          deviceId: credentials.deviceId,
+          usedBiometric: !!biometricData
         },
         severity: 'MEDIUM',
         outcome: 'SUCCESS'
@@ -236,14 +236,56 @@ export class AuthAPI {
       throw this.handleAuthError(error);
     }
   }
+
+  /**
+   * Verifies biometric authentication data
+   */
+  public async verifyBiometric(biometricData: IBiometricCredentials): Promise<boolean> {
+    try {
+      const encryptedBiometric = await this.encryptionService.encryptField(
+        JSON.stringify(biometricData),
+        'biometric'
+      );
+
+      const response = await this.client.post(
+        AuthEndpoints.VERIFY_BIOMETRIC,
+        { biometric: encryptedBiometric }
+      );
+
+      this.logSecurityEvent({
+        eventType: 'BIOMETRIC_VERIFICATION',
+        timestamp: Date.now(),
+        userId: response.headers['x-user-id'],
+        sessionId: response.headers['x-session-id'],
+        metadata: {
+          deviceId: biometricData.deviceId,
+          biometricType: biometricData.type
+        },
+        severity: 'HIGH',
+        outcome: 'SUCCESS'
+      });
+
+      return response.data.verified;
+    } catch (error) {
+      throw this.handleAuthError(error);
+    }
+  }
 }
 
 // Export secure authentication functions
 export const login = async (
-  credentials: ILoginCredentials
+  credentials: ILoginCredentials,
+  biometricData?: IBiometricCredentials
 ): Promise<IAuthTokens> => {
   const authAPI = new AuthAPI(process.env.NEXT_PUBLIC_API_URL || '');
-  return authAPI.login(credentials);
+  return authAPI.login(credentials, biometricData);
+};
+
+export const verifyBiometric = async (
+  biometricData: IBiometricCredentials
+): Promise<boolean> => {
+  const authAPI = new AuthAPI(process.env.NEXT_PUBLIC_API_URL || '');
+  return authAPI.verifyBiometric(biometricData);
 };
 
 export default AuthAPI;
