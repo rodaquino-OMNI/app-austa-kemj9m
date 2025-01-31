@@ -43,7 +43,7 @@ const SkipLink = styled.a`
 const MainContent = styled.main<{ clinicalMode?: boolean }>`
   min-height: ${MAIN_CONTENT_MIN_HEIGHT};
   background-color: ${({ clinicalMode }) =>
-    clinicalMode ? (theme.palette.background as any).clinical : theme.palette.background.default};
+    clinicalMode ? '#F8FBFF' : theme.palette.background.default};
   padding-top: var(--header-height);
   transition: background-color 0.3s ease;
 
@@ -59,7 +59,7 @@ const ErrorFallback = styled.div`
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: ${8 * 3}px;
+  padding: ${theme.spacing(4)}px;
   background-color: ${theme.palette.error.light};
   color: ${theme.palette.error.contrastText};
 `;
