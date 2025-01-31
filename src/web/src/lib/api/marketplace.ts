@@ -64,171 +64,6 @@ interface PaymentDetails {
 }
 
 /**
- * Retrieves paginated and filtered marketplace products with security validation
- * @param params - Filter and pagination parameters
- * @returns Promise with product list and audit tracking
- */
-export const getProducts = async (params: GetProductsParams = {}): Promise<{
-  products: Product[];
-  total: number;
-  page: number;
-  auditId: string;
-}> => {
-  try {
-    // Validate and sanitize input parameters
-    const validatedParams = validateRequest(params, {
-      page: { type: 'number', min: 1 },
-      limit: { type: 'number', min: 1, max: 100 },
-      category: { type: 'enum', enum: ProductCategory },
-      sortBy: { type: 'enum', enum: ProductSortOption },
-      status: { type: 'enum', enum: ProductStatus }
-    });
-
-    // Generate audit ID for request tracking
-    const auditId = `MP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    const response = await axios.get(buildUrl(MarketplaceEndpoints.GET_PRODUCTS), {
-      params: validatedParams,
-      headers: {
-        ...API_CONFIG.headers,
-        'X-Audit-ID': auditId
-      }
-    });
-
-    // Validate and sanitize response data
-    const sanitizedData = sanitizeData(response.data);
-
-    // Log request for audit trail
-    logger.info('Products retrieved', {
-      auditId,
-      params: validatedParams,
-      resultCount: sanitizedData.products.length
-    });
-
-    return {
-      ...sanitizedData,
-      auditId
-    };
-
-  } catch (error) {
-    handleApiError(error as AxiosError);
-    throw error;
-  }
-};
-
-/**
- * Retrieves detailed product information by ID with security validation
- * @param productId - Unique product identifier
- * @returns Promise with product details and audit tracking
- */
-export const getProductById = async (productId: string): Promise<Product & { auditId: string }> => {
-  try {
-    // Validate product ID format
-    if (!productId.match(/^[A-Za-z0-9-]+$/)) {
-      throw new Error(ErrorCode.INVALID_INPUT);
-    }
-
-    const auditId = `MP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    const response = await axios.get(
-      buildUrl(processEndpointParams(MarketplaceEndpoints.GET_PRODUCT, { id: productId })),
-      {
-        headers: {
-          ...API_CONFIG.headers,
-          'X-Audit-ID': auditId
-        }
-      }
-    );
-
-    // Validate response against schema
-    const sanitizedData = sanitizeData(response.data);
-
-    // Log access for audit trail
-    logger.info('Product details accessed', {
-      auditId,
-      productId,
-      category: sanitizedData.category
-    });
-
-    return {
-      ...sanitizedData,
-      auditId
-    };
-
-  } catch (error) {
-    handleApiError(error as AxiosError);
-    throw error;
-  }
-};
-
-/**
- * Initiates secure product purchase with comprehensive validation
- * @param productId - Product to purchase
- * @param paymentDetails - Encrypted payment information
- * @returns Promise with transaction details and audit tracking
- */
-export const purchaseProduct = async (
-  productId: string,
-  paymentDetails: PaymentDetails
-): Promise<{
-  transactionId: string;
-  status: string;
-  auditId: string;
-  securityToken: string;
-}> => {
-  try {
-    // Validate inputs
-    if (!productId.match(/^[A-Za-z0-9-]+$/)) {
-      throw new Error(ErrorCode.INVALID_INPUT);
-    }
-
-    // Generate secure transaction identifiers
-    const auditId = `MP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const securityToken = await encryptPayload(JSON.stringify({
-      auditId,
-      timestamp: Date.now(),
-      productId
-    }));
-
-    const response = await axios.post(
-      buildUrl(processEndpointParams(MarketplaceEndpoints.PURCHASE_PRODUCT, { id: productId })),
-      {
-        paymentDetails,
-        securityToken
-      },
-      {
-        headers: {
-          ...API_CONFIG.headers,
-          'X-Audit-ID': auditId,
-          'X-Security-Token': securityToken
-        }
-      }
-    );
-
-    // Validate transaction response
-    const sanitizedData = sanitizeData(response.data);
-
-    // Log transaction for audit
-    logger.info('Product purchase initiated', {
-      auditId,
-      productId,
-      transactionId: sanitizedData.transactionId,
-      status: sanitizedData.status
-    });
-
-    return {
-      ...sanitizedData,
-      auditId,
-      securityToken
-    };
-
-  } catch (error) {
-    handleApiError(error as AxiosError);
-    throw error;
-  }
-};
-
-/**
  * Handles API errors with proper logging and tracking
  * @param error - Axios error object
  */
@@ -253,4 +88,172 @@ const handleApiError = (error: AxiosError): never => {
   });
 
   throw new Error(errorCode);
+};
+
+// Group all marketplace API functions under a single namespace
+export const MarketplaceAPI = {
+  /**
+   * Retrieves paginated and filtered marketplace products with security validation
+   * @param params - Filter and pagination parameters
+   * @returns Promise with product list and audit tracking
+   */
+  getProducts: async (params: GetProductsParams = {}): Promise<{
+    products: Product[];
+    total: number;
+    page: number;
+    auditId: string;
+  }> => {
+    try {
+      // Validate and sanitize input parameters
+      const validatedParams = validateRequest(params, {
+        page: { type: 'number', min: 1 },
+        limit: { type: 'number', min: 1, max: 100 },
+        category: { type: 'enum', enum: ProductCategory },
+        sortBy: { type: 'enum', enum: ProductSortOption },
+        status: { type: 'enum', enum: ProductStatus }
+      });
+
+      // Generate audit ID for request tracking
+      const auditId = `MP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      const response = await axios.get(buildUrl(MarketplaceEndpoints.GET_PRODUCTS), {
+        params: validatedParams,
+        headers: {
+          ...API_CONFIG.headers,
+          'X-Audit-ID': auditId
+        }
+      });
+
+      // Validate and sanitize response data
+      const sanitizedData = sanitizeData(response.data);
+
+      // Log request for audit trail
+      logger.info('Products retrieved', {
+        auditId,
+        params: validatedParams,
+        resultCount: sanitizedData.products.length
+      });
+
+      return {
+        ...sanitizedData,
+        auditId
+      };
+
+    } catch (error) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  },
+
+  /**
+   * Retrieves detailed product information by ID with security validation
+   * @param productId - Unique product identifier
+   * @returns Promise with product details and audit tracking
+   */
+  getProductById: async (productId: string): Promise<Product & { auditId: string }> => {
+    try {
+      // Validate product ID format
+      if (!productId.match(/^[A-Za-z0-9-]+$/)) {
+        throw new Error(ErrorCode.INVALID_INPUT);
+      }
+
+      const auditId = `MP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      const response = await axios.get(
+        buildUrl(processEndpointParams(MarketplaceEndpoints.GET_PRODUCT, { id: productId })),
+        {
+          headers: {
+            ...API_CONFIG.headers,
+            'X-Audit-ID': auditId
+          }
+        }
+      );
+
+      // Validate response against schema
+      const sanitizedData = sanitizeData(response.data);
+
+      // Log access for audit trail
+      logger.info('Product details accessed', {
+        auditId,
+        productId,
+        category: sanitizedData.category
+      });
+
+      return {
+        ...sanitizedData,
+        auditId
+      };
+
+    } catch (error) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  },
+
+  /**
+   * Initiates secure product purchase with comprehensive validation
+   * @param productId - Product to purchase
+   * @param paymentDetails - Encrypted payment information
+   * @returns Promise with transaction details and audit tracking
+   */
+  purchaseProduct: async (
+    productId: string,
+    paymentDetails: PaymentDetails
+  ): Promise<{
+    transactionId: string;
+    status: string;
+    auditId: string;
+    securityToken: string;
+  }> => {
+    try {
+      // Validate inputs
+      if (!productId.match(/^[A-Za-z0-9-]+$/)) {
+        throw new Error(ErrorCode.INVALID_INPUT);
+      }
+
+      // Generate secure transaction identifiers
+      const auditId = `MP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const securityToken = await encryptPayload(JSON.stringify({
+        auditId,
+        timestamp: Date.now(),
+        productId
+      }));
+
+      const response = await axios.post(
+        buildUrl(processEndpointParams(MarketplaceEndpoints.PURCHASE_PRODUCT, { id: productId })),
+        {
+          paymentDetails,
+          securityToken
+        },
+        {
+          headers: {
+            ...API_CONFIG.headers,
+            'X-Audit-ID': auditId,
+            'X-Security-Token': securityToken
+          }
+        }
+      );
+
+      // Validate transaction response
+      const sanitizedData = sanitizeData(response.data);
+
+      // Log transaction for audit
+      logger.info('Product purchase initiated', {
+        auditId,
+        productId,
+        transactionId: sanitizedData.transactionId,
+        status: sanitizedData.status
+      });
+
+      return {
+        ...sanitizedData,
+        auditId,
+        securityToken
+      };
+
+    } catch (error) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  }
 };
