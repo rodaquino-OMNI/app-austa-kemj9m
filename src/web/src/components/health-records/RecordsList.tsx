@@ -6,7 +6,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react'; // ^18.0.0
 import { format } from 'date-fns'; // ^2.30.0
-import { useVirtual } from '@tanstack/react-virtual'; // ^2.10.4
+import { useVirtual } from '@tanstack/react-virtual'; // ^3.0.0
 import { AuditLogger } from '@healthcare/audit-logger'; // ^1.2.0
 
 // Internal imports
