@@ -67,21 +67,6 @@ export interface IMFACredentials {
 }
 
 /**
- * Interface for MFA setup configuration
- * Defines the structure for multi-factor authentication setup
- */
-export interface IMFASetup {
-    method: MFAMethod;
-    phoneNumber?: string;
-    email?: string;
-    qrCodeUrl?: string;
-    secretKey?: string;
-    backupCodes?: string[];
-    setupCompletedAt?: number;
-    verificationRequired: boolean;
-}
-
-/**
  * Interface for authentication errors with detailed tracking
  * Implements comprehensive error logging for security auditing
  */
@@ -105,6 +90,8 @@ export interface IAuthContext {
     error: IAuthError | null;
     lastActivity: number;
     sessionTimeout: number;
+    isAuthenticated: boolean;
+    checkAccess: (level: SecurityLevel) => Promise<boolean>;
 }
 
 /**
@@ -112,6 +99,11 @@ export interface IAuthContext {
  * Defines granular access control levels
  */
 export type PermissionLevel = 'READ' | 'WRITE' | 'ADMIN' | 'NONE';
+
+/**
+ * Type for security levels used in access control
+ */
+export type SecurityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 /**
  * Interface for resource permissions
@@ -169,10 +161,10 @@ export interface IOAuthProviderConfig {
 }
 
 /**
- * Interface for security event logging
+ * Type for security event logging
  * Implements comprehensive security audit tracking
  */
-export interface ISecurityEvent {
+export type SecurityEvent = {
     eventType: string;
     timestamp: number;
     userId: string;
@@ -180,4 +172,4 @@ export interface ISecurityEvent {
     metadata: Record<string, any>;
     severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
     outcome: 'SUCCESS' | 'FAILURE' | 'ERROR';
-}
+};
