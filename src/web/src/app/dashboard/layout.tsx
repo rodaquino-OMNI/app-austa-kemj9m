@@ -8,12 +8,12 @@
 import React, { useState, useEffect, useCallback } from 'react'; // v18.0.0
 import styled from '@emotion/styled'; // v11.11.0
 import { useRouter } from 'next/router'; // v13.0.0
-import { Theme } from '@emotion/react';
 
 // Internal imports
 import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
+import { AuthState } from '../../lib/types/auth';
 
 // Constants
 const SIDEBAR_WIDTH = 280;
@@ -39,7 +39,7 @@ const StyledDashboardLayout = styled.div<{
 }>`
   display: flex;
   min-height: 100vh;
-  background: ${({ theme }) => theme.palette.background.default};
+  background: var(--color-background-default);
   transition: padding 0.3s ease;
   padding-left: ${({ sidebarCollapsed }) =>
     sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH}px;
@@ -87,7 +87,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   emergencyMode = false
 }) => {
   const router = useRouter();
-  const { user, isAuthenticated, checkAccess } = useAuth();
+  const { user, state, tokens } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
 
@@ -95,7 +95,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
    * Securely toggles sidebar state with audit logging
    */
   const handleSidebarToggle = useCallback(() => {
-    if (!isAuthenticated) return;
+    if (state !== AuthState.AUTHENTICATED) return;
     
     setSidebarCollapsed(prev => {
       const newState = !prev;
@@ -111,22 +111,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       }
       return newState;
     });
-  }, [isAuthenticated, user]);
+  }, [state, user]);
 
   /**
    * Verifies user has appropriate dashboard access rights
    */
   const checkDashboardAccess = useCallback(async () => {
-    if (!isAuthenticated || !user) {
+    if (state !== AuthState.AUTHENTICATED || !user) {
       router.push('/auth/login');
       return;
     }
 
-    const hasAccess = await checkAccess(accessLevel);
+    // Check access based on user role and security level
+    const hasAccess = user.role === 'ADMIN' || accessLevel === 'LOW';
     if (!hasAccess) {
       router.push('/403');
     }
-  }, [isAuthenticated, user, accessLevel, router, checkAccess]);
+  }, [state, user, accessLevel, router]);
 
   /**
    * Monitors user activity for session management
@@ -195,7 +196,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     }
   }, [user]);
 
-  if (!isAuthenticated) {
+  if (state !== AuthState.AUTHENTICATED) {
     return null;
   }
 
