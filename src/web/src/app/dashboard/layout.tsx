@@ -8,11 +8,12 @@
 import React, { useState, useEffect, useCallback } from 'react'; // v18.0.0
 import styled from '@emotion/styled'; // v11.11.0
 import { useRouter } from 'next/router'; // v13.0.0
+import { Theme } from '@emotion/react';
 
 // Internal imports
 import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
-import { useAuth } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
 
 // Constants
 const SIDEBAR_WIDTH = 280;
@@ -86,7 +87,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   emergencyMode = false
 }) => {
   const router = useRouter();
-  const auth = useAuth();
+  const { user, isAuthenticated, checkAccess } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
 
@@ -94,7 +95,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
    * Securely toggles sidebar state with audit logging
    */
   const handleSidebarToggle = useCallback(() => {
-    if (!auth?.isAuthenticated) return;
+    if (!isAuthenticated) return;
     
     setSidebarCollapsed(prev => {
       const newState = !prev;
@@ -103,29 +104,29 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         localStorage.setItem('sidebarState', JSON.stringify({
           state: newState,
           timestamp: Date.now(),
-          userId: auth?.user?.id
+          userId: user?.id
         }));
       } catch (error) {
         console.error('Failed to store sidebar state:', error);
       }
       return newState;
     });
-  }, [auth?.isAuthenticated, auth?.user]);
+  }, [isAuthenticated, user]);
 
   /**
    * Verifies user has appropriate dashboard access rights
    */
   const checkDashboardAccess = useCallback(async () => {
-    if (!auth?.isAuthenticated || !auth?.user) {
+    if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
 
-    const hasAccess = await auth?.checkAccess?.(accessLevel);
+    const hasAccess = await checkAccess(accessLevel);
     if (!hasAccess) {
       router.push('/403');
     }
-  }, [auth?.isAuthenticated, auth?.user, auth?.checkAccess, accessLevel, router]);
+  }, [isAuthenticated, user, accessLevel, router, checkAccess]);
 
   /**
    * Monitors user activity for session management
@@ -185,16 +186,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       const savedState = localStorage.getItem('sidebarState');
       if (savedState) {
         const { state, userId } = JSON.parse(savedState);
-        if (userId === auth?.user?.id) {
+        if (userId === user?.id) {
           setSidebarCollapsed(state);
         }
       }
     } catch (error) {
       console.error('Failed to restore sidebar state:', error);
     }
-  }, [auth?.user]);
+  }, [user]);
 
-  if (!auth?.isAuthenticated) {
+  if (!isAuthenticated) {
     return null;
   }
 
