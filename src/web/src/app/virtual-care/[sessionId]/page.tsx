@@ -10,7 +10,8 @@ import {
   IConsultation, 
   ConsultationStatus, 
   ConnectionQuality,
-  isActiveConsultation 
+  isActiveConsultation,
+  IConsultationRoom 
 } from '../../../lib/types/consultation';
 
 // Security monitoring package version 2.0.0
@@ -98,6 +99,25 @@ const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
   }, [params.sessionId, router]);
 
   /**
+   * Verifies encryption status
+   */
+  const verifyEncryption = useCallback(async () => {
+    try {
+      const verified = await virtualCareApi.verifyEncryption(params.sessionId);
+      setSecurityContext(prev => ({
+        ...prev,
+        encryptionStatus: verified ? 'VERIFIED' : 'FAILED'
+      }));
+
+      if (!verified) {
+        handleSecurityViolation('ENCRYPTION_FAILED');
+      }
+    } catch (err) {
+      handleSecurityViolation('ENCRYPTION_VERIFICATION_ERROR');
+    }
+  }, [params.sessionId, handleSecurityViolation]);
+
+  /**
    * Initializes consultation session
    */
   useEffect(() => {
@@ -112,21 +132,29 @@ const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
           }
         );
 
-        if (!isActiveConsultation(consultationData)) {
+        const consultationInfo = {
+          ...consultationData,
+          id: params.sessionId,
+          type: 'VIDEO',
+          patientId: consultationData.room.localParticipant.identity,
+          providerId: Array.from(consultationData.room.participants.values())[0].identity,
+          status: ConsultationStatus.IN_PROGRESS,
+          participants: [],
+          healthRecordId: null,
+          roomSid: consultationData.room.sid,
+          metadata: {},
+          securityMetadata: {
+            encryptionVerified: consultationData.encryptionEnabled ? 'true' : 'false'
+          },
+          auditLog: []
+        } as IConsultation;
+
+        if (!isActiveConsultation(consultationInfo)) {
           throw new Error('Consultation is not active');
         }
 
-        setConsultation(consultationData);
-        setSecurityContext(prev => ({
-          ...prev,
-          encryptionStatus: consultationData.securityMetadata.encryptionVerified === 'true' 
-            ? 'VERIFIED' 
-            : 'FAILED'
-        }));
-
-        if (consultationData.securityMetadata.encryptionVerified !== 'true') {
-          handleSecurityViolation('ENCRYPTION_FAILED');
-        }
+        setConsultation(consultationInfo);
+        await verifyEncryption();
       } catch (err: any) {
         setError(err.message || 'Failed to initialize consultation');
         handleSecurityViolation('INITIALIZATION_FAILED');
@@ -141,7 +169,7 @@ const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
     return () => {
       handleConsultationEnd();
     };
-  }, [params.sessionId, handleConsultationEnd, handleSecurityViolation]);
+  }, [params.sessionId, verifyEncryption, handleConsultationEnd, handleSecurityViolation]);
 
   // Loading state
   if (loading) {
