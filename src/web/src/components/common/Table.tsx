@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useState, useRef } from 'react'; // ^18.0.0
 import styled from '@emotion/styled'; // ^11.11.0
 import { css } from '@emotion/react'; // ^11.11.0
-import { useVirtualizer } from '@tanstack/react-virtual'; // ^3.0.0
+import { useVirtual } from 'react-virtual'; // ^2.10.4
 import { theme } from '../../styles/theme';
 
 // Interfaces
@@ -40,7 +40,7 @@ interface SortConfig {
 const StyledTableContainer = styled.div`
   width: 100%;
   overflow: auto;
-  border-radius: ${theme.shape.borderRadiusSmall}px;
+  border-radius: ${theme.shape.borderRadius}px;
   background: ${theme.palette.background.paper};
   box-shadow: ${theme.shadows[0]};
 
@@ -66,7 +66,7 @@ const StyledTableHeader = styled.thead<{ sticky?: boolean }>`
 `;
 
 const StyledTableHeaderCell = styled.th<{ sortable?: boolean }>`
-  padding: ${theme.spacing.md}px;
+  padding: ${theme.spacing(2)}px;
   text-align: left;
   font-weight: ${theme.typography.fontWeightMedium};
   color: ${theme.palette.text.primary};
@@ -103,7 +103,7 @@ const StyledTableRow = styled.tr<{ selected?: boolean }>`
 `;
 
 const StyledTableCell = styled.td`
-  padding: ${theme.spacing.md}px;
+  padding: ${theme.spacing(2)}px;
   color: ${theme.palette.text.primary};
   border-bottom: 1px solid ${theme.palette.divider};
 `;
@@ -112,8 +112,8 @@ const StyledPagination = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: ${theme.spacing.md}px;
-  gap: ${theme.spacing.sm}px;
+  padding: ${theme.spacing(2)}px;
+  gap: ${theme.spacing(1)}px;
 `;
 
 // Custom Hooks
@@ -183,10 +183,10 @@ export const Table: React.FC<TableProps> = React.memo(({
   
   const [currentPage, setCurrentPage] = useState(0);
   
-  const rowVirtualizer = useVirtualizer({
-    count: sortedData.length,
-    getScrollElement: () => containerRef.current,
-    estimateSize: () => 48,
+  const rowVirtualizer = useVirtual({
+    size: sortedData.length,
+    parentRef: containerRef,
+    estimateSize: useCallback(() => 48, []),
     overscan: 5
   });
 
@@ -230,7 +230,8 @@ export const Table: React.FC<TableProps> = React.memo(({
             sortable={sortable && column.sortable}
             onClick={() => column.sortable && handleSort(column.id)}
             style={{ width: column.width }}
-            aria-sort={sortConfig?.column === column.id ? sortConfig.direction : undefined}
+            aria-sort={sortConfig?.column === column.id ? 
+              (sortConfig.direction === 'asc' ? 'ascending' : 'descending') : undefined}
           >
             {column.header}
             {sortable && column.sortable && sortConfig?.column === column.id && (
@@ -247,7 +248,7 @@ export const Table: React.FC<TableProps> = React.memo(({
   const renderTableBody = () => (
     <tbody>
       {virtualScroll ? (
-        rowVirtualizer.getVirtualItems().map(virtualRow => {
+        rowVirtualizer.virtualItems.map(virtualRow => {
           const row = displayData[virtualRow.index];
           return (
             <StyledTableRow
