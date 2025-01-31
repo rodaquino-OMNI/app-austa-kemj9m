@@ -1,30 +1,3 @@
-```
-
-2. Second error is about missing ViewerAccessLevel:
-```
-Module '../../lib/types/healthRecord' has no exported member 'ViewerAccessLevel'
-```
-
-3. Third error is about subscribeToUpdates not existing:
-```
-Property 'subscribeToUpdates' does not exist on type
-```
-
-4. Fourth and fifth errors are about missing Analytics enums:
-```
-Property 'AnalyticsCategory' and 'PrivacyLevel' do not exist on type 'typeof Analytics'
-```
-
-5. Last set of errors are about null checks and optional chaining for selectedRecord:
-```
-'selectedRecord.attachments.length' is possibly 'undefined'
-'selectedRecord' is possibly 'null'
-```
-
-Let me regenerate the file with fixes:
-
-# src/web/src/app/health-records/page.tsx
-```typescript
 'use client';
 
 /**
