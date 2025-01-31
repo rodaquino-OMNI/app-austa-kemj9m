@@ -68,6 +68,14 @@ const SENSITIVE_PATTERNS = {
 export namespace Analytics {
   let initialized = false;
 
+  export interface ErrorContext {
+    componentStack?: string;
+    additionalInfo?: Record<string, unknown>;
+    severity?: 'low' | 'medium' | 'high' | 'critical';
+    source?: string;
+    userAction?: string;
+  }
+
   /**
    * Initializes analytics providers with HIPAA-compliant configuration
    */
