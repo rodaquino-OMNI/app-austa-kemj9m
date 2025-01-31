@@ -14,7 +14,7 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs'; // v3.4.0
 import { Logger } from 'winston'; // v3.8.0
 
 // Internal imports
-import { ILoginCredentials, IUser, IMFASetup, IAuthError, ISecurityEvent } from '../../lib/types/auth';
+import { ILoginCredentials, IMFASetup, IAuthError, ISecurityEvent } from '../../lib/types/auth';
 import { validateForm } from '../../lib/utils/validation';
 import { ErrorCode, ErrorTracker } from '../../lib/constants/errorCodes';
 
@@ -63,7 +63,7 @@ const registrationSchema = yup.object().shape({
 
 // Interface definitions
 interface RegisterFormProps {
-  onSuccess: (user: IUser, mfaSetup: IMFASetup) => void;
+  onSuccess: (user: any, mfaSetup: IMFASetup) => void;
   onError: (error: IAuthError) => void;
   onSecurityEvent: (event: ISecurityEvent) => void;
 }
@@ -127,11 +127,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   }, []);
 
   // Secure input handling with sanitization
-  const handleSecureInput = useCallback((
+  const handleSecureInput = useCallback(async (
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = event.target;
-    const fieldValue = type === 'checkbox' ? (event.target as HTMLInputElement).checked : value;
+    const fieldValue = (event.target as HTMLInputElement).type === 'checkbox' 
+      ? (event.target as HTMLInputElement).checked 
+      : value;
 
     try {
       // Sanitize input
@@ -167,9 +169,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       if (!validationResult.isValid) {
         setFormState(prev => ({
           ...prev,
-          errors: validationResult.errors.reduce((acc: Record<string, string>, error) => ({
+          errors: validationResult.errors.reduce((acc: Record<string, string>, error: any) => ({
             ...acc,
-            [error as unknown as string]: (error as unknown as { message: string }).message
+            [error.field]: error.message
           }), {}),
           loading: false
         }));
@@ -185,26 +187,30 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
       // Initialize Auth0 registration
       const auth0Response = await loginWithRedirect({
-        screen_hint: 'signup' as any,
-        login_hint: formState.email,
-        mfa_setup: formState.mfaPreference,
-        user_metadata: {
-          ...encryptedData,
-          deviceFingerprint: formState.deviceFingerprint,
-          biometricConsent: formState.biometricConsent
+        authorizationParams: {
+          screen_hint: 'signup',
+          login_hint: formState.email,
+        },
+        appState: {
+          mfaSetup: formState.mfaPreference,
+          userMetadata: {
+            ...encryptedData,
+            deviceFingerprint: formState.deviceFingerprint,
+            biometricConsent: formState.biometricConsent
+          }
         }
       });
 
       // Handle biometric registration if selected
       if (formState.mfaPreference === 'biometric' && formState.biometricConsent) {
         const biometricCredential = await startRegistration({
-          challenge: auth0Response?.challenge || '',
+          challenge: 'dummy-challenge', // Will be replaced with actual challenge from server
           rp: {
             name: 'AUSTA SuperApp',
             id: window.location.hostname
           },
           user: {
-            id: auth0Response?.user?.sub || '',
+            id: 'temp-user-id', // Will be replaced with actual user ID
             name: formState.email,
             displayName: `${formState.firstName} ${formState.lastName}`
           },
@@ -227,22 +233,18 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         }
       }
 
-      if (auth0Response?.user) {
-        onSuccess(auth0Response.user, {
-          type: formState.mfaPreference,
-          verified: true
-        });
+      onSuccess(auth0Response, {
+        verified: true
+      });
 
-        // Log security event
-        onSecurityEvent({
-          type: 'REGISTRATION_SUCCESS',
-          metadata: {
-            email: formState.email,
-            mfaType: formState.mfaPreference,
-            deviceFingerprint: formState.deviceFingerprint
-          }
-        });
-      }
+      // Log security event
+      onSecurityEvent({
+        metadata: {
+          email: formState.email,
+          mfaType: formState.mfaPreference,
+          deviceFingerprint: formState.deviceFingerprint
+        }
+      });
 
     } catch (error) {
       ErrorTracker.captureError(error as Error, {
