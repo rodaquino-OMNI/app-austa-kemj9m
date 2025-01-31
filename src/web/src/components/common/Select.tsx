@@ -38,12 +38,22 @@ interface SelectProps {
   medicalDataType?: 'diagnosis' | 'medication' | 'procedure' | 'general';
 }
 
-// Styled Components
-const StyledSelectContainer = styled.div<{
+interface StyledSelectContainerProps {
   fullWidth?: boolean;
   clinicalMode?: string;
   validationLevel?: string;
-}>`
+}
+
+interface StyledSelectProps {
+  size?: 'small' | 'medium' | 'large';
+  error?: boolean;
+  clinicalMode?: 'standard' | 'critical' | 'monitoring';
+  validationLevel?: 'none' | 'warning' | 'critical';
+  secureContent?: boolean;
+}
+
+// Styled Components
+const StyledSelectContainer = styled.div<StyledSelectContainerProps>`
   position: relative;
   width: ${props => props.fullWidth ? '100%' : 'auto'};
   font-family: ${theme.typography.fontFamily};
@@ -61,17 +71,11 @@ const StyledSelectContainer = styled.div<{
   `}
 `;
 
-const StyledSelect = styled.select<{
-  size: 'small' | 'medium' | 'large';
-  error?: boolean;
-  clinicalMode?: 'standard' | 'critical' | 'monitoring';
-  validationLevel?: string;
-  secureContent?: boolean;
-}>`
+const StyledSelect = styled.select<StyledSelectProps>`
   width: 100%;
-  padding: ${props => COMPONENT_SIZES[props.size].padding};
-  height: ${props => COMPONENT_SIZES[props.size].height};
-  font-size: ${props => COMPONENT_SIZES[props.size].fontSize};
+  padding: ${props => COMPONENT_SIZES[props.size || 'medium'].padding};
+  height: ${props => COMPONENT_SIZES[props.size || 'medium'].height};
+  font-size: ${props => COMPONENT_SIZES[props.size || 'medium'].fontSize};
   color: ${theme.palette.text.primary};
   background-color: ${theme.palette.background.paper};
   border: 1px solid ${props => 
@@ -80,7 +84,7 @@ const StyledSelect = styled.select<{
     props.validationLevel === 'critical' ? theme.palette.error.main :
     theme.palette.text.disabled
   };
-  border-radius: ${theme.shape.borderRadiusSmall}px;
+  border-radius: ${theme.shape.borderRadius}px;
   cursor: pointer;
   appearance: none;
   transition: all 0.2s ease-in-out;
@@ -117,8 +121,8 @@ const HelperText = styled.span<{ error?: boolean }>`
 // Validation Functions
 const validateMedicalData = (
   value: string | string[],
-  options: SelectOption[],
-  medicalDataType?: string
+  medicalDataType?: string,
+  options: SelectOption[]
 ): ValidationResult => {
   if (!medicalDataType) return { isValid: true, severity: 'none' };
 
@@ -186,7 +190,7 @@ export const Select: React.FC<SelectProps> = ({
       ? Array.from(event.target.selectedOptions, option => option.value)
       : event.target.value;
 
-    const validationResult = validateMedicalData(newValue, options, medicalDataType);
+    const validationResult = validateMedicalData(newValue, medicalDataType, options);
     onChange(newValue, validationResult);
   }, [multiple, medicalDataType, options, onChange]);
 
