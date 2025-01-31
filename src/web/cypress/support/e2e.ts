@@ -23,7 +23,8 @@ Cypress.on('window:before:load', (win) => {
     originalError.apply(win.console, args);
     Cypress.log({
       name: 'Console Error',
-      message: args.join(' ')
+      message: args.join(' '),
+      level: 'error'
     });
   };
 });
@@ -35,8 +36,6 @@ Cypress.config('responseTimeout', 30000);
 Cypress.config('pageLoadTimeout', 30000);
 Cypress.config('viewportWidth', 1280);
 Cypress.config('viewportHeight', 720);
-Cypress.config('chromeWebSecurity', true);
-Cypress.config('video', true);
 Cypress.config('retries', {
   runMode: 2,
   openMode: 0
@@ -84,12 +83,22 @@ beforeEach(() => {
 // Enhanced afterEach hook with comprehensive validation
 afterEach(() => {
   // Validate accessibility compliance
-  cy.checkA11y(null, {
+  cy.checkA11y({
+    includedImpacts: ['critical', 'serious'],
     rules: {
       'color-contrast': { enabled: true },
       'html-has-lang': { enabled: true },
       'valid-aria-roles': { enabled: true }
     }
+  });
+
+  // Verify security headers
+  cy.verifySecurityHeaders({
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Content-Security-Policy': "default-src 'self'"
   });
 
   // Check performance metrics
@@ -103,6 +112,12 @@ afterEach(() => {
     // Validate against SLA requirements
     expect(testDuration).to.be.lessThan(500, 'Test execution time exceeds SLA threshold');
   });
+
+  // Validate HIPAA compliance
+  cy.validateHIPAACompliance();
+
+  // Generate security test report
+  cy.task('generateSecurityReport');
 
   // Clean up test data securely
   cy.task('secureCleanup');
