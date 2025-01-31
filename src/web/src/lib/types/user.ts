@@ -104,6 +104,7 @@ export interface IUser {
     status: UserStatus;
     profile: IUserProfile;
     securitySettings: IUserSecuritySettings;
+    specialization: string;
     createdAt: Date;
     updatedAt: Date;
     lastAuditAt: Date;
