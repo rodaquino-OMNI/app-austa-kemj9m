@@ -14,6 +14,7 @@ import { AuditLogger } from '@hipaa-audit/logger'; // v2.0.0
 import Header from './Header';
 import Sidebar from './Sidebar';
 import useAuth from '../../hooks/useAuth';
+import { AuthState } from '../../lib/types/auth';
 
 // Constants
 const SIDEBAR_WIDTH = 280;
@@ -88,7 +89,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   securityLevel = 'MEDIUM'
 }) => {
   const router = useRouter();
-  const { user, state: authState, checkEmergencyMode } = useAuth();
+  const { user, state } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [highContrast, setHighContrast] = useState(false);
   const auditLogger = new AuditLogger();
@@ -97,7 +98,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   const checkAdminAccess = useCallback(
     async (requiredLevel: AdminSecurityLevel): Promise<boolean> => {
       try {
-        if (authState !== 'AUTHENTICATED' || !user) {
+        if (state !== AuthState.AUTHENTICATED || !user) {
           await auditLogger.log({
             action: 'ADMIN_ACCESS_DENIED',
             userId: 'unknown',
@@ -128,7 +129,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         return false;
       }
     },
-    [authState, user, auditLogger]
+    [state, user, auditLogger]
   );
 
   // Handle emergency mode changes
