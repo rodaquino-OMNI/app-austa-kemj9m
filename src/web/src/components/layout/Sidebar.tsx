@@ -252,11 +252,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         >
           <NavigationItem
             component="div"
+            active={isRouteActive(item.route)}
             onClick={() => item.children ? handleExpand(item.id) : router.push(item.route)}
             sx={{ pl: level * 2 }}
             aria-label={item.label}
             role="menuitem"
-            active={isRouteActive(item.route)}
           >
             <ListItemIcon sx={{ minWidth: 40 }}>
               {item.icon}
