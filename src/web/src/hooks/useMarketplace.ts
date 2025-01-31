@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Product, ProductCategory, ProductSortOption } from '../lib/types/product';
 import { useAnalytics } from './useAnalytics';
-import * as marketplaceApi from '../lib/api/marketplace';
+import { MarketplaceAPI } from '../lib/api/marketplace';
 import { ErrorCode } from '../lib/constants/errorCodes';
 
 // Security context type for HIPAA compliance
@@ -97,7 +97,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
     const startTime = performance.now();
 
     try {
-      const response = await marketplaceApi.getProducts({
+      const response = await MarketplaceAPI.getProducts({
         page: filters.page,
         limit: filters.limit,
         category: filters.category,
@@ -114,9 +114,17 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         loading: false
       }));
 
-      // Track successful fetch
+      // Track successful fetch with required analytics fields
       logEvent({
         name: 'marketplace_products_fetched',
+        category: 'MARKETPLACE',
+        timestamp: Date.now(),
+        userConsent: true,
+        privacyLevel: 'PUBLIC',
+        auditInfo: {
+          eventId: crypto.randomUUID(),
+          timestamp: Date.now()
+        },
         properties: {
           productCount: response.products.length,
           category: filters.category,
@@ -124,11 +132,16 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         }
       });
 
-      // Track performance
+      // Track performance with required fields
       logPerformance({
         name: 'marketplace_fetch_duration',
         value: performance.now() - startTime,
-        tags: { category: filters.category?.toString() || 'all' }
+        tags: { category: filters.category?.toString() || 'all' },
+        timestamp: Date.now(),
+        context: {
+          operation: 'fetchProducts',
+          filters: JSON.stringify(filters)
+        }
       });
 
     } catch (error: any) {
@@ -150,17 +163,25 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'fetchProducts',
         filters
-      }, 'PROTECTED');
+      }, 'INTERNAL');
     }
   }, [filters, logEvent, logError, logPerformance]);
 
   // Secure product retrieval by ID
   const getProductById = useCallback(async (productId: string) => {
     try {
-      const product = await marketplaceApi.getProductById(productId);
+      const product = await MarketplaceAPI.getProductById(productId);
       
       logEvent({
         name: 'marketplace_product_viewed',
+        category: 'MARKETPLACE',
+        timestamp: Date.now(),
+        userConsent: true,
+        privacyLevel: 'PUBLIC',
+        auditInfo: {
+          eventId: crypto.randomUUID(),
+          timestamp: Date.now()
+        },
         properties: {
           productId,
           category: product.category
@@ -173,7 +194,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'getProductById',
         productId
-      }, 'PROTECTED');
+      }, 'INTERNAL');
       throw error;
     }
   }, [logEvent, logError]);
@@ -184,10 +205,18 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
     paymentDetails: { paymentMethodId: string; encryptedData: string }
   ) => {
     try {
-      const result = await marketplaceApi.purchaseProduct(productId, paymentDetails);
+      const result = await MarketplaceAPI.purchaseProduct(productId, paymentDetails);
 
       logEvent({
         name: 'marketplace_product_purchased',
+        category: 'MARKETPLACE',
+        timestamp: Date.now(),
+        userConsent: true,
+        privacyLevel: 'PUBLIC',
+        auditInfo: {
+          eventId: crypto.randomUUID(),
+          timestamp: Date.now()
+        },
         properties: {
           productId,
           transactionId: result.transactionId
@@ -200,7 +229,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'purchaseProduct',
         productId
-      }, 'PROTECTED');
+      }, 'INTERNAL');
       throw error;
     }
   }, [logEvent, logError]);
