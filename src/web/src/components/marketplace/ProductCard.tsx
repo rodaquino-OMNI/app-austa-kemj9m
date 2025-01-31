@@ -13,10 +13,7 @@ const MIN_TOUCH_TARGET_SIZE = 44;
 
 // Types
 interface ProductCardProps {
-  product: Product & {
-    insuranceCovered?: boolean;
-    badges?: string[];
-  };
+  product: Product;
   onClick?: (product: Product) => void;
   clinicalMode?: boolean;
 }
@@ -31,8 +28,8 @@ const StyledCard = styled(Card)<{ isHovered: boolean; clinicalMode: boolean }>`
   transform: ${({ isHovered }) => isHovered ? 'translateY(-4px)' : 'none'};
   
   ${({ clinicalMode, theme }) => clinicalMode && `
-    border-left: 4px solid ${(theme as Theme).palette.clinical.main};
-    background-color: ${(theme as Theme).palette.background.clinical};
+    border-left: 4px solid ${(theme as Theme).palette.primary.main};
+    background-color: ${(theme as Theme).palette.background.paper};
   `}
 
   @media (prefers-reduced-motion: reduce) {
@@ -74,11 +71,11 @@ const PriceContainer = styled.div`
   min-height: ${MIN_TOUCH_TARGET_SIZE}px;
 `;
 
-const Price = styled.span<{ insuranceCovered: boolean }>`
+const Price = styled.span<{ isDiscounted: boolean }>`
   font-size: 1.25rem;
   font-weight: 600;
-  color: ${({ theme, insuranceCovered }) => 
-    insuranceCovered ? (theme as Theme).palette.success.main : (theme as Theme).palette.text.primary};
+  color: ${({ theme, isDiscounted }) => 
+    isDiscounted ? (theme as Theme).palette.success.main : (theme as Theme).palette.text.primary};
 `;
 
 const BadgeContainer = styled.div`
@@ -107,9 +104,9 @@ const formatPrice = (price: number): string => {
   }).format(price / 100);
 };
 
-const truncateText = (text: string): string => {
-  if (text.length <= MAX_DESCRIPTION_LENGTH) return text;
-  return `${text.substring(0, MAX_DESCRIPTION_LENGTH - 3)}...`;
+const truncateText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) return text;
+  return `${text.substring(0, maxLength - 3)}...`;
 };
 
 // Main Component
@@ -175,9 +172,9 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
           sizes="(max-width: 768px) 100vw, 360px"
         />
         <BadgeContainer>
-          {product.badges?.map((badge: string) => (
-            <Badge key={badge} role="status">
-              {badge}
+          {product.tags?.map((tag: string) => (
+            <Badge key={tag} role="status">
+              {tag}
             </Badge>
           ))}
         </BadgeContainer>
@@ -188,11 +185,11 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
           {product.name}
         </Title>
         <Description aria-label={product.description}>
-          {truncateText(product.description)}
+          {truncateText(product.description, MAX_DESCRIPTION_LENGTH)}
         </Description>
         <PriceContainer>
           <Price 
-            insuranceCovered={product.insuranceCovered || false}
+            isDiscounted={false}
             aria-label={`Price: ${formatPrice(product.price)}`}
           >
             {formatPrice(product.price)}
