@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react'; // ^18.0.0
-import styled from '@emotion/styled'; // ^11.11.0
-import { css } from '@emotion/react'; // ^11.11.0
+import React, { useCallback, useMemo, useState } from 'react';
+import styled from '@emotion/styled';
+import { css } from '@emotion/react';
 import { theme } from '../../styles/theme';
 import { COMPONENT_SIZES, CLINICAL_STATES } from '../../styles/components';
 
@@ -62,11 +62,11 @@ const StyledSelectContainer = styled.div<{
 `;
 
 const StyledSelect = styled.select<{
+  size?: string;
   error?: boolean;
   clinicalMode?: string;
   validationLevel?: string;
   secureContent?: boolean;
-  size: 'small' | 'medium' | 'large';
 }>`
   width: 100%;
   padding: ${props => COMPONENT_SIZES[props.size || 'medium'].padding};
@@ -80,7 +80,7 @@ const StyledSelect = styled.select<{
     props.validationLevel === 'critical' ? theme.palette.error.main :
     theme.palette.text.disabled
   };
-  border-radius: ${theme.shape.borderRadiusSmall}px;
+  border-radius: ${theme.shape.borderRadius}px;
   cursor: pointer;
   appearance: none;
   transition: all 0.2s ease-in-out;
@@ -93,7 +93,7 @@ const StyledSelect = styled.select<{
   &:focus {
     outline: none;
     border-color: ${theme.palette.primary.main};
-    box-shadow: 0 0 0 ${CLINICAL_STATES[props.clinicalMode || 'standard'].focus} ${theme.palette.primary.light}30;
+    box-shadow: 0 0 0 ${({ clinicalMode }) => CLINICAL_STATES[clinicalMode || 'standard'].focus} ${theme.palette.primary.light}30;
   }
 
   &:disabled {
