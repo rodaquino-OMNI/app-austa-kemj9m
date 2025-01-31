@@ -113,6 +113,37 @@ class VirtualCareApi {
   }
 
   /**
+   * Verifies encryption status of an existing consultation
+   * @param consultationId ID of the consultation to verify
+   * @returns Boolean indicating if encryption is active and valid
+   */
+  public async verifyEncryption(consultationId: string): Promise<boolean> {
+    try {
+      const response = await this.axiosInstance.get(
+        `${VirtualCareEndpoints.GET_SESSION_TOKEN}/${consultationId}/encryption-status`
+      );
+      
+      const isEncrypted = response.data.encryptionStatus === 'active' && 
+                         response.data.encryptionVerified === true;
+
+      logger.info('Encryption verification completed', {
+        consultationId,
+        isEncrypted,
+        timestamp: new Date().toISOString()
+      });
+
+      return isEncrypted;
+    } catch (error) {
+      logger.error('Failed to verify encryption', {
+        error,
+        consultationId,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Joins an existing virtual consultation with security verification
    * @param consultationId ID of the consultation to join
    * @param securityContext Security context for the session
