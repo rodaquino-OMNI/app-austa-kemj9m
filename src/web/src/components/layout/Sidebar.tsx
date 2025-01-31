@@ -18,7 +18,8 @@ import {
   ListItemIcon,
   ListItemText,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Theme
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -43,7 +44,7 @@ import {
   ADMIN_ROUTES
 } from '../../lib/constants/routes';
 
-import { useAuth } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
 import { UserRole } from '../../lib/types/user';
 
 // Constants
@@ -68,7 +69,7 @@ interface SidebarProps {
 }
 
 // Styled Components
-const SidebarContainer = styled.nav<{ isCollapsed: boolean; width: number }>`
+const SidebarContainer = styled.nav<{ isCollapsed: boolean; width: number; theme: Theme }>`
   width: ${({ isCollapsed, width }) => (isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : width)}px;
   height: 100vh;
   background: ${({ theme }) => theme.palette.background.paper};
@@ -96,7 +97,7 @@ const SidebarContainer = styled.nav<{ isCollapsed: boolean; width: number }>`
   }
 `;
 
-const SidebarHeader = styled.div`
+const SidebarHeader = styled.div<{ theme: Theme }>`
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -104,11 +105,11 @@ const SidebarHeader = styled.div`
   min-height: 64px;
 `;
 
-const NavigationList = styled(List)`
+const NavigationList = styled(List)<{ theme: Theme }>`
   padding: ${({ theme }) => theme.spacing(1)};
 `;
 
-const NavigationItem = styled(ListItem)<{ active?: boolean }>`
+const NavigationItem = styled(ListItem)<{ active?: boolean; theme: Theme }>`
   border-radius: ${({ theme }) => theme.shape.borderRadius}px;
   margin-bottom: ${({ theme }) => theme.spacing(0.5)};
   background-color: ${({ active, theme }) =>
@@ -250,12 +251,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           arrow
         >
           <NavigationItem
-            button
-            active={isRouteActive(item.route)}
+            component="div"
             onClick={() => item.children ? handleExpand(item.id) : router.push(item.route)}
             sx={{ pl: level * 2 }}
             aria-label={item.label}
             role="menuitem"
+            active={isRouteActive(item.route)}
           >
             <ListItemIcon sx={{ minWidth: 40 }}>
               {item.icon}
@@ -297,8 +298,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       width={width}
       role="navigation"
       aria-label="Main navigation"
+      theme={theme}
     >
-      <SidebarHeader>
+      <SidebarHeader theme={theme}>
         <IconButton
           onClick={onToggle}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -309,7 +311,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </IconButton>
       </SidebarHeader>
 
-      <NavigationList role="menu">
+      <NavigationList role="menu" theme={theme}>
         {renderNavigationItems(navigationItems)}
       </NavigationList>
     </SidebarContainer>
