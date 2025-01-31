@@ -89,7 +89,7 @@ const StyledModal = styled.div<{
   border: 2px solid ${({ clinicalContext }) =>
     CLINICAL_CONTEXTS[clinicalContext as keyof typeof CLINICAL_CONTEXTS].borderColor};
   border-radius: ${theme.shape.borderRadius}px;
-  box-shadow: ${theme.shadows[2]};
+  box-shadow: ${theme.shadows[24]};
   width: ${({ size }) => MODAL_SIZES[size].width};
   max-height: ${({ size }) => MODAL_SIZES[size].maxHeight};
   max-width: 95vw;
@@ -121,7 +121,7 @@ const StyledModal = styled.div<{
 `;
 
 const ModalHeader = styled.div<{ clinicalContext: string }>`
-  padding: ${theme.spacing(4)}px;
+  padding: ${theme.spacing(3)}px;
   border-bottom: 1px solid ${({ clinicalContext }) =>
     CLINICAL_CONTEXTS[clinicalContext as keyof typeof CLINICAL_CONTEXTS].borderColor};
   display: flex;
@@ -138,14 +138,14 @@ const Title = styled.h2<{ clinicalContext: string }>`
 `;
 
 const Content = styled.div`
-  padding: ${theme.spacing(4)}px;
+  padding: ${theme.spacing(3)}px;
   overflow-y: auto;
   flex: 1;
   -webkit-overflow-scrolling: touch;
 `;
 
 const Actions = styled.div`
-  padding: ${theme.spacing(4)}px;
+  padding: ${theme.spacing(3)}px;
   border-top: 1px solid ${theme.palette.divider};
   display: flex;
   justify-content: flex-end;
