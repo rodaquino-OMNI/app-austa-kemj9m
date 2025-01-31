@@ -3,7 +3,6 @@ import styled from '@emotion/styled';
 import Image from 'next/image';
 import { Product, ProductCategory } from '../../lib/types/product';
 import { Card } from '../../styles/components';
-import { Theme } from '@mui/material';
 
 // Constants
 const MAX_DESCRIPTION_LENGTH = 150;
@@ -19,17 +18,17 @@ interface ProductCardProps {
 }
 
 // Styled Components
-const StyledCard = styled(Card)<{ isHovered: boolean; clinicalMode: boolean }>`
+const StyledCard = styled(Card)`
   position: relative;
   width: 100%;
   max-width: 360px;
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
-  transform: ${({ isHovered }) => isHovered ? 'translateY(-4px)' : 'none'};
+  transform: ${({ isHovered }: { isHovered: boolean }) => isHovered ? 'translateY(-4px)' : 'none'};
   
-  ${({ clinicalMode, theme }) => clinicalMode && `
-    border-left: 4px solid ${(theme as Theme).palette.primary.main};
-    background-color: ${(theme as Theme).palette.background.paper};
+  ${({ clinicalMode, theme }: { clinicalMode: boolean; theme: any }) => clinicalMode && `
+    border-left: 4px solid ${theme.palette.clinical.main};
+    background-color: ${theme.palette.background.clinical};
   `}
 
   @media (prefers-reduced-motion: reduce) {
@@ -53,14 +52,14 @@ const Title = styled.h3`
   margin: 0 0 8px 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: ${({ theme }) => (theme as Theme).palette.text.primary};
+  color: ${({ theme }) => theme.palette.text.primary};
   min-height: 44px;
 `;
 
 const Description = styled.p`
   margin: 0 0 16px 0;
   font-size: 0.875rem;
-  color: ${({ theme }) => (theme as Theme).palette.text.secondary};
+  color: ${({ theme }) => theme.palette.text.secondary};
   line-height: 1.5;
 `;
 
@@ -71,11 +70,11 @@ const PriceContainer = styled.div`
   min-height: ${MIN_TOUCH_TARGET_SIZE}px;
 `;
 
-const Price = styled.span<{ isDiscounted: boolean }>`
+const Price = styled.span<{ insuranceCovered: boolean }>`
   font-size: 1.25rem;
   font-weight: 600;
-  color: ${({ theme, isDiscounted }) => 
-    isDiscounted ? (theme as Theme).palette.success.main : (theme as Theme).palette.text.primary};
+  color: ${({ theme, insuranceCovered }) => 
+    insuranceCovered ? theme.palette.success.main : theme.palette.text.primary};
 `;
 
 const BadgeContainer = styled.div`
@@ -90,24 +89,26 @@ const BadgeContainer = styled.div`
 const Badge = styled.span`
   padding: 4px 8px;
   border-radius: 4px;
-  background-color: ${({ theme }) => (theme as Theme).palette.primary.main};
-  color: ${({ theme }) => (theme as Theme).palette.primary.contrastText};
+  background-color: ${({ theme }) => theme.palette.primary.main};
+  color: ${({ theme }) => theme.palette.primary.contrastText};
   font-size: 0.75rem;
   font-weight: 500;
 `;
 
 // Helper Functions
-const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('en-US', {
+const formatPrice = memo((price: number, insuranceCovered: boolean): string => {
+  const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
   }).format(price / 100);
-};
 
-const truncateText = (text: string, maxLength: number): string => {
+  return insuranceCovered ? `${formattedPrice} (Covered)` : formattedPrice;
+});
+
+const truncateText = memo((text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
   return `${text.substring(0, maxLength - 3)}...`;
-};
+});
 
 // Main Component
 const ProductCard: React.FC<ProductCardProps> = memo(({ 
@@ -136,29 +137,16 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
     setImageError(true);
   }, []);
 
-  const getCategoryBadgeColor = useCallback((category: ProductCategory) => {
-    switch (category) {
-      case ProductCategory.DIGITAL_THERAPY:
-        return 'primary';
-      case ProductCategory.WELLNESS_PROGRAM:
-        return 'secondary';
-      case ProductCategory.PROVIDER_SERVICE:
-        return 'clinical';
-      default:
-        return 'primary';
-    }
-  }, []);
-
   return (
     <StyledCard
       elevation="clinical"
-      clinicalMode={clinicalMode}
+      clinicalMode={clinicalMode ? 'standard' : undefined}
       isHovered={isHovered}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
       role="article"
-      aria-label={`${product.name} - ${formatPrice(product.price)}`}
+      aria-label={`${product.name} - ${formatPrice(product.price, product.insuranceCovered)}`}
     >
       <ImageContainer>
         <Image
@@ -172,9 +160,9 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
           sizes="(max-width: 768px) 100vw, 360px"
         />
         <BadgeContainer>
-          {product.tags?.map((tag: string) => (
-            <Badge key={tag} role="status">
-              {tag}
+          {product.badges?.map((badge) => (
+            <Badge key={badge} role="status">
+              {badge}
             </Badge>
           ))}
         </BadgeContainer>
@@ -189,10 +177,10 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
         </Description>
         <PriceContainer>
           <Price 
-            isDiscounted={false}
-            aria-label={`Price: ${formatPrice(product.price)}`}
+            insuranceCovered={product.insuranceCovered}
+            aria-label={`Price: ${formatPrice(product.price, product.insuranceCovered)}`}
           >
-            {formatPrice(product.price)}
+            {formatPrice(product.price, product.insuranceCovered)}
           </Price>
         </PriceContainer>
       </ContentContainer>
