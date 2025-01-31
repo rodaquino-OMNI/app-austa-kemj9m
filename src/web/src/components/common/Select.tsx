@@ -23,8 +23,8 @@ interface ValidationResult {
 interface SelectProps {
   name: string;
   id: string;
-  value: string | string[];
   options: SelectOption[];
+  value: string | string[];
   onChange: (value: string | string[], validationResult: ValidationResult) => void;
   multiple?: boolean;
   disabled?: boolean;
@@ -62,16 +62,16 @@ const StyledSelectContainer = styled.div<{
 `;
 
 const StyledSelect = styled.select<{
-  size?: string;
+  size: 'small' | 'medium' | 'large';
   error?: boolean;
-  clinicalMode?: string;
+  clinicalMode?: 'standard' | 'critical' | 'monitoring';
   validationLevel?: string;
   secureContent?: boolean;
 }>`
   width: 100%;
-  padding: ${props => COMPONENT_SIZES[props.size || 'medium'].padding};
-  height: ${props => COMPONENT_SIZES[props.size || 'medium'].height};
-  font-size: ${props => COMPONENT_SIZES[props.size || 'medium'].fontSize};
+  padding: ${props => COMPONENT_SIZES[props.size].padding};
+  height: ${props => COMPONENT_SIZES[props.size].height};
+  font-size: ${props => COMPONENT_SIZES[props.size].fontSize};
   color: ${theme.palette.text.primary};
   background-color: ${theme.palette.background.paper};
   border: 1px solid ${props => 
@@ -80,7 +80,7 @@ const StyledSelect = styled.select<{
     props.validationLevel === 'critical' ? theme.palette.error.main :
     theme.palette.text.disabled
   };
-  border-radius: ${theme.shape.borderRadius}px;
+  border-radius: ${theme.shape.borderRadiusSmall}px;
   cursor: pointer;
   appearance: none;
   transition: all 0.2s ease-in-out;
@@ -93,7 +93,7 @@ const StyledSelect = styled.select<{
   &:focus {
     outline: none;
     border-color: ${theme.palette.primary.main};
-    box-shadow: 0 0 0 ${({ clinicalMode = 'standard' }) => CLINICAL_STATES[clinicalMode].focus} ${theme.palette.primary.light}30;
+    box-shadow: 0 0 0 ${props => CLINICAL_STATES[props.clinicalMode || 'standard'].focus} ${theme.palette.primary.light}30;
   }
 
   &:disabled {
@@ -117,8 +117,8 @@ const HelperText = styled.span<{ error?: boolean }>`
 // Validation Functions
 const validateMedicalData = (
   value: string | string[],
-  medicalDataType?: string,
-  options: SelectOption[]
+  options: SelectOption[],
+  medicalDataType?: string
 ): ValidationResult => {
   if (!medicalDataType) return { isValid: true, severity: 'none' };
 
@@ -186,7 +186,7 @@ export const Select: React.FC<SelectProps> = ({
       ? Array.from(event.target.selectedOptions, option => option.value)
       : event.target.value;
 
-    const validationResult = validateMedicalData(newValue, medicalDataType, options);
+    const validationResult = validateMedicalData(newValue, options, medicalDataType);
     onChange(newValue, validationResult);
   }, [multiple, medicalDataType, options, onChange]);
 
