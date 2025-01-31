@@ -2,29 +2,20 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title as ChartTitle, Tooltip, Legend } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
-import DatePicker from 'react-datepicker';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend } from 'chart.js'; // ^4.0.0
+import { Line, Bar } from 'react-chartjs-2'; // ^4.0.0
+import DatePicker from 'react-datepicker'; // ^4.0.0
 import { AdminAPI } from '../../../lib/api/admin';
 import { Analytics } from '../../../lib/utils/analytics';
 import Table from '../../../components/common/Table';
 import { theme } from '../../../styles/theme';
 
 // Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ChartTitle,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
 
 // Styled Components
 const DashboardContainer = styled.div`
-  padding: ${theme.spacing.section}px;
+  padding: 32px;
   background: ${theme.palette.background.default};
 `;
 
@@ -32,33 +23,30 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${theme.spacing.xl}px;
+  margin-bottom: 24px;
 `;
 
-const Title = styled.h1`
-  font-size: ${theme.typography.h1.fontSize};
-  font-weight: ${theme.typography.h1.fontWeight};
-  line-height: ${theme.typography.h1.lineHeight};
-  letter-spacing: ${theme.typography.h1.letterSpacing};
+const StyledTitle = styled.h1`
+  ${theme.typography.h1};
   color: ${theme.palette.text.primary};
 `;
 
 const Controls = styled.div`
   display: flex;
-  gap: ${theme.spacing.md}px;
+  gap: 16px;
   align-items: center;
 `;
 
 const MetricsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: ${theme.spacing.lg}px;
-  margin-bottom: ${theme.spacing.section}px;
+  gap: 24px;
+  margin-bottom: 32px;
 `;
 
 const MetricCard = styled.div`
   background: ${theme.palette.background.paper};
-  padding: ${theme.spacing.lg}px;
+  padding: 24px;
   border-radius: ${theme.shape.borderRadius}px;
   box-shadow: ${theme.shadows[0]};
 `;
@@ -191,7 +179,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ searchParams }) => {
   return (
     <DashboardContainer>
       <Header>
-        <Title>Analytics Dashboard</Title>
+        <StyledTitle>Analytics Dashboard</StyledTitle>
         <Controls>
           <DatePicker
             selected={startDate}
