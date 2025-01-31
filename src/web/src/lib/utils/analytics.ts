@@ -41,7 +41,6 @@ export interface AnalyticsEvent {
 }
 
 export interface PerformanceContext {
-  [key: string]: string | undefined;
   page?: string;
   component?: string;
   browser?: string;
@@ -67,14 +66,6 @@ const SENSITIVE_PATTERNS = {
 // Analytics namespace implementation
 export namespace Analytics {
   let initialized = false;
-
-  export interface ErrorContext {
-    componentStack?: string;
-    additionalInfo?: Record<string, unknown>;
-    severity?: 'low' | 'medium' | 'high' | 'critical';
-    source?: string;
-    userAction?: string;
-  }
 
   /**
    * Initializes analytics providers with HIPAA-compliant configuration
@@ -231,7 +222,7 @@ export namespace Analytics {
 
     try {
       const sanitizedTags = sanitizeData(metric.tags);
-      const sanitizedContext = sanitizeData(metric.context as Record<string, unknown>);
+      const sanitizedContext = sanitizeData(metric.context);
 
       const performanceData = {
         metric_name: metric.name,
@@ -242,7 +233,7 @@ export namespace Analytics {
         environment: process.env.NODE_ENV,
       };
 
-      datadogRum.addTiming(metric.name, performanceData);
+      datadogRum.addTiming(metric.name, metric.value, performanceData);
 
     } catch (error) {
       console.error('Performance tracking failed:', error);
