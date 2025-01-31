@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import { withErrorBoundary } from '@sentry/react';
-import { useContext } from 'react';
 
 import { 
   IHealthRecord, 
@@ -11,7 +10,7 @@ import {
   SecurityClassification 
 } from '../../../lib/types/healthRecord';
 import { useHealthRecords } from '../../../hooks/useHealthRecords';
-import DocumentViewer, { ViewerAccessLevel } from '../../../components/health-records/DocumentViewer';
+import DocumentViewer from '../../../components/health-records/DocumentViewer';
 import Button from '../../../components/common/Button';
 import Loader from '../../../components/common/Loader';
 import { Analytics } from '../../../lib/utils/analytics';
@@ -51,7 +50,7 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
     deleteRecord,
     loading,
     operationLoading 
-  } = useHealthRecords(params.recordId, {
+  } = useHealthRecords('current-patient', {
     enableRealTimeSync: true,
     retryAttempts: 3
   });
@@ -61,7 +60,7 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
     const loadRecord = async () => {
       try {
         // Fetch record
-        const records = await fetchRecords(1);
+        const records = await fetchRecords(parseInt(params.recordId, 10));
         if (!records || records.length === 0) {
           notFound();
         }
@@ -99,7 +98,7 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
     };
 
     loadRecord();
-  }, [params.recordId, fetchRecords]);
+  }, [params.recordId]);
 
   // Handle secure record deletion
   const handleDelete = async () => {
@@ -205,6 +204,7 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
             onClose={() => setActiveAttachment(null)}
             accessLevel={ViewerAccessLevel.READ_ONLY}
             watermarkText="CONFIDENTIAL"
+            patientId="current-patient"
           />
         )}
       </main>
