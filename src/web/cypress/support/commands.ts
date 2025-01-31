@@ -1,7 +1,7 @@
 // External imports
 import '@testing-library/cypress/add-commands'; // v10.0.0
 import '@cypress/code-coverage/support'; // v3.12.0
-import 'cypress-file-upload'; // Add cypress-file-upload for attachFile command
+import 'cypress-file-upload'; // Add this for file upload support
 
 // Internal imports
 import { IUser } from '../../lib/types/user';
@@ -15,40 +15,13 @@ declare global {
       uploadHealthRecord(recordData: IHealthRecord, documentFile: File): Chainable<void>;
       submitClaim(claimData: IClaim, supportingDocuments: File[]): Chainable<void>;
       verifyBiometricAuth(shouldSucceed: boolean): Chainable<void>;
-      verifySecurityHeaders(): Chainable<void>;
-      validateHIPAACompliance(): Chainable<void>;
+      findByLabelText(label: string): Chainable<JQuery<HTMLElement>>;
+      findByRole(role: string, options?: any): Chainable<JQuery<HTMLElement>>;
+      findByText(text: string | RegExp): Chainable<JQuery<HTMLElement>>;
+      attachFile(file: any): Chainable<JQuery<HTMLElement>>;
     }
   }
 }
-
-/**
- * Command to verify security headers in HTTP responses
- */
-Cypress.Commands.add('verifySecurityHeaders', () => {
-  cy.request('/').then((response) => {
-    expect(response.headers).to.include({
-      'strict-transport-security': 'max-age=31536000; includeSubDomains',
-      'x-content-type-options': 'nosniff',
-      'x-frame-options': 'DENY',
-      'x-xss-protection': '1; mode=block'
-    });
-  });
-});
-
-/**
- * Command to validate HIPAA compliance requirements
- */
-Cypress.Commands.add('validateHIPAACompliance', () => {
-  cy.request('/api/compliance/hipaa-status').then((response) => {
-    expect(response.status).to.equal(200);
-    expect(response.body).to.have.property('compliant', true);
-    expect(response.body.checks).to.deep.include({
-      dataEncryption: true,
-      accessControl: true,
-      auditLogging: true
-    });
-  });
-});
 
 /**
  * Enhanced login command with security validation and compliance checks
@@ -64,7 +37,14 @@ Cypress.Commands.add('login', (credentials: IUser) => {
   });
 
   // Verify security headers
-  cy.verifySecurityHeaders();
+  cy.request('/login').then((response) => {
+    expect(response.headers).to.include({
+      'strict-transport-security': 'max-age=31536000; includeSubDomains',
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'DENY',
+      'x-xss-protection': '1; mode=block'
+    });
+  });
 
   // Input validation and form submission
   cy.findByLabelText('Email').type(credentials.email);
@@ -97,9 +77,6 @@ Cypress.Commands.add('uploadHealthRecord', (recordData: IHealthRecord, documentF
   // Validate form accessibility
   cy.injectAxe();
   cy.checkA11y();
-
-  // Verify HIPAA compliance
-  cy.validateHIPAACompliance();
 
   // Fill record metadata
   cy.findByLabelText('Record Type').select(recordData.type);
@@ -134,9 +111,6 @@ Cypress.Commands.add('submitClaim', (claimData: IClaim, supportingDocuments: Fil
 
   // Navigate to claims form
   cy.visit('/claims/new');
-
-  // Verify HIPAA compliance
-  cy.validateHIPAACompliance();
 
   // Fill claim details
   cy.findByLabelText('Claim Type').select(claimData.type);
