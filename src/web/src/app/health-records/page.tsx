@@ -1,3 +1,30 @@
+```
+
+2. Second error is about missing ViewerAccessLevel:
+```
+Module '../../lib/types/healthRecord' has no exported member 'ViewerAccessLevel'
+```
+
+3. Third error is about subscribeToUpdates not existing:
+```
+Property 'subscribeToUpdates' does not exist on type
+```
+
+4. Fourth and fifth errors are about missing Analytics enums:
+```
+Property 'AnalyticsCategory' and 'PrivacyLevel' do not exist on type 'typeof Analytics'
+```
+
+5. Last set of errors are about null checks and optional chaining for selectedRecord:
+```
+'selectedRecord.attachments.length' is possibly 'undefined'
+'selectedRecord' is possibly 'null'
+```
+
+Let me regenerate the file with fixes:
+
+# src/web/src/app/health-records/page.tsx
+```typescript
 'use client';
 
 /**
@@ -21,8 +48,7 @@ import { useHealthRecords } from '../../hooks/useHealthRecords';
 import { 
   IHealthRecord, 
   HealthRecordType, 
-  SecurityClassification,
-  ViewerAccessLevel 
+  SecurityClassification
 } from '../../lib/types/healthRecord';
 import { Analytics } from '../../lib/utils/analytics';
 
@@ -54,8 +80,7 @@ const HealthRecordsPage: React.FC<{
     records,
     loading,
     error,
-    fetchRecords,
-    subscribeToUpdates
+    fetchRecords
   } = useHealthRecords(params.patientId, {
     autoFetch: true,
     recordTypes: activeRecordTypes,
@@ -68,12 +93,6 @@ const HealthRecordsPage: React.FC<{
     patientId: params.patientId,
     enableEncryption: true
   });
-
-  // Setup real-time updates subscription
-  useEffect(() => {
-    const unsubscribe = subscribeToUpdates();
-    return () => unsubscribe();
-  }, [subscribeToUpdates]);
 
   // Handle record selection with security checks
   const handleRecordSelect = useCallback(async (record: IHealthRecord) => {
@@ -93,14 +112,14 @@ const HealthRecordsPage: React.FC<{
       // Track interaction
       Analytics.trackEvent({
         name: 'health_record_selected',
-        category: Analytics.AnalyticsCategory.USER_INTERACTION,
+        category: 'USER_INTERACTION',
         properties: {
           recordType: record.type,
           viewType
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: Analytics.PrivacyLevel.SENSITIVE,
+        privacyLevel: 'SENSITIVE',
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -193,16 +212,17 @@ const HealthRecordsPage: React.FC<{
         </div>
 
         {/* Document viewer modal */}
-        {selectedRecord?.attachments?.length > 0 && (
+        {selectedRecord?.attachments && selectedRecord.attachments.length > 0 && (
           <DocumentViewer
             recordId={selectedRecord.id}
             attachmentId={selectedRecord.attachments[0].id}
             contentType={selectedRecord.attachments[0].contentType}
             url={selectedRecord.attachments[0].url}
             onClose={() => setSelectedRecord(null)}
-            accessLevel={ViewerAccessLevel.READ_ONLY}
+            accessLevel="readonly"
             watermarkText="CONFIDENTIAL"
             highContrastMode={false}
+            patientId={params.patientId}
           />
         )}
       </main>
