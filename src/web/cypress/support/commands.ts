@@ -1,11 +1,12 @@
 // External imports
 import '@testing-library/cypress/add-commands'; // v10.0.0
 import '@cypress/code-coverage/support'; // v3.12.0
+import 'cypress-file-upload'; // Add cypress-file-upload for attachFile command
 
 // Internal imports
-import { IUser } from '../../src/lib/types/user';
-import { IHealthRecord } from '../../src/lib/types/healthRecord';
-import { IClaim } from '../../src/lib/types/claim';
+import { IUser } from '../../lib/types/user';
+import { IHealthRecord } from '../../lib/types/healthRecord';
+import { IClaim } from '../../lib/types/claim';
 
 declare global {
   namespace Cypress {
@@ -43,7 +44,7 @@ Cypress.Commands.add('login', (credentials: IUser) => {
 
   // Input validation and form submission
   cy.findByLabelText('Email').type(credentials.email);
-  cy.findByLabelText('Password').type(credentials.password, { log: false });
+  cy.findByLabelText('Password').type(credentials.password, { sensitive: true });
   cy.findByRole('button', { name: /sign in/i }).click();
 
   // Verify authentication and session
@@ -140,9 +141,11 @@ Cypress.Commands.add('verifyBiometricAuth', (shouldSucceed: boolean) => {
 
   // Mock biometric capability
   cy.window().then((win) => {
-    win.navigator.credentials = {
-      get: cy.stub().resolves(shouldSucceed ? { id: 'bio-credential-id' } : null)
-    };
+    Object.defineProperty(win.navigator, 'credentials', {
+      value: {
+        get: cy.stub().resolves(shouldSucceed ? { id: 'bio-credential-id' } : null)
+      }
+    });
   });
 
   // Trigger biometric auth
