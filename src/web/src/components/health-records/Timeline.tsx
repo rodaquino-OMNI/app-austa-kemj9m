@@ -27,40 +27,39 @@ import {
 import { useHealthRecords } from '../../hooks/useHealthRecords';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { Analytics } from '../../lib/utils/analytics';
-import { themePalette, themeSpacing } from '../../styles/theme';
 
 // Styled components with Material Design 3.0 patterns
-const TimelineContainer = styled(Box)({
+const TimelineContainer = styled(Box)(({ theme }: { theme: Theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
-  backgroundColor: themePalette.background.paper,
-  borderRadius: 8,
-  boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08)',
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: theme.shadows[1],
   overflow: 'hidden'
-});
+}));
 
-const TimelineGroup = styled(Box)({
-  padding: themeSpacing(2),
-  borderBottom: `1px solid ${themePalette.divider}`,
+const TimelineGroup = styled(Box)(({ theme }: { theme: Theme }) => ({
+  padding: theme.spacing(2),
+  borderBottom: `1px solid ${theme.palette.divider}`,
   '&:last-child': {
     borderBottom: 'none'
   }
-});
+}));
 
 const TimelineItem = styled(Box, {
   shouldForwardProp: prop => prop !== 'isHighlighted'
-})<{ isHighlighted?: boolean }>(({ isHighlighted }) => ({
+})<{ isHighlighted?: boolean; theme?: Theme }>(({ theme, isHighlighted }) => ({
   display: 'flex',
-  padding: themeSpacing(2),
-  backgroundColor: isHighlighted ? themePalette.background.clinical : 'transparent',
+  padding: theme?.spacing(2),
+  backgroundColor: isHighlighted ? theme?.palette.background.default : 'transparent',
   transition: 'background-color 0.2s ease',
   cursor: 'pointer',
   '&:hover': {
-    backgroundColor: themePalette.background.clinical
+    backgroundColor: theme?.palette.background.default
   },
   '&:focus-visible': {
-    outline: `2px solid ${themePalette.primary.main}`,
+    outline: `2px solid ${theme?.palette.primary.main}`,
     outlineOffset: '-2px'
   }
 }));
