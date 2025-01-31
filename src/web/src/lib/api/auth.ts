@@ -229,6 +229,37 @@ export class AuthAPI {
       throw this.handleAuthError(error);
     }
   }
+
+  /**
+   * Requests a password reset with security verification
+   */
+  public async requestPasswordReset(params: { email: string; deviceId: string; sessionId: string }): Promise<void> {
+    try {
+      const encryptedParams = await this.encryptionService.encryptField(
+        JSON.stringify(params),
+        'auth'
+      );
+
+      await this.client.post(
+        AuthEndpoints.RESET_PASSWORD,
+        { resetRequest: encryptedParams }
+      );
+
+      this.logSecurityEvent({
+        eventType: 'PASSWORD_RESET_REQUEST',
+        timestamp: Date.now(),
+        userId: params.email,
+        sessionId: params.sessionId,
+        metadata: {
+          deviceId: params.deviceId
+        },
+        severity: 'HIGH',
+        outcome: 'SUCCESS'
+      });
+    } catch (error) {
+      throw this.handleAuthError(error);
+    }
+  }
 }
 
 // Export secure authentication functions
