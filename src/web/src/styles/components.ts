@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 import { theme } from './theme';
 
 // Global constants for medical interface components
-const COMPONENT_SIZES = {
+export const COMPONENT_SIZES = {
   small: {
     padding: '12px 20px',
     fontSize: '16px',
@@ -24,7 +24,7 @@ const COMPONENT_SIZES = {
   }
 } as const;
 
-const CLINICAL_STATES = {
+export const CLINICAL_STATES = {
   standard: {
     contrast: '4.5:1',
     focus: '3px solid'
