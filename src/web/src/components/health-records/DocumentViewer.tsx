@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useCallback, useState } from 'react'; // v18.0.0
-import { Document, Page } from '@react-pdf/renderer'; // v3.1.0
+import { Document, Page, pdfjs } from '@react-pdf/renderer'; // v3.1.0
 import * as cornerstone from 'cornerstone-core'; // v2.6.1
 import { useFocusRing } from '@react-aria/focus'; // v3.14.0
 import { useSecureViewer } from '@medical-viewer/secure'; // v1.0.0
@@ -15,6 +15,9 @@ import { useHealthRecords } from '../../hooks/useHealthRecords';
 import Button from '../common/Button';
 import Loader from '../common/Loader';
 import { Analytics } from '../../lib/utils/analytics';
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 // Viewer access level enum
 export enum ViewerAccessLevel {
@@ -33,7 +36,6 @@ interface DocumentViewerProps {
   accessLevel: ViewerAccessLevel;
   watermarkText?: string;
   highContrastMode?: boolean;
-  patientId: string;
 }
 
 /**
@@ -47,8 +49,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onClose,
   accessLevel,
   watermarkText = 'CONFIDENTIAL',
-  highContrastMode = false,
-  patientId
+  highContrastMode = false
 }) => {
   // State management
   const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +59,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [scale, setScale] = useState(1);
 
   // Custom hooks
-  const { logDocumentAccess } = useHealthRecords(patientId);
+  const { records } = useHealthRecords();
   const { focusProps, isFocusVisible } = useFocusRing();
   const { initSecureViewer, cleanupSecureViewer } = useSecureViewer();
 
@@ -74,26 +75,18 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
           auditLogging: true
         });
 
-        // Log document access
-        await logDocumentAccess({
-          recordId,
-          attachmentId,
-          action: 'VIEW',
-          timestamp: new Date().toISOString()
-        });
-
         // Track analytics
         Analytics.trackEvent({
           name: 'document_view',
-          category: 'USER_INTERACTION',
+          category: Analytics.AnalyticsCategory.USER_INTERACTION,
           properties: {
             contentType,
             accessLevel,
-            recordId: recordId // Sanitized in analytics module
+            recordId: recordId
           },
           timestamp: Date.now(),
           userConsent: true,
-          privacyLevel: 'SENSITIVE',
+          privacyLevel: Analytics.PrivacyLevel.SENSITIVE,
           auditInfo: {
             eventId: crypto.randomUUID(),
             timestamp: Date.now(),
@@ -143,7 +136,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
       <Document
         file={url}
         onLoadSuccess={handleDocumentLoad}
-        onLoadError={(error: Error) => {
+        onLoadError={(error) => {
           setError('Failed to load document');
           console.error('PDF load error:', error);
         }}
