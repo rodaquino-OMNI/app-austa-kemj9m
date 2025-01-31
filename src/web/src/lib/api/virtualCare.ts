@@ -84,6 +84,7 @@ class VirtualCareApi {
   public async createConsultation(params: ConsultationCreateParams): Promise<IConsultation> {
     try {
       await this.verifyEncryptionCapabilities(params.encryptionRequirements);
+      await this.verifyEncryption(params.securityLevel);
 
       const response = await this.axiosInstance.post(
         VirtualCareEndpoints.CREATE_SESSION,
@@ -106,6 +107,35 @@ class VirtualCareApi {
       logger.error('Failed to create consultation', {
         error,
         params,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Verifies encryption status and security level for the consultation
+   * @param securityLevel Required security level for the consultation
+   */
+  private async verifyEncryption(securityLevel: string): Promise<void> {
+    try {
+      const response = await this.axiosInstance.post(
+        `${VirtualCareEndpoints.CREATE_SESSION}/verify-encryption`,
+        { securityLevel }
+      );
+
+      if (!response.data.verified) {
+        throw new Error('Encryption verification failed');
+      }
+
+      logger.info('Encryption verification successful', {
+        securityLevel,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      logger.error('Encryption verification failed', {
+        error,
+        securityLevel,
         timestamp: new Date().toISOString()
       });
       throw error;
