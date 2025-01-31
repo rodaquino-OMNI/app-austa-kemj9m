@@ -38,22 +38,12 @@ interface SelectProps {
   medicalDataType?: 'diagnosis' | 'medication' | 'procedure' | 'general';
 }
 
-interface StyledSelectContainerProps {
+// Styled Components
+const StyledSelectContainer = styled.div<{
   fullWidth?: boolean;
   clinicalMode?: string;
   validationLevel?: string;
-}
-
-interface StyledSelectProps {
-  size?: 'small' | 'medium' | 'large';
-  error?: boolean;
-  clinicalMode?: 'standard' | 'critical' | 'monitoring';
-  validationLevel?: 'none' | 'warning' | 'critical';
-  secureContent?: boolean;
-}
-
-// Styled Components
-const StyledSelectContainer = styled.div<StyledSelectContainerProps>`
+}>`
   position: relative;
   width: ${props => props.fullWidth ? '100%' : 'auto'};
   font-family: ${theme.typography.fontFamily};
@@ -71,7 +61,13 @@ const StyledSelectContainer = styled.div<StyledSelectContainerProps>`
   `}
 `;
 
-const StyledSelect = styled.select<StyledSelectProps>`
+const StyledSelect = styled.select<{
+  error?: boolean;
+  clinicalMode?: string;
+  validationLevel?: string;
+  secureContent?: boolean;
+  size: 'small' | 'medium' | 'large';
+}>`
   width: 100%;
   padding: ${props => COMPONENT_SIZES[props.size || 'medium'].padding};
   height: ${props => COMPONENT_SIZES[props.size || 'medium'].height};
@@ -84,7 +80,7 @@ const StyledSelect = styled.select<StyledSelectProps>`
     props.validationLevel === 'critical' ? theme.palette.error.main :
     theme.palette.text.disabled
   };
-  border-radius: ${theme.shape.borderRadius}px;
+  border-radius: ${theme.shape.borderRadiusSmall}px;
   cursor: pointer;
   appearance: none;
   transition: all 0.2s ease-in-out;
@@ -97,7 +93,7 @@ const StyledSelect = styled.select<StyledSelectProps>`
   &:focus {
     outline: none;
     border-color: ${theme.palette.primary.main};
-    box-shadow: 0 0 0 ${props => CLINICAL_STATES[props.clinicalMode || 'standard'].focus} ${theme.palette.primary.light}30;
+    box-shadow: 0 0 0 ${CLINICAL_STATES[props.clinicalMode || 'standard'].focus} ${theme.palette.primary.light}30;
   }
 
   &:disabled {
@@ -121,8 +117,8 @@ const HelperText = styled.span<{ error?: boolean }>`
 // Validation Functions
 const validateMedicalData = (
   value: string | string[],
-  medicalDataType?: string,
-  options: SelectOption[]
+  options: SelectOption[],
+  medicalDataType?: string
 ): ValidationResult => {
   if (!medicalDataType) return { isValid: true, severity: 'none' };
 
@@ -190,7 +186,7 @@ export const Select: React.FC<SelectProps> = ({
       ? Array.from(event.target.selectedOptions, option => option.value)
       : event.target.value;
 
-    const validationResult = validateMedicalData(newValue, medicalDataType, options);
+    const validationResult = validateMedicalData(newValue, options, medicalDataType);
     onChange(newValue, validationResult);
   }, [multiple, medicalDataType, options, onChange]);
 
