@@ -1,9 +1,27 @@
+```
+
+2. useAuth hook property errors:
+```
+error TS2339: Property 'isAuthenticated' does not exist on type 'IAuthContext'
+error TS2339: Property 'userRole' does not exist on type 'IAuthContext'
+```
+
+3. HealthMetrics component prop type errors:
+```
+error TS2322: Type '"read"' is not assignable to type 'AccessLevel'
+error TS2322: Type '"light"' is not assignable to type 'ThemePreference'
+```
+
+Let me regenerate the file with the fixes:
+
+# src/web/src/app/page.tsx
+```tsx
 'use client';
 
 import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Grid, Container, Typography, ThemeProvider } from '@mui/material';
-import Analytics from '@vercel/analytics';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 
 // Internal imports
 import Header from '../components/layout/Header';
@@ -13,7 +31,8 @@ import ErrorBoundary from '../components/common/ErrorBoundary';
 import useAuth from '../hooks/useAuth';
 import theme from '../styles/theme';
 import { UserRole } from '../lib/types/user';
-import { SecurityClassification, AccessLevel, ThemePreference } from '../lib/types/healthRecord';
+import { SecurityClassification } from '../lib/types/healthRecord';
+import { Analytics } from '../lib/utils/analytics';
 
 // Constants
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -25,32 +44,46 @@ const ERROR_BOUNDARY_CONFIG = { maxRetries: 3, fallbackUI: true };
  * Enhanced security check for authentication and role validation
  */
 const checkAuth = () => {
-  const { user } = useAuth();
+  const { user, state } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) {
+    if (state !== 'AUTHENTICATED') {
       router.push('/auth/login');
       return;
     }
 
     // Track secure page view
-    Analytics.track('page_view', {
-      page: 'dashboard',
-      userRole: user?.role,
+    Analytics.trackEvent({
+      name: 'page_view',
+      category: Analytics.AnalyticsCategory.USER_INTERACTION,
+      properties: {
+        page: 'dashboard',
+        userRole: user?.role,
+        timestamp: Date.now(),
+        isAuthenticated: true
+      },
       timestamp: Date.now(),
-      isAuthenticated: !!user
+      userConsent: true,
+      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+      auditInfo: {
+        eventId: crypto.randomUUID(),
+        timestamp: Date.now(),
+        userId: user?.id || 'anonymous',
+        ipAddress: 'masked',
+        actionType: 'page_view'
+      }
     });
-  }, [user, router]);
+  }, [state, user?.role, router]);
 
-  return { user };
+  return { user, userRole: user?.role };
 };
 
 /**
  * Main landing page component with role-based content and security features
  */
 const HomePage = () => {
-  const { user } = checkAuth();
+  const { user, userRole } = checkAuth();
   const router = useRouter();
 
   // Security context for components
@@ -63,11 +96,25 @@ const HomePage = () => {
 
   // Handle component errors with audit logging
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
-    Analytics.track('error_boundary_triggered', {
-      error: error.message,
-      component: 'HomePage',
-      userRole: user?.role,
-      timestamp: Date.now()
+    Analytics.trackEvent({
+      name: 'error_boundary_triggered',
+      category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
+      properties: {
+        error: error.message,
+        component: 'HomePage',
+        userRole,
+        timestamp: Date.now()
+      },
+      timestamp: Date.now(),
+      userConsent: true,
+      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+      auditInfo: {
+        eventId: crypto.randomUUID(),
+        timestamp: Date.now(),
+        userId: user?.id || 'anonymous',
+        ipAddress: 'masked',
+        actionType: 'error_boundary_triggered'
+      }
     });
   };
 
@@ -106,14 +153,14 @@ const HomePage = () => {
             <Grid item xs={12}>
               <Suspense fallback={<div>Loading actions...</div>}>
                 <QuickActions
-                  userRole={user?.role as UserRole}
+                  userRole={userRole as UserRole}
                   securityContext={securityContext}
                 />
               </Suspense>
             </Grid>
 
             {/* Health Metrics Section - Only for patients and providers */}
-            {(user?.role === UserRole.PATIENT || user?.role === UserRole.PROVIDER) && (
+            {(userRole === UserRole.PATIENT || userRole === UserRole.PROVIDER) && (
               <Grid item xs={12}>
                 <Suspense fallback={<div>Loading health metrics...</div>}>
                   <HealthMetrics
@@ -130,12 +177,12 @@ const HomePage = () => {
 
             {/* Role-specific Content */}
             <Grid item xs={12}>
-              {user?.role === UserRole.ADMIN && (
+              {userRole === UserRole.ADMIN && (
                 <Typography variant="h2" component="h2">
                   System Overview
                 </Typography>
               )}
-              {user?.role === UserRole.INSURANCE && (
+              {userRole === UserRole.INSURANCE && (
                 <Typography variant="h2" component="h2">
                   Claims Dashboard
                 </Typography>
@@ -149,4 +196,4 @@ const HomePage = () => {
 };
 
 // Export with analytics wrapper
-export default Analytics.withAnalytics(HomePage);
+export default VercelAnalytics.withAnalytics(HomePage);
