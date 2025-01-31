@@ -61,29 +61,11 @@ const registrationSchema = yup.object().shape({
   deviceFingerprint: yup.string().required('Device verification failed')
 });
 
-interface IMFASetup {
-  type: string;
-  verified: boolean;
-}
-
-interface ISecurityEvent {
-  type: string;
-  metadata: Record<string, any>;
-}
-
-interface IAuthError {
-  code: string;
-  message: string;
-  details: Record<string, any>;
-  timestamp: number;
-  requestId: string;
-}
-
 // Interface definitions
 interface RegisterFormProps {
-  onSuccess: (user: any, mfaSetup: IMFASetup) => void;
-  onError: (error: IAuthError) => void;
-  onSecurityEvent: (event: ISecurityEvent) => void;
+  onSuccess: (user: any, mfaSetup: any) => void;
+  onError: (error: any) => void;
+  onSecurityEvent: (event: any) => void;
 }
 
 interface RegisterFormState {
@@ -106,8 +88,358 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   onError,
   onSecurityEvent
 }) => {
-  // Rest of the component implementation remains unchanged...
-  // [Previous implementation continues...]
+  // State management
+  const [formState, setFormState] = useState<RegisterFormState>({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    acceptTerms: false,
+    mfaPreference: '',
+    biometricConsent: false,
+    deviceFingerprint: '',
+    loading: false,
+    errors: {}
+  });
+
+  const { loginWithRedirect } = useAuth0();
+
+  // Initialize device fingerprint on mount
+  useEffect(() => {
+    const initializeFingerprint = async () => {
+      try {
+        const fp = await fpPromise;
+        const result = await fp.get();
+        setFormState(prev => ({
+          ...prev,
+          deviceFingerprint: result.visitorId
+        }));
+      } catch (error) {
+        ErrorTracker.captureError(error as Error, {
+          context: 'Fingerprint initialization'
+        });
+      }
+    };
+
+    initializeFingerprint();
+  }, []);
+
+  // Secure input handling with sanitization
+  const handleSecureInput = useCallback((
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = event.target;
+    const fieldValue = type === 'checkbox' ? (event.target as HTMLInputElement).checked : value;
+
+    try {
+      // Sanitize input
+      const sanitizedValue = type === 'checkbox' 
+        ? fieldValue 
+        : CryptoJS.AES.encrypt(fieldValue as string, process.env.REACT_APP_ENCRYPTION_KEY!).toString();
+
+      setFormState(prev => ({
+        ...prev,
+        [name]: sanitizedValue,
+        errors: {
+          ...prev.errors,
+          [name]: ''
+        }
+      }));
+    } catch (error) {
+      ErrorTracker.captureError(error as Error, {
+        context: 'Input handling',
+        field: name
+      });
+    }
+  }, []);
+
+  // Form submission with security measures
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setFormState(prev => ({ ...prev, loading: true }));
+
+    try {
+      // Validate form data
+      const validationResult = await validateForm(formState, registrationSchema);
+      
+      if (!validationResult.isValid) {
+        setFormState(prev => ({
+          ...prev,
+          errors: validationResult.errors.reduce((acc: Record<string, string>, error: string) => ({
+            ...acc,
+            [error]: error
+          }), {}),
+          loading: false
+        }));
+        return;
+      }
+
+      // Encrypt sensitive data
+      const encryptedData = {
+        firstName: CryptoJS.AES.encrypt(formState.firstName, process.env.REACT_APP_ENCRYPTION_KEY!).toString(),
+        lastName: CryptoJS.AES.encrypt(formState.lastName, process.env.REACT_APP_ENCRYPTION_KEY!).toString(),
+        phoneNumber: CryptoJS.AES.encrypt(formState.phoneNumber, process.env.REACT_APP_ENCRYPTION_KEY!).toString()
+      };
+
+      // Initialize Auth0 registration
+      await loginWithRedirect({
+        screen_hint: 'signup',
+        login_hint: formState.email,
+        mfa_setup: formState.mfaPreference,
+        user_metadata: {
+          ...encryptedData,
+          deviceFingerprint: formState.deviceFingerprint,
+          biometricConsent: formState.biometricConsent
+        }
+      } as any);
+
+      // Handle biometric registration if selected
+      if (formState.mfaPreference === 'biometric' && formState.biometricConsent) {
+        const biometricCredential = await startRegistration({
+          challenge: 'challenge',
+          rp: {
+            name: 'AUSTA SuperApp',
+            id: window.location.hostname
+          },
+          user: {
+            id: 'user_id',
+            name: formState.email,
+            displayName: `${formState.firstName} ${formState.lastName}`
+          },
+          pubKeyCredParams: [
+            { alg: -7, type: 'public-key' },
+            { alg: -257, type: 'public-key' }
+          ],
+          timeout: 60000,
+          attestation: 'direct',
+          authenticatorSelection: {
+            authenticatorAttachment: 'platform',
+            userVerification: 'required',
+            requireResidentKey: true
+          }
+        });
+
+        // Verify biometric registration
+        if (!biometricCredential) {
+          throw new Error(ErrorCode.INVALID_CREDENTIALS);
+        }
+      }
+
+      onSuccess({ email: formState.email }, {
+        type: formState.mfaPreference,
+        verified: true
+      });
+
+      // Log security event
+      onSecurityEvent({
+        type: 'REGISTRATION_SUCCESS',
+        metadata: {
+          email: formState.email,
+          mfaType: formState.mfaPreference,
+          deviceFingerprint: formState.deviceFingerprint
+        }
+      });
+
+    } catch (error) {
+      ErrorTracker.captureError(error as Error, {
+        context: 'Registration submission'
+      });
+      onError({
+        code: (error as any).code || ErrorCode.INTERNAL_SERVER_ERROR,
+        message: (error as Error).message,
+        details: {},
+        timestamp: Date.now(),
+        requestId: formState.deviceFingerprint
+      });
+    } finally {
+      setFormState(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="register-form" noValidate>
+      <div className="form-group">
+        <input
+          type="email"
+          name="email"
+          value={formState.email}
+          onChange={handleSecureInput}
+          placeholder="Healthcare Email"
+          aria-label="Email Address"
+          aria-invalid={!!formState.errors.email}
+          aria-describedby="email-error"
+          required
+        />
+        {formState.errors.email && (
+          <span id="email-error" className="error-message" role="alert">
+            {formState.errors.email}
+          </span>
+        )}
+      </div>
+
+      <div className="form-group">
+        <input
+          type="password"
+          name="password"
+          value={formState.password}
+          onChange={handleSecureInput}
+          placeholder="Password"
+          aria-label="Password"
+          aria-invalid={!!formState.errors.password}
+          aria-describedby="password-error"
+          required
+        />
+        {formState.errors.password && (
+          <span id="password-error" className="error-message" role="alert">
+            {formState.errors.password}
+          </span>
+        )}
+      </div>
+
+      <div className="form-group">
+        <input
+          type="password"
+          name="confirmPassword"
+          value={formState.confirmPassword}
+          onChange={handleSecureInput}
+          placeholder="Confirm Password"
+          aria-label="Confirm Password"
+          aria-invalid={!!formState.errors.confirmPassword}
+          aria-describedby="confirm-password-error"
+          required
+        />
+        {formState.errors.confirmPassword && (
+          <span id="confirm-password-error" className="error-message" role="alert">
+            {formState.errors.confirmPassword}
+          </span>
+        )}
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <input
+            type="text"
+            name="firstName"
+            value={formState.firstName}
+            onChange={handleSecureInput}
+            placeholder="First Name"
+            aria-label="First Name"
+            aria-invalid={!!formState.errors.firstName}
+            aria-describedby="first-name-error"
+            required
+          />
+          {formState.errors.firstName && (
+            <span id="first-name-error" className="error-message" role="alert">
+              {formState.errors.firstName}
+            </span>
+          )}
+        </div>
+
+        <div className="form-group">
+          <input
+            type="text"
+            name="lastName"
+            value={formState.lastName}
+            onChange={handleSecureInput}
+            placeholder="Last Name"
+            aria-label="Last Name"
+            aria-invalid={!!formState.errors.lastName}
+            aria-describedby="last-name-error"
+            required
+          />
+          {formState.errors.lastName && (
+            <span id="last-name-error" className="error-message" role="alert">
+              {formState.errors.lastName}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="form-group">
+        <input
+          type="tel"
+          name="phoneNumber"
+          value={formState.phoneNumber}
+          onChange={handleSecureInput}
+          placeholder="Phone Number"
+          aria-label="Phone Number"
+          aria-invalid={!!formState.errors.phoneNumber}
+          aria-describedby="phone-error"
+          required
+        />
+        {formState.errors.phoneNumber && (
+          <span id="phone-error" className="error-message" role="alert">
+            {formState.errors.phoneNumber}
+          </span>
+        )}
+      </div>
+
+      <div className="form-group">
+        <select
+          name="mfaPreference"
+          value={formState.mfaPreference}
+          onChange={handleSecureInput}
+          aria-label="MFA Preference"
+          aria-invalid={!!formState.errors.mfaPreference}
+          aria-describedby="mfa-error"
+          required
+        >
+          <option value="">Select MFA Method</option>
+          <option value="sms">SMS</option>
+          <option value="email">Email</option>
+          <option value="authenticator">Authenticator App</option>
+          <option value="biometric">Biometric</option>
+        </select>
+        {formState.errors.mfaPreference && (
+          <span id="mfa-error" className="error-message" role="alert">
+            {formState.errors.mfaPreference}
+          </span>
+        )}
+      </div>
+
+      <div className="form-group checkbox">
+        <label>
+          <input
+            type="checkbox"
+            name="biometricConsent"
+            checked={formState.biometricConsent}
+            onChange={handleSecureInput}
+            aria-label="Biometric Consent"
+          />
+          I consent to biometric authentication
+        </label>
+      </div>
+
+      <div className="form-group checkbox">
+        <label>
+          <input
+            type="checkbox"
+            name="acceptTerms"
+            checked={formState.acceptTerms}
+            onChange={handleSecureInput}
+            aria-label="Accept Terms"
+            required
+          />
+          I accept the terms and conditions
+        </label>
+        {formState.errors.acceptTerms && (
+          <span className="error-message" role="alert">
+            {formState.errors.acceptTerms}
+          </span>
+        )}
+      </div>
+
+      <button
+        type="submit"
+        disabled={formState.loading}
+        aria-busy={formState.loading}
+      >
+        {formState.loading ? 'Registering...' : 'Register'}
+      </button>
+    </form>
+  );
 };
 
 export default RegisterForm;
