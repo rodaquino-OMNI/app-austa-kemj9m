@@ -11,28 +11,28 @@ import ErrorBoundary from '@/components/common/ErrorBoundary';
 import { useClaims } from '@/hooks/useClaims';
 import { IClaim } from '@/lib/types/claim';
 import { theme } from '@/styles/theme';
-import { Analytics } from '@/lib/utils/analytics';
+import { Analytics, AnalyticsCategory, PrivacyLevel } from '@/lib/utils/analytics';
 
 // Styled components with accessibility enhancements
 const ClaimsPageContainer = styled.main`
   display: grid;
   grid-template-columns: 1fr;
-  gap: ${theme.spacing.lg}px;
-  padding: ${theme.spacing.lg}px;
+  gap: ${theme.spacing(3)}px;
+  padding: ${theme.spacing(3)}px;
   max-width: 1440px;
   margin: 0 auto;
   min-height: 100vh;
 
   @media (max-width: ${theme.breakpoints.values.sm}px) {
-    padding: ${theme.spacing.md}px;
-    gap: ${theme.spacing.md}px;
+    padding: ${theme.spacing(2)}px;
+    gap: ${theme.spacing(2)}px;
   }
 `;
 
 const ClaimsHeader = styled.header`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.md}px;
+  gap: ${theme.spacing(2)}px;
 `;
 
 const ClaimsTitle = styled.h1`
@@ -44,13 +44,13 @@ const ClaimsTitle = styled.h1`
 
 const ClaimsContent = styled.section`
   display: grid;
-  gap: ${theme.spacing.xl}px;
+  gap: ${theme.spacing(4)}px;
 `;
 
 const StatusTrackerWrapper = styled.div`
   background: ${theme.palette.background.paper};
   border-radius: ${theme.shape.borderRadius}px;
-  box-shadow: ${theme.shadows.clinical};
+  box-shadow: ${theme.shadows[1]};
   overflow: hidden;
 `;
 
@@ -97,7 +97,7 @@ const ClaimsPage: React.FC = () => {
       // Track analytics event
       await Analytics.trackEvent({
         name: 'claim_selected',
-        category: 'USER_INTERACTION',
+        category: AnalyticsCategory.USER_INTERACTION,
         properties: {
           claimId: claim.id,
           claimType: claim.type,
@@ -105,7 +105,7 @@ const ClaimsPage: React.FC = () => {
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'INTERNAL',
+        privacyLevel: PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: `claim_select_${Date.now()}`,
           timestamp: Date.now(),
