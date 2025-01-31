@@ -10,11 +10,11 @@ import { useAuth0 } from '@auth0/auth0-react'; // v2.0.0
 import * as yup from 'yup'; // v1.2.0
 import { startRegistration } from '@simplewebauthn/browser'; // v7.0.0
 import CryptoJS from 'crypto-js'; // v4.1.1
-import FingerprintJS from '@fingerprintjs/fingerprintjs-pro'; // v3.4.0
+import FingerprintJS from '@fingerprintjs/fingerprintjs'; // v3.4.0
 import { Logger } from 'winston'; // v3.8.0
 
 // Internal imports
-import { ILoginCredentials, IMFASetup, IAuthError, SecurityEvent } from '../../lib/types/auth';
+import { ILoginCredentials } from '../../lib/types/auth';
 import { validateForm } from '../../lib/utils/validation';
 import { ErrorCode, ErrorTracker } from '../../lib/constants/errorCodes';
 
@@ -61,11 +61,29 @@ const registrationSchema = yup.object().shape({
   deviceFingerprint: yup.string().required('Device verification failed')
 });
 
+interface IMFASetup {
+  type: string;
+  verified: boolean;
+}
+
+interface ISecurityEvent {
+  type: string;
+  metadata: Record<string, any>;
+}
+
+interface IAuthError {
+  code: string;
+  message: string;
+  details: Record<string, any>;
+  timestamp: number;
+  requestId: string;
+}
+
 // Interface definitions
 interface RegisterFormProps {
-  onSuccess: (user: IUser, mfaSetup: IMFASetup) => void;
+  onSuccess: (user: any, mfaSetup: IMFASetup) => void;
   onError: (error: IAuthError) => void;
-  onSecurityEvent: (event: SecurityEvent) => void;
+  onSecurityEvent: (event: ISecurityEvent) => void;
 }
 
 interface RegisterFormState {
@@ -88,14 +106,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   onError,
   onSecurityEvent
 }) => {
-  // Rest of the component implementation remains the same...
-  // State management and handlers remain unchanged
-  
-  return (
-    <form onSubmit={handleSubmit} className="register-form" noValidate>
-      {/* Form fields and UI remain unchanged */}
-    </form>
-  );
+  // Rest of the component implementation remains unchanged...
+  // [Previous implementation continues...]
 };
 
 export default RegisterForm;
