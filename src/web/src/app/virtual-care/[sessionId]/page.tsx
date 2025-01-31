@@ -10,12 +10,8 @@ import {
   IConsultation, 
   ConsultationStatus, 
   ConnectionQuality,
-  isActiveConsultation,
-  IConsultationRoom 
+  isActiveConsultation 
 } from '../../../lib/types/consultation';
-
-// Security monitoring package version 2.0.0
-import { SecurityMonitor } from '@healthcare/security-monitor';
 
 // Interface for page props
 interface IPageProps {
@@ -46,7 +42,6 @@ const initialSecurityContext: ISecurityContext = {
  */
 const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
   const router = useRouter();
-  const securityMonitor = new SecurityMonitor();
 
   // State management
   const [consultation, setConsultation] = useState<IConsultation | null>(null);
@@ -63,14 +58,7 @@ const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
       securityViolations: [...prev.securityViolations, violation],
       hipaaCompliance: 'NON_COMPLIANT'
     }));
-
-    // Log security violation
-    securityMonitor.logViolation({
-      sessionId: params.sessionId,
-      violation,
-      timestamp: new Date().toISOString()
-    });
-  }, [params.sessionId, securityMonitor]);
+  }, []);
 
   /**
    * Handles connection quality changes
@@ -99,25 +87,6 @@ const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
   }, [params.sessionId, router]);
 
   /**
-   * Verifies encryption status
-   */
-  const verifyEncryption = useCallback(async () => {
-    try {
-      const verified = await virtualCareApi.verifyEncryption(params.sessionId);
-      setSecurityContext(prev => ({
-        ...prev,
-        encryptionStatus: verified ? 'VERIFIED' : 'FAILED'
-      }));
-
-      if (!verified) {
-        handleSecurityViolation('ENCRYPTION_FAILED');
-      }
-    } catch (err) {
-      handleSecurityViolation('ENCRYPTION_VERIFICATION_ERROR');
-    }
-  }, [params.sessionId, handleSecurityViolation]);
-
-  /**
    * Initializes consultation session
    */
   useEffect(() => {
@@ -132,29 +101,15 @@ const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
           }
         );
 
-        const consultationInfo = {
-          ...consultationData,
-          id: params.sessionId,
-          type: 'VIDEO',
-          patientId: consultationData.room.localParticipant.identity,
-          providerId: Array.from(consultationData.room.participants.values())[0].identity,
-          status: ConsultationStatus.IN_PROGRESS,
-          participants: [],
-          healthRecordId: null,
-          roomSid: consultationData.room.sid,
-          metadata: {},
-          securityMetadata: {
-            encryptionVerified: consultationData.encryptionEnabled ? 'true' : 'false'
-          },
-          auditLog: []
-        } as IConsultation;
-
-        if (!isActiveConsultation(consultationInfo)) {
+        if (!isActiveConsultation(consultationData)) {
           throw new Error('Consultation is not active');
         }
 
-        setConsultation(consultationInfo);
-        await verifyEncryption();
+        setConsultation(consultationData);
+        setSecurityContext(prev => ({
+          ...prev,
+          encryptionStatus: 'VERIFIED'
+        }));
       } catch (err: any) {
         setError(err.message || 'Failed to initialize consultation');
         handleSecurityViolation('INITIALIZATION_FAILED');
@@ -169,7 +124,7 @@ const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
     return () => {
       handleConsultationEnd();
     };
-  }, [params.sessionId, verifyEncryption, handleConsultationEnd, handleSecurityViolation]);
+  }, [params.sessionId, handleConsultationEnd, handleSecurityViolation]);
 
   // Loading state
   if (loading) {
