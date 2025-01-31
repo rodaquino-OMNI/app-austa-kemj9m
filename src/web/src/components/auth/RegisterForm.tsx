@@ -10,11 +10,11 @@ import { useAuth0 } from '@auth0/auth0-react'; // v2.0.0
 import * as yup from 'yup'; // v1.2.0
 import { startRegistration } from '@simplewebauthn/browser'; // v7.0.0
 import CryptoJS from 'crypto-js'; // v4.1.1
-import FingerprintJS from '@fingerprintjs/fingerprintjs-pro'; // v3.4.0
+import FingerprintJS from '@fingerprintjs/fingerprintjs'; // v3.4.0
 import { Logger } from 'winston'; // v3.8.0
 
 // Internal imports
-import { ILoginCredentials, IUser, IAuthError, SecurityEvent } from '../../lib/types/auth';
+import { ILoginCredentials, IUser, IMFASetup, IAuthError, ISecurityEvent } from '../../lib/types/auth';
 import { validateForm } from '../../lib/utils/validation';
 import { ErrorCode, ErrorTracker } from '../../lib/constants/errorCodes';
 
@@ -63,9 +63,9 @@ const registrationSchema = yup.object().shape({
 
 // Interface definitions
 interface RegisterFormProps {
-  onSuccess: (user: IUser, mfaSetup: { type: string; verified: boolean }) => void;
+  onSuccess: (user: IUser, mfaSetup: IMFASetup) => void;
   onError: (error: IAuthError) => void;
-  onSecurityEvent: (event: SecurityEvent) => void;
+  onSecurityEvent: (event: ISecurityEvent) => void;
 }
 
 interface RegisterFormState {
@@ -127,11 +127,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   }, []);
 
   // Secure input handling with sanitization
-  const handleSecureInput = useCallback(async (
-    event: React.ChangeEvent<HTMLInputElement>
+  const handleSecureInput = useCallback((
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type, checked } = event.target;
-    const fieldValue = type === 'checkbox' ? checked : value;
+    const { name, value, type } = event.target;
+    const fieldValue = type === 'checkbox' ? (event.target as HTMLInputElement).checked : value;
 
     try {
       // Sanitize input
@@ -167,9 +167,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       if (!validationResult.isValid) {
         setFormState(prev => ({
           ...prev,
-          errors: validationResult.errors.reduce((acc, curr) => ({
+          errors: validationResult.errors.reduce((acc: Record<string, string>, error) => ({
             ...acc,
-            [curr]: validationResult.errors[curr]
+            [error as unknown as string]: (error as unknown as { message: string }).message
           }), {}),
           loading: false
         }));
@@ -184,8 +184,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       };
 
       // Initialize Auth0 registration
-      await loginWithRedirect({
-        screen_hint: 'signup',
+      const auth0Response = await loginWithRedirect({
+        screen_hint: 'signup' as any,
         login_hint: formState.email,
         mfa_setup: formState.mfaPreference,
         user_metadata: {
@@ -198,13 +198,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       // Handle biometric registration if selected
       if (formState.mfaPreference === 'biometric' && formState.biometricConsent) {
         const biometricCredential = await startRegistration({
-          challenge: 'challenge',
+          challenge: auth0Response?.challenge || '',
           rp: {
             name: 'AUSTA SuperApp',
             id: window.location.hostname
           },
           user: {
-            id: 'user_id',
+            id: auth0Response?.user?.sub || '',
             name: formState.email,
             displayName: `${formState.firstName} ${formState.lastName}`
           },
@@ -227,25 +227,22 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         }
       }
 
-      onSuccess({ id: 'temp_id', email: formState.email } as IUser, {
-        type: formState.mfaPreference,
-        verified: true
-      });
+      if (auth0Response?.user) {
+        onSuccess(auth0Response.user, {
+          type: formState.mfaPreference,
+          verified: true
+        });
 
-      // Log security event
-      onSecurityEvent({
-        eventType: 'REGISTRATION_SUCCESS',
-        timestamp: Date.now(),
-        userId: 'temp_id',
-        sessionId: formState.deviceFingerprint,
-        metadata: {
-          email: formState.email,
-          mfaType: formState.mfaPreference,
-          deviceFingerprint: formState.deviceFingerprint
-        },
-        severity: 'LOW',
-        outcome: 'SUCCESS'
-      });
+        // Log security event
+        onSecurityEvent({
+          type: 'REGISTRATION_SUCCESS',
+          metadata: {
+            email: formState.email,
+            mfaType: formState.mfaPreference,
+            deviceFingerprint: formState.deviceFingerprint
+          }
+        });
+      }
 
     } catch (error) {
       ErrorTracker.captureError(error as Error, {
