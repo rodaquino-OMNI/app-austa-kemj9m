@@ -97,7 +97,7 @@ const ForgotPasswordPage: React.FC = () => {
 
       const validationResult = await validateForm(
         { email: sanitizedEmail },
-        { email: 'email' }
+        { email: 'string' }
       );
 
       if (!validationResult.isValid) {
@@ -111,13 +111,10 @@ const ForgotPasswordPage: React.FC = () => {
 
       // Request password reset
       const authAPI = new AuthAPI(process.env.NEXT_PUBLIC_API_URL || '');
-      await authAPI.login({
+      await authAPI.requestPasswordReset({
         email: sanitizedEmail,
         deviceId,
-        sessionId: crypto.randomUUID(),
-        password: '',
-        rememberMe: false,
-        clientMetadata: {}
+        sessionId: crypto.randomUUID()
       });
 
       // Log successful attempt
@@ -148,14 +145,14 @@ const ForgotPasswordPage: React.FC = () => {
       // Redirect to confirmation page
       router.push('/auth/forgot-password/confirmation');
 
-    } catch (err) {
+    } catch (error: unknown) {
       // Log failed attempt
       logSecurityEvent('PASSWORD_RESET_FAILED', {
         email,
-        error: err instanceof Error ? err.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
 
-      ErrorTracker.captureError(err instanceof Error ? err : new Error('Password reset failed'), {
+      ErrorTracker.captureError(error instanceof Error ? error : new Error('Unknown error'), {
         component: 'ForgotPasswordPage',
         action: 'handleSubmit'
       });
@@ -180,7 +177,7 @@ const ForgotPasswordPage: React.FC = () => {
             type="email"
             label="Email Address"
             value={email}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+            onChange={(value: string) => setEmail(value)}
             placeholder="Enter your registered email"
             error={error}
             disabled={isSubmitting}
