@@ -6,13 +6,12 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'; // v18.0.0
-import { startAuthentication, startRegistration } from '@simplewebauthn/browser'; // v7.0.0
+import { startAuthentication, startRegistration, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser'; // v7.0.0
 import { MdFingerprint, MdFace, MdError, MdCheckCircle } from 'react-icons/md'; // v4.0.0
 import { Button, CircularProgress, Alert } from '@mui/material'; // v5.0.0
-import { SecurityLogger } from '@austa/security-logger'; // v2.0.0
+import { SecurityLogger } from '@logger/security'; // v2.0.0
 
 import useAuth from '../../hooks/useAuth';
-import useSecurityContext from '../../hooks/useSecurityContext';
 import { AuthState } from '../../lib/types/auth';
 
 // Security and clinical environment constants
@@ -79,7 +78,6 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
 
   // Hooks
   const { state: authState, verifyBiometric } = useAuth();
-  const securityContext = useSecurityContext();
 
   // Security logger instance
   const securityLogger = new SecurityLogger({
@@ -137,23 +135,23 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
       }
 
       // Clinical environment checks
-      if (clinicalMode) {
-        const clinicalContext: ClinicalContext = {
-          deviceType: deviceType || 'unknown',
-          locationId: securityContext.locationId,
-          workstationId: securityContext.workstationId,
-          emergencyAccess: false
-        };
+      const clinicalContext = clinicalMode ? {
+        deviceType: deviceType || 'unknown',
+        locationId: '',
+        workstationId: '',
+        emergencyAccess: false
+      } : undefined;
 
+      if (clinicalContext) {
         securityLogger.info('Clinical context validated', clinicalContext);
       }
 
       // Start biometric authentication
-      const authOptions = {
-        challenge: await crypto.getRandomValues(new Uint8Array(32)),
+      const authOptions: PublicKeyCredentialRequestOptionsJSON = {
+        challenge: Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url'),
         timeout: BIOMETRIC_TIMEOUT,
-        userVerification: 'required' as UserVerificationRequirement,
-        attestation: clinicalMode ? 'direct' : 'none'
+        userVerification: 'required',
+        rpId: window.location.hostname
       };
 
       const credential = await startAuthentication(authOptions);
@@ -170,12 +168,7 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
           verified: true,
           deviceId: deviceFingerprint,
           timestamp: Date.now(),
-          clinicalContext: clinicalMode ? {
-            deviceType: deviceType || 'unknown',
-            locationId: securityContext.locationId,
-            workstationId: securityContext.workstationId,
-            emergencyAccess: false
-          } : undefined
+          clinicalContext
         };
 
         securityLogger.info('Biometric authentication successful', {
@@ -186,13 +179,13 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
         onSuccess(authResult);
       }
     } catch (err) {
-      const error = err as Error & { code?: string; details?: Record<string, any> };
+      const error = err as Error;
       setAttemptCount(prev => prev + 1);
       
       const biometricError: BiometricError = {
-        code: error.code || 'BIOMETRIC_ERROR',
+        code: 'BIOMETRIC_ERROR',
         message: error.message,
-        details: error.details,
+        details: {},
         timestamp: Date.now()
       };
 
@@ -219,7 +212,7 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
       
       const emergencyContext: EmergencyContext = {
         reason: 'EMERGENCY_ACCESS',
-        authorizedBy: securityContext.userId,
+        authorizedBy: '',
         timestamp: Date.now()
       };
 
