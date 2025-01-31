@@ -190,7 +190,7 @@ const RegisterPage: React.FC = () => {
     <Auth0Provider
       domain={process.env.NEXT_PUBLIC_AUTH0_DOMAIN!}
       clientId={process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID!}
-      returnTo={window.location.origin}
+      redirectUri={window.location.origin}
       audience={process.env.NEXT_PUBLIC_AUTH0_AUDIENCE}
       scope="openid profile email"
     >
@@ -199,6 +199,10 @@ const RegisterPage: React.FC = () => {
           onSuccess={handleRegistrationSuccess}
           onError={handleRegistrationError}
           onSecurityEvent={securityLogger.log}
+          securityContext={{
+            deviceFingerprint: securityContext.deviceFingerprint,
+            biometricSupport: securityContext.biometricSupport
+          }}
           isLoading={isLoading}
         />
       </div>
