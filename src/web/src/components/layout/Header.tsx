@@ -10,7 +10,7 @@ import {
   HEALTH_RECORDS_ROUTES,
   CLAIMS_ROUTES,
   MARKETPLACE_ROUTES,
-  EMERGENCY_ROUTES 
+  ERROR_ROUTES 
 } from '../../lib/constants/routes';
 import useAuth from '../../hooks/useAuth';
 
@@ -222,7 +222,7 @@ const Header: React.FC<HeaderProps> = ({
       <UserSection>
         {emergencyMode && (
           <EmergencyButton
-            onClick={() => handleEmergencyNavigation(EMERGENCY_ROUTES.TRIAGE, 'HIGH')}
+            onClick={() => handleEmergencyNavigation(ERROR_ROUTES.SERVER_ERROR, 'HIGH')}
             aria-label="Emergency access"
           >
             Emergency Mode
