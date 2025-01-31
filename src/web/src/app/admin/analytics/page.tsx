@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend } from 'chart.js'; // ^4.0.0
-import { Line, Bar } from 'react-chartjs-2'; // ^4.0.0
-import DatePicker from 'react-datepicker'; // ^4.0.0
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend } from 'chart.js';
+import { Line, Bar } from 'react-chartjs-2';
+import DatePicker from 'react-datepicker';
 import { AdminAPI } from '../../../lib/api/admin';
 import { Analytics } from '../../../lib/utils/analytics';
 import Table from '../../../components/common/Table';
