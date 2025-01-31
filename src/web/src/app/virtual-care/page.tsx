@@ -11,7 +11,7 @@ import {
   ConnectionQuality,
   isSecureRoom,
   ConsultationType,
-  IConsultation
+  IConsultation 
 } from '../../lib/types/consultation';
 
 // Security violation types for monitoring
