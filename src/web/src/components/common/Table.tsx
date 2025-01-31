@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useState, useRef } from 'react'; // ^18.0.0
 import styled from '@emotion/styled'; // ^11.11.0
 import { css } from '@emotion/react'; // ^11.11.0
-import { useVirtual } from '@tanstack/react-virtual'; // ^2.10.4
+import { useVirtual } from '@tanstack/react-virtual'; // ^3.0.0
 import { theme } from '../../styles/theme';
 
 // Interfaces
