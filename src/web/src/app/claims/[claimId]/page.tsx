@@ -22,13 +22,13 @@ interface PageProps {
 
 // Styled components for enhanced UI
 const ClaimContainer = styled.div`
-  padding: ${theme.spacing(4)}px;
+  padding: ${theme.spacing.xl}px;
   background: ${theme.palette.background.paper};
-  border-radius: ${theme.shape.clinicalCard}px;
-  box-shadow: ${theme.shadows[1]};
+  border-radius: ${theme.shape.borderRadiusLarge}px;
+  box-shadow: ${theme.shadows.clinical};
 
   @media (max-width: ${theme.breakpoints.values.sm}px) {
-    padding: ${theme.spacing(2)}px;
+    padding: ${theme.spacing.md}px;
   }
 `;
 
@@ -36,14 +36,11 @@ const ClaimHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${theme.spacing(4)}px;
+  margin-bottom: ${theme.spacing.xl}px;
 `;
 
 const ClaimTitle = styled.h1`
-  font-size: ${theme.typography.h2.fontSize};
-  font-weight: ${theme.typography.h2.fontWeight};
-  line-height: ${theme.typography.h2.lineHeight};
-  letter-spacing: ${theme.typography.h2.letterSpacing};
+  ${theme.typography.h2};
   color: ${theme.palette.text.primary};
   margin: 0;
 `;
@@ -51,45 +48,40 @@ const ClaimTitle = styled.h1`
 const ClaimInfo = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: ${theme.spacing(4)}px;
-  margin: ${theme.spacing(4)}px 0;
+  gap: ${theme.spacing.xl}px;
+  margin: ${theme.spacing.xl}px 0;
 `;
 
 const InfoSection = styled.div`
   h3 {
-    font-size: ${theme.typography.h3.fontSize};
-    font-weight: ${theme.typography.h3.fontWeight};
-    line-height: ${theme.typography.h3.lineHeight};
-    letter-spacing: ${theme.typography.h3.letterSpacing};
+    ${theme.typography.h3};
     color: ${theme.palette.text.secondary};
-    margin-bottom: ${theme.spacing(2)}px;
+    margin-bottom: ${theme.spacing.md}px;
   }
 
   p {
-    font-size: ${theme.typography.body1.fontSize};
-    line-height: ${theme.typography.body1.lineHeight};
-    letter-spacing: ${theme.typography.body1.letterSpacing};
+    ${theme.typography.body1};
     color: ${theme.palette.text.primary};
-    margin: ${theme.spacing(1)}px 0;
+    margin: ${theme.spacing.sm}px 0;
   }
 `;
 
 const DocumentList = styled.ul`
   list-style: none;
   padding: 0;
-  margin: ${theme.spacing(2)}px 0;
+  margin: ${theme.spacing.md}px 0;
 `;
 
 const DocumentItem = styled.li`
   display: flex;
   align-items: center;
-  padding: ${theme.spacing(1)}px;
+  padding: ${theme.spacing.sm}px;
   border-radius: ${theme.shape.borderRadius}px;
   background: ${theme.palette.background.default};
-  margin-bottom: ${theme.spacing(1)}px;
+  margin-bottom: ${theme.spacing.sm}px;
 
   &:hover {
-    background: ${theme.palette.background.paper};
+    background: ${theme.palette.background.clinical};
   }
 `;
 
