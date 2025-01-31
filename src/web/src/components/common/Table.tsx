@@ -5,7 +5,7 @@ import { useVirtual } from '@tanstack/react-virtual'; // ^2.10.4
 import { theme } from '../../styles/theme';
 
 // Interfaces
-interface ColumnDefinition {
+interface ColumnDefinition<T = any> {
   id: string;
   header: string;
   accessor: string;
@@ -13,7 +13,7 @@ interface ColumnDefinition {
   minWidth?: number;
   maxWidth?: number;
   sortable?: boolean;
-  render?: (value: any, row: Record<string, any>) => React.ReactNode;
+  render?: (value: T, row: Record<string, any>) => React.ReactNode;
 }
 
 interface TableProps {
