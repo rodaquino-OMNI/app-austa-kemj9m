@@ -172,7 +172,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
       });
 
       onSuccess(response);
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
       
       auditLog.error('Login failed', {
@@ -205,7 +205,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         setAuthState(AuthState.AUTHENTICATED);
         onSuccess(mfaResult.tokens);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'MFA verification failed';
       setErrors(prev => ({
         ...prev,
