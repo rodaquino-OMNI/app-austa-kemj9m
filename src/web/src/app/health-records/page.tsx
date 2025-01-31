@@ -1,17 +1,3 @@
-```
-
-2. ViewerAccessLevel is not exported from healthRecord.ts - we need to use the one from DocumentViewer.tsx.
-
-3. subscribeToUpdates is not available in useHealthRecords hook.
-
-4. Analytics.AnalyticsCategory and Analytics.PrivacyLevel are not accessed correctly.
-
-5. Multiple null/undefined checks needed for selectedRecord and its attachments.
-
-Let me regenerate the file with all fixes:
-
-# src/web/src/app/health-records/page.tsx
-```typescript
 'use client';
 
 /**
@@ -22,11 +8,11 @@ Let me regenerate the file with all fixes:
 
 import React, { useState, useCallback, useEffect } from 'react'; // v18.0.0
 import { Suspense } from 'react'; // v18.0.0
-import { AuditLogger } from '@austa/audit-log'; // v1.0.0
+import { AuditLogger } from '@austa/audit-logger'; // v1.0.0
 
 // Internal imports
 import RecordsList from '../../components/health-records/RecordsList';
-import DocumentViewer, { ViewerAccessLevel } from '../../components/health-records/DocumentViewer';
+import DocumentViewer from '../../components/health-records/DocumentViewer';
 import Timeline from '../../components/health-records/Timeline';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import { useHealthRecords } from '../../hooks/useHealthRecords';
@@ -35,7 +21,8 @@ import { useHealthRecords } from '../../hooks/useHealthRecords';
 import { 
   IHealthRecord, 
   HealthRecordType, 
-  SecurityClassification
+  SecurityClassification,
+  ViewerAccessLevel 
 } from '../../lib/types/healthRecord';
 import { Analytics } from '../../lib/utils/analytics';
 
@@ -67,7 +54,8 @@ const HealthRecordsPage: React.FC<{
     records,
     loading,
     error,
-    fetchRecords
+    fetchRecords,
+    subscribeToUpdates
   } = useHealthRecords(params.patientId, {
     autoFetch: true,
     recordTypes: activeRecordTypes,
@@ -80,6 +68,12 @@ const HealthRecordsPage: React.FC<{
     patientId: params.patientId,
     enableEncryption: true
   });
+
+  // Setup real-time updates subscription
+  useEffect(() => {
+    const unsubscribe = subscribeToUpdates();
+    return () => unsubscribe();
+  }, [subscribeToUpdates]);
 
   // Handle record selection with security checks
   const handleRecordSelect = useCallback(async (record: IHealthRecord) => {
@@ -99,14 +93,14 @@ const HealthRecordsPage: React.FC<{
       // Track interaction
       Analytics.trackEvent({
         name: 'health_record_selected',
-        category: 'USER_INTERACTION',
+        category: Analytics.AnalyticsCategory.USER_INTERACTION,
         properties: {
           recordType: record.type,
           viewType
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'SENSITIVE',
+        privacyLevel: Analytics.PrivacyLevel.SENSITIVE,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -199,7 +193,7 @@ const HealthRecordsPage: React.FC<{
         </div>
 
         {/* Document viewer modal */}
-        {selectedRecord && selectedRecord.attachments && selectedRecord.attachments.length > 0 && (
+        {selectedRecord?.attachments?.length > 0 && (
           <DocumentViewer
             recordId={selectedRecord.id}
             attachmentId={selectedRecord.attachments[0].id}
@@ -209,7 +203,6 @@ const HealthRecordsPage: React.FC<{
             accessLevel={ViewerAccessLevel.READ_ONLY}
             watermarkText="CONFIDENTIAL"
             highContrastMode={false}
-            patientId={params.patientId}
           />
         )}
       </main>
