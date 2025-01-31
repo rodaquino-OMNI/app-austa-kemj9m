@@ -9,10 +9,10 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Auth0Provider } from '@auth0/auth0-react'; // v2.0.0
-import { startRegistration } from '@simplewebauthn/browser'; // v7.0.0
-import { WebEncryptionService } from '@austa/encryption'; // v1.0.0
-import { SecurityLogger } from '@austa/security-logger'; // v1.0.0
+import { Auth0Provider, Auth0ProviderOptions } from '@auth0/auth0-react';
+import { startRegistration } from '@simplewebauthn/browser';
+import { WebEncryptionService } from '@austa/encryption';
+import { SecurityLogger } from '@austa/security-logger';
 
 // Internal imports
 import RegisterForm from '../../../components/auth/RegisterForm';
@@ -190,19 +190,17 @@ const RegisterPage: React.FC = () => {
     <Auth0Provider
       domain={process.env.NEXT_PUBLIC_AUTH0_DOMAIN!}
       clientId={process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID!}
-      redirectUri={window.location.origin}
-      audience={process.env.NEXT_PUBLIC_AUTH0_AUDIENCE}
-      scope="openid profile email"
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE,
+        scope: "openid profile email"
+      }}
     >
       <div className="register-page">
         <RegisterForm
           onSuccess={handleRegistrationSuccess}
           onError={handleRegistrationError}
           onSecurityEvent={securityLogger.log}
-          securityContext={{
-            deviceFingerprint: securityContext.deviceFingerprint,
-            biometricSupport: securityContext.biometricSupport
-          }}
           isLoading={isLoading}
         />
       </div>
