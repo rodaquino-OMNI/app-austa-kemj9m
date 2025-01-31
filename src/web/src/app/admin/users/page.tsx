@@ -8,13 +8,7 @@ import Modal from '../../../components/common/Modal';
 import { AdminAPI } from '../../../lib/api/admin';
 import { UserRole, UserStatus, IUser } from '../../../lib/types/user';
 import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../../lib/utils/analytics';
-
-// Temporary security utils until @company/security-utils is added
-const SecurityUtils = {
-  maskPII: (value: string) => value.replace(/./g, '*'),
-  sanitizeInput: (value: string) => value.trim(),
-  validateUserUpdates: (updates: any) => true
-};
+import { SecurityUtils } from '@company/security-utils';
 
 // Table column definitions with security considerations
 const USER_TABLE_COLUMNS = [
@@ -23,8 +17,7 @@ const USER_TABLE_COLUMNS = [
     header: 'Name',
     accessor: 'profile.firstName',
     sortable: true,
-    secure: true,
-    render: (value: string, row: IUser) => 
+    render: (value: any, row: Record<string, any>) => 
       SecurityUtils.maskPII(`${row.profile.firstName} ${row.profile.lastName}`)
   },
   {
@@ -32,8 +25,7 @@ const USER_TABLE_COLUMNS = [
     header: 'Email',
     accessor: 'email',
     sortable: true,
-    secure: true,
-    render: (value: string) => SecurityUtils.maskPII(value)
+    render: (value: any) => SecurityUtils.maskPII(value)
   },
   {
     id: 'role',
@@ -52,13 +44,13 @@ const USER_TABLE_COLUMNS = [
     header: 'Last Login',
     accessor: 'securitySettings.lastLoginAt',
     sortable: true,
-    render: (value: Date) => new Date(value).toLocaleString()
+    render: (value: any) => new Date(value).toLocaleString()
   },
   {
     id: 'mfaStatus',
     header: 'MFA Status',
     accessor: 'securitySettings.mfaEnabled',
-    render: (value: boolean) => value ? 'Enabled' : 'Disabled'
+    render: (value: any) => value ? 'Enabled' : 'Disabled'
   }
 ];
 
@@ -158,13 +150,13 @@ const UsersPage: React.FC = () => {
     {
       label: 'Update',
       onClick: () => selectedUser && handleUserUpdate(selectedUser.id, selectedUser),
-      variant: 'primary',
+      variant: 'primary' as const,
       requiresConfirmation: true
     },
     {
       label: 'Cancel',
       onClick: () => setIsModalOpen(false),
-      variant: 'secondary'
+      variant: 'secondary' as const
     }
   ], [selectedUser]);
 
