@@ -85,7 +85,7 @@ const Controls: React.FC<IControlsProps> = ({
       await toggleAudio();
       setIsAudioEnabled(prev => !prev);
     } catch (error) {
-      onError(new Error(`Failed to toggle audio: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      onError(new Error('Failed to toggle audio: ' + error.message));
     }
   }, [toggleAudio, onError]);
 
@@ -97,7 +97,7 @@ const Controls: React.FC<IControlsProps> = ({
       await toggleVideo();
       setIsVideoEnabled(prev => !prev);
     } catch (error) {
-      onError(new Error(`Failed to toggle video: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      onError(new Error('Failed to toggle video: ' + error.message));
     }
   }, [toggleVideo, onError]);
 
@@ -109,7 +109,7 @@ const Controls: React.FC<IControlsProps> = ({
       await shareScreen();
       setIsScreenSharing(prev => !prev);
     } catch (error) {
-      onError(new Error(`Failed to toggle screen sharing: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      onError(new Error('Failed to toggle screen sharing: ' + error.message));
     }
   }, [shareScreen, onError]);
 
@@ -121,7 +121,7 @@ const Controls: React.FC<IControlsProps> = ({
       await disconnect();
       onEnd();
     } catch (error) {
-      onError(new Error(`Failed to end consultation: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      onError(new Error('Failed to end consultation: ' + error.message));
     }
   }, [disconnect, onEnd, onError]);
 
@@ -134,9 +134,9 @@ const Controls: React.FC<IControlsProps> = ({
         const stats = await getConnectionStats();
         setConnectionState(prev => ({
           ...prev,
-          quality: ConnectionQuality.GOOD, // Default to GOOD as we're using stats differently now
-          latency: stats.packetLoss || 0,
-          encrypted: true // Assuming encryption is handled at connection level
+          quality: stats.quality,
+          latency: stats.latency || 0,
+          encrypted: stats.encrypted
         }));
       } catch (error) {
         console.error('Connection monitoring error:', error);
