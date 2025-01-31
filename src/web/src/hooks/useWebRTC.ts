@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'; // v18.2.0
-import { Room, LocalTrack, RemoteParticipant } from 'twilio-video'; // v2.27.0
+import { Room, LocalTrack, RemoteParticipant, ConnectionQualityStats } from 'twilio-video'; // v2.27.0
 
 import { virtualCareApi } from '../lib/api/virtualCare';
 import {
@@ -29,13 +29,6 @@ const QUALITY_THRESHOLD = {
 interface WebRTCError extends Error {
   code: string;
   details?: any;
-}
-
-// Custom interface for connection quality statistics
-interface ConnectionQualityStats {
-  audioInputLevel?: number;
-  videoBitrate?: number;
-  packetLoss?: number;
 }
 
 /**
@@ -67,20 +60,18 @@ export const useWebRTC = (
     if (!room?.room) return;
 
     try {
-      const statsReports = await room.room.getStats();
+      const stats = await room.room.getStats();
       let audioLevel = 0;
       let videoBitrate = 0;
       let packetLoss = 0;
 
-      // Parse stats from the StatsReport array
-      statsReports.forEach(report => {
-        if (report.type === 'media-source' && report.kind === 'audio') {
-          audioLevel = report.audioLevel || 0;
-        }
-        if (report.type === 'media-source' && report.kind === 'video') {
-          videoBitrate = report.bitrate || 0;
-        }
-        if (report.type === 'remote-inbound-rtp') {
+      stats.forEach(report => {
+        if (report instanceof RTCInboundRtpStreamStats) {
+          if (report.kind === 'audio') {
+            audioLevel = report.audioLevel || 0;
+          } else if (report.kind === 'video') {
+            videoBitrate = report.bytesReceived || 0;
+          }
           packetLoss = report.packetsLost || 0;
         }
       });
@@ -233,7 +224,7 @@ export const useWebRTC = (
   /**
    * Retrieves current connection quality statistics
    */
-  const getConnectionStats = useCallback(async (): Promise<ConnectionQualityStats> => {
+  const getConnectionStats = useCallback(async (): Promise<RTCStatsReport> => {
     if (!room?.room) {
       throw new Error('Room not connected');
     }
