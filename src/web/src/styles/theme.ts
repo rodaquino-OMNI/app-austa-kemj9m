@@ -1,6 +1,24 @@
-import { createTheme, Theme, ThemeOptions } from '@mui/material'; // @mui/material ^5.14.0
+import { createTheme, Theme, ThemeOptions } from '@mui/material';
 
-// Healthcare-specific color palette with WCAG 2.1 AA compliant contrast ratios
+declare module '@mui/material/styles' {
+  interface Palette {
+    clinical: {
+      main: string;
+      light: string;
+      dark: string;
+      contrastText: string;
+    };
+  }
+  interface PaletteOptions {
+    clinical?: {
+      main: string;
+      light: string;
+      dark: string;
+      contrastText: string;
+    };
+  }
+}
+
 const palette = {
   primary: {
     main: '#0B4F6C',
@@ -51,7 +69,6 @@ const palette = {
   },
 };
 
-// Fluid typography system with accessible line heights and letter spacing
 const typography = {
   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   fontSize: 16,
@@ -94,7 +111,6 @@ const typography = {
   },
 };
 
-// Mobile-first responsive breakpoints
 const breakpoints = {
   values: {
     xs: 320,
@@ -105,12 +121,10 @@ const breakpoints = {
   },
 };
 
-// Healthcare-optimized spacing system
 const createSpacing = (factor: number) => {
   return factor * 8;
 };
 
-// Medical interface shape configurations
 const shape = {
   borderRadius: 8,
   borderRadiusSmall: 4,
@@ -119,14 +133,12 @@ const shape = {
   buttonRadius: 8,
 };
 
-// Healthcare-specific elevation system
 const shadows = {
   clinical: '0px 4px 20px rgba(0, 0, 0, 0.08)',
   elevated: '0px 8px 24px rgba(0, 0, 0, 0.12)',
   modal: '0px 16px 32px rgba(0, 0, 0, 0.16)',
 };
 
-// Create default shadows array
 const defaultShadows = [
   'none',
   shadows.clinical,
@@ -155,7 +167,6 @@ const defaultShadows = [
   shadows.clinical,
 ];
 
-// Component-specific overrides for healthcare context
 const components = {
   MuiButton: {
     styleOverrides: {
@@ -205,7 +216,6 @@ const components = {
   },
 };
 
-// Create the theme with all configurations
 const themeOptions: ThemeOptions = {
   palette,
   typography,
@@ -218,7 +228,6 @@ const themeOptions: ThemeOptions = {
 
 export const theme: Theme = createTheme(themeOptions);
 
-// Export individual theme sections for granular access
 export const {
   palette: themePalette,
   typography: themeTypography,
