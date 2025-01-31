@@ -320,6 +320,8 @@ const useAuth = (): IAuthContext & {
     error,
     lastActivity,
     sessionTimeout: SESSION_TIMEOUT,
+    isAuthenticated: state === AuthState.AUTHENTICATED,
+    checkAccess: async () => true, // Implement proper access check logic
     login: handleLogin,
     logout: handleLogout,
     verifyMFA,
