@@ -5,14 +5,12 @@
  */
 
 import { BASE_URL, API_VERSION } from './src/lib/constants/endpoints';
-import withBundleAnalyzer from '@next/bundle-analyzer'; // v13.4.0
-import withPWA from 'next-pwa'; // v5.6.0
-import withSentryConfig from '@sentry/nextjs'; // v7.0.0
-import type { NextConfig, WebpackConfigContext } from 'next';
-import type { Configuration as WebpackConfig } from 'webpack';
-
-// Declare module for next-pwa
-declare module 'next-pwa';
+import withBundleAnalyzer from '@next/bundle-analyzer';
+import withPWA from 'next-pwa';
+import withSentryConfig from '@sentry/nextjs';
+import type { NextConfig } from 'next';
+import type { WebpackConfigContext } from 'next/dist/server/config-shared';
+import type { Configuration } from 'webpack';
 
 /**
  * Content Security Policy configuration
@@ -91,7 +89,7 @@ const baseConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
 
-  webpack: (config: WebpackConfig, { dev, isServer }: WebpackConfigContext): WebpackConfig => {
+  webpack: (config: Configuration, { dev, isServer }: WebpackConfigContext): Configuration => {
     // Optimize bundle splitting
     config.optimization = {
       ...config.optimization,
@@ -175,11 +173,11 @@ let config: NextConfig = baseConfig;
 config = withPWA({
   ...config,
   pwa: pwaConfig,
-});
+}) as NextConfig;
 
 // Add bundle analyzer in analysis mode
 if (process.env.ANALYZE === 'true') {
-  config = withBundleAnalyzer(analyzerConfig)(config);
+  config = withBundleAnalyzer(analyzerConfig)(config) as NextConfig;
 }
 
 // Add Sentry configuration for production
