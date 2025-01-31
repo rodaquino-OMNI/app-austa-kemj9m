@@ -108,16 +108,16 @@ export const ADMIN_ROUTES = {
 
 /**
  * Emergency related route constants
- * Emergency services and triage functionality
+ * Emergency services and urgent care navigation paths
  */
 export const EMERGENCY_ROUTES = {
   HOME: '/emergency',
-  TRIAGE: '/emergency/triage',
-  SERVICES: '/emergency/services',
-  CONTACTS: '/emergency/contacts',
-  NEAREST_FACILITY: '/emergency/nearest-facility',
+  URGENT_CARE: '/emergency/urgent-care',
   SOS: '/emergency/sos',
-  FIRST_AID: '/emergency/first-aid'
+  NEARBY_FACILITIES: '/emergency/nearby-facilities',
+  EMERGENCY_CONTACTS: '/emergency/contacts',
+  EMERGENCY_INSTRUCTIONS: '/emergency/instructions',
+  EMERGENCY_HISTORY: '/emergency/history'
 } as const;
 
 /**
