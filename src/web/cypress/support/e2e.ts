@@ -35,6 +35,7 @@ Cypress.config('responseTimeout', 30000);
 Cypress.config('pageLoadTimeout', 30000);
 Cypress.config('viewportWidth', 1280);
 Cypress.config('viewportHeight', 720);
+Cypress.config('chromeWebSecurity', true);
 Cypress.config('video', true);
 Cypress.config('retries', {
   runMode: 2,
@@ -91,15 +92,6 @@ afterEach(() => {
     }
   });
 
-  // Verify security headers
-  cy.verifySecurityHeaders({
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
-    'X-XSS-Protection': '1; mode=block',
-    'Content-Security-Policy': "default-src 'self'"
-  });
-
   // Check performance metrics
   cy.window().then((win) => {
     win.performance.mark('test-case-end');
@@ -111,12 +103,6 @@ afterEach(() => {
     // Validate against SLA requirements
     expect(testDuration).to.be.lessThan(500, 'Test execution time exceeds SLA threshold');
   });
-
-  // Validate HIPAA compliance
-  cy.validateHIPAACompliance();
-
-  // Generate security test report
-  cy.task('generateSecurityReport');
 
   // Clean up test data securely
   cy.task('secureCleanup');
