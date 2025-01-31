@@ -113,6 +113,65 @@ class VirtualCareApi {
   }
 
   /**
+   * Reports connection quality metrics for a consultation
+   * @param consultationId ID of the consultation
+   * @param quality Current connection quality level
+   * @param metrics Additional quality metrics
+   */
+  public async reportConnectionQuality(
+    consultationId: string,
+    quality: ConnectionQuality,
+    metrics?: Record<string, number>
+  ): Promise<void> {
+    try {
+      await this.axiosInstance.post(
+        `${VirtualCareEndpoints.UPDATE_SESSION_STATUS}/${consultationId}/quality`,
+        {
+          quality,
+          metrics,
+          timestamp: new Date().toISOString()
+        }
+      );
+
+      logger.info('Connection quality reported', {
+        consultationId,
+        quality,
+        metrics,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      logger.error('Failed to report connection quality', {
+        error,
+        consultationId,
+        quality,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Verifies encryption status for a consultation
+   * @param consultationId ID of the consultation
+   * @returns Encryption verification status
+   */
+  public async verifyEncryption(consultationId: string): Promise<boolean> {
+    try {
+      const response = await this.axiosInstance.get(
+        `${VirtualCareEndpoints.GET_SESSION_TOKEN}/${consultationId}/encryption`
+      );
+      return response.data.encryptionVerified === true;
+    } catch (error) {
+      logger.error('Encryption verification failed', {
+        error,
+        consultationId,
+        timestamp: new Date().toISOString()
+      });
+      return false;
+    }
+  }
+
+  /**
    * Joins an existing virtual consultation with security verification
    * @param consultationId ID of the consultation to join
    * @param securityContext Security context for the session
