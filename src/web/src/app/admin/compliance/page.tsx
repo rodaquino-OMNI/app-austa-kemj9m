@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { format, parseISO } from 'date-fns';
 import useWebSocket from 'react-use-websocket';
-import { Theme } from '@mui/material';
 
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Table from '../../../components/common/Table';
@@ -45,25 +44,25 @@ interface ComplianceRecord {
 }
 
 // Styled Components
-const StyledCompliancePage = styled.div<{ theme?: Theme }>`
-  padding: ${({ theme }) => theme?.spacing(4)}px;
+const StyledCompliancePage = styled.div`
+  padding: ${({ theme }) => theme.spacing.lg}px;
   max-width: 1600px;
   margin: 0 auto;
-  background-color: ${({ theme }) => theme?.palette.background.default};
+  background-color: ${({ theme }) => theme.palette.background.default};
   min-height: calc(100vh - 64px);
 `;
 
-const Header = styled.div<{ theme?: Theme }>`
+const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme?.spacing(4)}px;
+  margin-bottom: ${({ theme }) => theme.spacing.xl}px;
 `;
 
-const Controls = styled.div<{ theme?: Theme }>`
+const Controls = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme?.spacing(2)}px;
-  margin-bottom: ${({ theme }) => theme?.spacing(4)}px;
+  gap: ${({ theme }) => theme.spacing.md}px;
+  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
 `;
 
 const CompliancePage: React.FC = () => {
@@ -78,11 +77,11 @@ const CompliancePage: React.FC = () => {
     onOpen: () => {
       Analytics.trackEvent({
         name: 'compliance_websocket_connected',
-        category: 'SYSTEM_PERFORMANCE',
+        category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
         properties: { endpoint: WEBSOCKET_ENDPOINT },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'INTERNAL',
+        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -93,7 +92,7 @@ const CompliancePage: React.FC = () => {
       });
     },
     onError: (error) => {
-      Analytics.trackError(error instanceof Error ? error : new Error('WebSocket connection failed'), {
+      Analytics.trackError(error, {
         context: 'compliance_websocket',
         endpoint: WEBSOCKET_ENDPOINT
       });
@@ -150,8 +149,8 @@ const CompliancePage: React.FC = () => {
       id: 'actions',
       header: 'Actions',
       accessor: 'id',
-      render: (_: string, row: ComplianceRecord) => (
-        <button onClick={() => handleRecordSelect(row)}>View Details</button>
+      render: (value: string, row: Record<string, any>) => (
+        <button onClick={() => handleRecordSelect(row as ComplianceRecord)}>View Details</button>
       )
     }
   ], []);
@@ -164,7 +163,7 @@ const CompliancePage: React.FC = () => {
       const mockData: ComplianceRecord[] = []; // Replace with actual API call
       setRecords(mockData);
     } catch (error) {
-      Analytics.trackError(error instanceof Error ? error : new Error('Failed to fetch records'), {
+      Analytics.trackError(error as Error, {
         context: 'compliance_fetch_records'
       });
     } finally {
@@ -194,14 +193,14 @@ const CompliancePage: React.FC = () => {
     
     Analytics.trackEvent({
       name: 'compliance_record_viewed',
-      category: 'USER_INTERACTION',
+      category: Analytics.AnalyticsCategory.USER_INTERACTION,
       properties: {
         recordId: record.id,
         complianceType: record.type
       },
       timestamp: Date.now(),
       userConsent: true,
-      privacyLevel: 'INTERNAL',
+      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
       auditInfo: {
         eventId: crypto.randomUUID(),
         timestamp: Date.now(),
