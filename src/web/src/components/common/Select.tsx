@@ -23,9 +23,9 @@ interface ValidationResult {
 interface SelectProps {
   name: string;
   id: string;
-  options: SelectOption[];
   value: string | string[];
   onChange: (value: string | string[], validationResult: ValidationResult) => void;
+  options: SelectOption[];
   multiple?: boolean;
   disabled?: boolean;
   error?: boolean;
@@ -38,22 +38,12 @@ interface SelectProps {
   medicalDataType?: 'diagnosis' | 'medication' | 'procedure' | 'general';
 }
 
-interface StyledSelectContainerProps {
+// Styled Components
+const StyledSelectContainer = styled.div<{
   fullWidth?: boolean;
   clinicalMode?: string;
   validationLevel?: string;
-}
-
-interface StyledSelectProps {
-  size?: 'small' | 'medium' | 'large';
-  error?: boolean;
-  clinicalMode?: string;
-  validationLevel?: string;
-  secureContent?: boolean;
-}
-
-// Styled Components
-const StyledSelectContainer = styled.div<StyledSelectContainerProps>`
+}>`
   position: relative;
   width: ${props => props.fullWidth ? '100%' : 'auto'};
   font-family: ${theme.typography.fontFamily};
@@ -71,7 +61,13 @@ const StyledSelectContainer = styled.div<StyledSelectContainerProps>`
   `}
 `;
 
-const StyledSelect = styled.select<StyledSelectProps>`
+const StyledSelect = styled.select<{
+  size?: string;
+  error?: boolean;
+  clinicalMode?: string;
+  validationLevel?: string;
+  secureContent?: boolean;
+}>`
   width: 100%;
   padding: ${props => COMPONENT_SIZES[props.size || 'medium'].padding};
   height: ${props => COMPONENT_SIZES[props.size || 'medium'].height};
@@ -84,7 +80,7 @@ const StyledSelect = styled.select<StyledSelectProps>`
     props.validationLevel === 'critical' ? theme.palette.error.main :
     theme.palette.text.disabled
   };
-  border-radius: ${theme.shape.borderRadiusSmall}px;
+  border-radius: ${theme.shape.borderRadius}px;
   cursor: pointer;
   appearance: none;
   transition: all 0.2s ease-in-out;
@@ -97,7 +93,7 @@ const StyledSelect = styled.select<StyledSelectProps>`
   &:focus {
     outline: none;
     border-color: ${theme.palette.primary.main};
-    box-shadow: 0 0 0 ${props => CLINICAL_STATES[props.clinicalMode || 'standard'].focus} ${theme.palette.primary.light}30;
+    box-shadow: 0 0 0 ${({ clinicalMode = 'standard' }) => CLINICAL_STATES[clinicalMode].focus} ${theme.palette.primary.light}30;
   }
 
   &:disabled {
