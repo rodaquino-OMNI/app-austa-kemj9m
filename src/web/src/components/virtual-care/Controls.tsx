@@ -132,12 +132,20 @@ const Controls: React.FC<IControlsProps> = ({
     const monitorConnection = async () => {
       try {
         const stats = await getConnectionStats();
-        const firstStat = Array.isArray(stats) && stats.length > 0 ? stats[0] : null;
+        let quality = ConnectionQuality.GOOD;
+        let latency = 0;
+
+        stats.forEach(report => {
+          if (report.type === 'transport') {
+            latency = report.currentRoundTripTime || 0;
+          }
+        });
+
         setConnectionState(prev => ({
           ...prev,
-          quality: firstStat?.quality || ConnectionQuality.GOOD,
-          latency: firstStat?.latency || 0,
-          encrypted: firstStat?.encrypted || true
+          quality,
+          latency,
+          encrypted: true
         }));
       } catch (error) {
         console.error('Connection monitoring error:', error);
