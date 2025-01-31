@@ -166,11 +166,23 @@ export const useClaims = (options: ClaimsOptions = {}) => {
 
       const { claims, total } = await response.json();
 
+      // Fix: Pass proper IClaim object for compliance validation
+      const complianceStatus = validateCompliance({
+        type: ClaimType.MEDICAL,
+        serviceDate: new Date(),
+        providerId: '',
+        amount: 0,
+        documents: claims,
+        healthRecordId: '',
+        consentAcknowledgment: true,
+        hipaaAuthorization: true
+      });
+
       setState(prev => ({
         ...prev,
         claims,
         totalClaims: total,
-        complianceStatus: validateCompliance({ documents: claims })
+        complianceStatus
       }));
 
       await auditLogger.log('CLAIMS_RETRIEVAL_SUCCESSFUL', {
