@@ -62,9 +62,9 @@ export interface FilterState {
   search?: string;
   categories?: ProductCategory[];
   priceRange?: {
-    min: number;
-    max: number;
-  } | undefined;
+    min: number | undefined;
+    max: number | undefined;
+  };
   sortBy?: ProductSortOption;
 }
 
