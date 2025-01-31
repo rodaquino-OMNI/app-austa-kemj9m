@@ -9,7 +9,9 @@ import { virtualCareApi } from '../../lib/api/virtualCare';
 import { 
   ConsultationStatus, 
   ConnectionQuality,
-  isSecureRoom 
+  isSecureRoom,
+  ConsultationType,
+  IConsultation
 } from '../../lib/types/consultation';
 
 // Security violation types for monitoring
@@ -86,26 +88,19 @@ const VirtualCarePage: React.FC = () => {
     if (!consultationId) return;
 
     try {
-      const consultation = await virtualCareApi.createConsultation({
-        patientId: 'current-user-id',
-        providerId: 'provider-id',
-        type: 'VIDEO',
-        scheduledStartTime: new Date(),
-        securityLevel: 'HIPAA',
-        encryptionRequirements: {
-          algorithm: 'AES-256-GCM',
-          keySize: 256
-        }
+      const encryptionVerified = await virtualCareApi.verifyEncryption({
+        consultationId,
+        timestamp: new Date().toISOString()
       });
 
       setSecurityStatus(prev => ({
         ...prev,
-        isVerified: consultation.securityMetadata.encryptionVerified === 'true',
+        isVerified: encryptionVerified,
         lastVerification: new Date(),
-        encryptionStatus: consultation.securityMetadata.encryptionVerified === 'true' ? 'verified' : 'failed'
+        encryptionStatus: encryptionVerified ? 'verified' : 'failed'
       }));
 
-      if (!consultation.securityMetadata.encryptionVerified) {
+      if (!encryptionVerified) {
         handleSecurityViolation('ENCRYPTION_FAILED');
       }
     } catch (error) {
@@ -121,9 +116,9 @@ const VirtualCarePage: React.FC = () => {
     try {
       setIsLoading(true);
       const consultation = await virtualCareApi.createConsultation({
-        patientId: 'current-user-id',
-        providerId: 'provider-id',
-        type: 'VIDEO',
+        patientId: 'current-user-id', // Should be retrieved from auth context
+        providerId: 'provider-id', // Should be retrieved from route params
+        type: ConsultationType.VIDEO,
         scheduledStartTime: new Date(),
         securityLevel: 'HIPAA',
         encryptionRequirements: {
@@ -212,7 +207,19 @@ const VirtualCarePage: React.FC = () => {
         <VideoConsultation
           consultation={{
             id: consultationId,
-            isEmergency: false // Added missing required property
+            type: ConsultationType.VIDEO,
+            patientId: 'current-user-id',
+            providerId: 'provider-id',
+            scheduledStartTime: new Date(),
+            actualStartTime: new Date(),
+            endTime: null,
+            status: ConsultationStatus.IN_PROGRESS,
+            participants: [],
+            healthRecordId: null,
+            roomSid: null,
+            metadata: {},
+            securityMetadata: {},
+            auditLog: []
           }}
           onEnd={handleConsultationEnd}
           onSecurityViolation={handleSecurityViolation}
