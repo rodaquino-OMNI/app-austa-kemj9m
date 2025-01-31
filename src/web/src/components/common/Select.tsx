@@ -24,8 +24,8 @@ interface SelectProps {
   name: string;
   id: string;
   value: string | string[];
-  onChange: (value: string | string[], validationResult: ValidationResult) => void;
   options: SelectOption[];
+  onChange: (value: string | string[], validationResult: ValidationResult) => void;
   multiple?: boolean;
   disabled?: boolean;
   error?: boolean;
