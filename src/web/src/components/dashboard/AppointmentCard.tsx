@@ -34,10 +34,10 @@ const formatAppointmentTime = (date: Date, locale: string, timezone: string): st
 
 const getStatusColor = (
   status: ConsultationStatus,
-  isUrgent: boolean,
+  isEmergency: boolean,
   theme: typeof import('../../styles/theme').theme
 ): string => {
-  if (isUrgent) return theme.palette.error.main;
+  if (isEmergency) return theme.palette.error.main;
 
   const statusColors = {
     [ConsultationStatus.SCHEDULED]: theme.palette.primary.main,
@@ -132,12 +132,10 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
     }
   }, [appointment.id, onReschedule]);
 
-  const isUrgent = appointment.metadata?.isUrgent || false;
-
   return (
     <Card
       elevation="clinical"
-      clinicalMode={isUrgent ? 'critical' : 'standard'}
+      clinicalMode={appointment.isEmergency ? 'critical' : 'standard'}
       role="article"
       aria-label={t('appointment.card.label')}
     >
@@ -147,13 +145,13 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
             {`${provider.profile.firstName} ${provider.profile.lastName}`}
           </span>
           <span className="provider-specialization" aria-label={t('appointment.provider.specialization')}>
-            {provider.profile.metadata?.specialization || ''}
+            {provider.specialization}
           </span>
         </div>
         <div 
           className="appointment-type"
           aria-label={t('appointment.type')}
-          style={{ color: getStatusColor(appointment.status, isUrgent, theme) }}
+          style={{ color: getStatusColor(appointment.status, appointment.isEmergency, theme) }}
         >
           {appointment.type === ConsultationType.VIDEO && '📹'}
           {appointment.type === ConsultationType.AUDIO && '🎤'}
@@ -178,7 +176,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           className="status-indicator"
           role="status"
           aria-live="polite"
-          style={{ color: getStatusColor(appointment.status, isUrgent, theme) }}
+          style={{ color: getStatusColor(appointment.status, appointment.isEmergency, theme) }}
         >
           {t(`appointment.status.${appointment.status.toLowerCase()}`)}
         </div>
@@ -232,7 +230,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: ${theme.spacing(2)}px;
+          margin-bottom: ${theme.spacing.md}px;
         }
 
         .provider-info {
@@ -252,7 +250,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         }
 
         .appointment-details {
-          margin: ${theme.spacing(2)}px 0;
+          margin: ${theme.spacing.md}px 0;
         }
 
         .time-info {
@@ -262,18 +260,18 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
         .status-indicator {
           font-weight: ${theme.typography.fontWeightMedium};
-          margin-top: ${theme.spacing(1)}px;
+          margin-top: ${theme.spacing.sm}px;
         }
 
         .appointment-actions {
           display: flex;
-          gap: ${theme.spacing(2)}px;
-          margin-top: ${theme.spacing(3)}px;
+          gap: ${theme.spacing.md}px;
+          margin-top: ${theme.spacing.lg}px;
         }
 
         button {
-          padding: ${theme.spacing(1)}px ${theme.spacing(2)}px;
-          border-radius: ${theme.shape.borderRadius}px;
+          padding: ${theme.spacing.sm}px ${theme.spacing.md}px;
+          border-radius: ${theme.shape.buttonRadius}px;
           font-weight: ${theme.typography.fontWeightMedium};
           transition: all 0.2s ease-in-out;
           min-height: 44px;
@@ -300,11 +298,11 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         }
 
         .connection-warning {
-          margin-top: ${theme.spacing(2)}px;
-          padding: ${theme.spacing(1)}px;
+          margin-top: ${theme.spacing.md}px;
+          padding: ${theme.spacing.sm}px;
           background-color: ${theme.palette.warning.light};
           color: ${theme.palette.warning.dark};
-          border-radius: ${theme.shape.borderRadius}px;
+          border-radius: ${theme.shape.borderRadiusSmall}px;
         }
 
         .visually-hidden {
