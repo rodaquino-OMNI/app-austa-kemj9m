@@ -1,27 +1,9 @@
-```
-
-2. useAuth hook property errors:
-```
-error TS2339: Property 'isAuthenticated' does not exist on type 'IAuthContext'
-error TS2339: Property 'userRole' does not exist on type 'IAuthContext'
-```
-
-3. HealthMetrics component prop type errors:
-```
-error TS2322: Type '"read"' is not assignable to type 'AccessLevel'
-error TS2322: Type '"light"' is not assignable to type 'ThemePreference'
-```
-
-Let me regenerate the file with the fixes:
-
-# src/web/src/app/page.tsx
-```tsx
 'use client';
 
 import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Grid, Container, Typography, ThemeProvider } from '@mui/material';
-import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
+import { Analytics } from '@vercel/analytics';
 
 // Internal imports
 import Header from '../components/layout/Header';
@@ -32,7 +14,6 @@ import useAuth from '../hooks/useAuth';
 import theme from '../styles/theme';
 import { UserRole } from '../lib/types/user';
 import { SecurityClassification } from '../lib/types/healthRecord';
-import { Analytics } from '../lib/utils/analytics';
 
 // Constants
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -44,39 +25,25 @@ const ERROR_BOUNDARY_CONFIG = { maxRetries: 3, fallbackUI: true };
  * Enhanced security check for authentication and role validation
  */
 const checkAuth = () => {
-  const { user, state } = useAuth();
+  const { user, isAuthenticated, userRole } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (state !== 'AUTHENTICATED') {
+    if (!isAuthenticated) {
       router.push('/auth/login');
       return;
     }
 
     // Track secure page view
-    Analytics.trackEvent({
-      name: 'page_view',
-      category: Analytics.AnalyticsCategory.USER_INTERACTION,
-      properties: {
-        page: 'dashboard',
-        userRole: user?.role,
-        timestamp: Date.now(),
-        isAuthenticated: true
-      },
+    Analytics.track('page_view', {
+      page: 'dashboard',
+      userRole,
       timestamp: Date.now(),
-      userConsent: true,
-      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
-      auditInfo: {
-        eventId: crypto.randomUUID(),
-        timestamp: Date.now(),
-        userId: user?.id || 'anonymous',
-        ipAddress: 'masked',
-        actionType: 'page_view'
-      }
+      isAuthenticated: true
     });
-  }, [state, user?.role, router]);
+  }, [isAuthenticated, userRole, router]);
 
-  return { user, userRole: user?.role };
+  return { user, userRole };
 };
 
 /**
@@ -96,25 +63,11 @@ const HomePage = () => {
 
   // Handle component errors with audit logging
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
-    Analytics.trackEvent({
-      name: 'error_boundary_triggered',
-      category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
-      properties: {
-        error: error.message,
-        component: 'HomePage',
-        userRole,
-        timestamp: Date.now()
-      },
-      timestamp: Date.now(),
-      userConsent: true,
-      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
-      auditInfo: {
-        eventId: crypto.randomUUID(),
-        timestamp: Date.now(),
-        userId: user?.id || 'anonymous',
-        ipAddress: 'masked',
-        actionType: 'error_boundary_triggered'
-      }
+    Analytics.track('error_boundary_triggered', {
+      error: error.message,
+      component: 'HomePage',
+      userRole,
+      timestamp: Date.now()
     });
   };
 
@@ -168,8 +121,8 @@ const HomePage = () => {
                     refreshInterval={REFRESH_INTERVAL}
                     showHistory={true}
                     encryptionKey={user?.securitySettings?.lastLoginAt.toString() || ''}
-                    accessLevel={AccessLevel.READ}
-                    theme={ThemePreference.LIGHT}
+                    accessLevel="read"
+                    theme="light"
                   />
                 </Suspense>
               </Grid>
@@ -195,5 +148,4 @@ const HomePage = () => {
   );
 };
 
-// Export with analytics wrapper
-export default VercelAnalytics.withAnalytics(HomePage);
+export default HomePage;
