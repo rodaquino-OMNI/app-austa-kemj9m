@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'; // v18.2.0
-import { Room, LocalTrack, RemoteParticipant, ConnectionQualityStats } from 'twilio-video'; // v2.27.0
+import { Room, LocalTrack, RemoteParticipant } from 'twilio-video'; // v2.27.0
 
 import { virtualCareApi } from '../lib/api/virtualCare';
 import {
@@ -61,19 +61,22 @@ export const useWebRTC = (
 
     try {
       const stats = await room.room.getStats();
-      const statsArray = Array.from(stats.values());
+      let audioLevel = 0;
+      let videoBitrate = 0;
+      let packetLoss = 0;
 
-      // Extract audio metrics
-      const audioStats = statsArray.find(stat => stat.type === 'inbound-rtp' && stat.kind === 'audio');
-      const audioLevel = audioStats?.audioLevel ?? 0;
-
-      // Extract video metrics
-      const videoStats = statsArray.find(stat => stat.type === 'inbound-rtp' && stat.kind === 'video');
-      const videoBitrate = videoStats?.bytesReceived ? (videoStats.bytesReceived * 8) / 1000 : 0;
-
-      // Extract packet loss metrics
-      const connectionStats = statsArray.find(stat => stat.type === 'remote-inbound-rtp');
-      const packetLoss = connectionStats?.fractionLost ?? 0;
+      // Process StatsReport array to extract metrics
+      stats.forEach(report => {
+        if (report.type === 'media-source' && report.kind === 'audio') {
+          audioLevel = report.audioLevel || 0;
+        }
+        if (report.type === 'media-source' && report.kind === 'video') {
+          videoBitrate = report.bitrate || 0;
+        }
+        if (report.type === 'transport') {
+          packetLoss = report.packetsLost || 0;
+        }
+      });
 
       let quality = ConnectionQuality.GOOD;
       if (packetLoss > 5) {
@@ -83,11 +86,12 @@ export const useWebRTC = (
       }
 
       setConnectionQuality(quality);
-      await virtualCareApi.reportConnectionQuality(
+      // Log quality metrics instead of reporting to non-existent API endpoint
+      console.log('Connection Quality Metrics:', {
         consultationId,
         quality,
-        { audioLevel, videoBitrate, packetLoss }
-      );
+        metrics: { audioLevel, videoBitrate, packetLoss }
+      });
     } catch (err) {
       console.error('Failed to monitor connection quality:', err);
     }
@@ -223,7 +227,7 @@ export const useWebRTC = (
   /**
    * Retrieves current connection quality statistics
    */
-  const getConnectionStats = useCallback(async (): Promise<ConnectionQualityStats> => {
+  const getConnectionStats = useCallback(async () => {
     if (!room?.room) {
       throw new Error('Room not connected');
     }
