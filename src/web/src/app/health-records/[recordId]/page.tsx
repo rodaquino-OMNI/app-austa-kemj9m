@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import { withErrorBoundary } from '@sentry/react';
+import { SecurityContext } from '@auth/security-context';
 
 import { 
   IHealthRecord, 
@@ -10,10 +11,10 @@ import {
   SecurityClassification 
 } from '../../../lib/types/healthRecord';
 import { useHealthRecords } from '../../../hooks/useHealthRecords';
-import DocumentViewer, { ViewerAccessLevel } from '../../../components/health-records/DocumentViewer';
+import DocumentViewer from '../../../components/health-records/DocumentViewer';
 import Button from '../../../components/common/Button';
 import Loader from '../../../components/common/Loader';
-import { Analytics } from '../../../lib/utils/analytics';
+import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../../lib/utils/analytics';
 
 // Page props interface
 interface PageProps {
@@ -43,42 +44,56 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
   const [activeAttachment, setActiveAttachment] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize health records hook
+  // Security context
+  const securityContext = React.useContext(SecurityContext);
+
+  // Initialize health records hook with security context
   const { 
     fetchRecords, 
     updateRecord, 
-    deleteRecord,
+    deleteRecord, 
+    auditAccess,
     loading,
     operationLoading 
-  } = useHealthRecords('anonymous', {
+  } = useHealthRecords(securityContext.userId, {
     enableRealTimeSync: true,
     retryAttempts: 3
   });
 
-  // Fetch record
+  // Fetch record with security checks
   useEffect(() => {
     const loadRecord = async () => {
       try {
-        // Fetch record
-        const records = await fetchRecords();
-        if (!records || records.length === 0) {
+        // Verify security context
+        if (!securityContext.isAuthenticated) {
+          throw new Error('Unauthorized access attempt');
+        }
+
+        // Fetch record with HIPAA compliance
+        const response = await fetchRecords(params.recordId);
+        if (!response) {
           notFound();
         }
 
-        // Set record
-        setRecord(records[0]);
+        // Set record and log access
+        setRecord(response);
+        await auditAccess({
+          recordId: params.recordId,
+          action: 'VIEW',
+          timestamp: new Date().toISOString()
+        });
 
         // Track secure analytics
         Analytics.trackEvent({
           name: 'health_record_view',
-          category: Analytics.AnalyticsCategory.USER_INTERACTION,
+          category: AnalyticsCategory.USER_INTERACTION,
           properties: {
-            recordType: records[0].type,
-            hasAttachments: records[0].attachments.length > 0
+            recordType: response.type,
+            hasAttachments: response.attachments.length > 0
           },
           timestamp: Date.now(),
           userConsent: true,
-          privacyLevel: Analytics.PrivacyLevel.SENSITIVE,
+          privacyLevel: PrivacyLevel.SENSITIVE,
           auditInfo: {
             eventId: crypto.randomUUID(),
             timestamp: Date.now(),
@@ -98,7 +113,7 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
     };
 
     loadRecord();
-  }, [params.recordId, fetchRecords]);
+  }, [params.recordId, securityContext]);
 
   // Handle secure record deletion
   const handleDelete = async () => {
@@ -108,11 +123,11 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
       await deleteRecord(record.id);
       Analytics.trackEvent({
         name: 'health_record_delete',
-        category: Analytics.AnalyticsCategory.USER_INTERACTION,
+        category: AnalyticsCategory.USER_INTERACTION,
         properties: { recordType: record.type },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: Analytics.PrivacyLevel.SENSITIVE,
+        privacyLevel: PrivacyLevel.SENSITIVE,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -202,9 +217,8 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
             contentType={record.attachments.find(a => a.id === activeAttachment)?.contentType || ''}
             url={record.attachments.find(a => a.id === activeAttachment)?.url || ''}
             onClose={() => setActiveAttachment(null)}
-            accessLevel={ViewerAccessLevel.READ_ONLY}
+            accessLevel="readonly"
             watermarkText="CONFIDENTIAL"
-            patientId={record.patientId}
           />
         )}
       </main>
