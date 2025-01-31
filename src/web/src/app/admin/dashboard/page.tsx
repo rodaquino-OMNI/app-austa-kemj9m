@@ -28,7 +28,6 @@ import HealthMetrics from '../../../components/dashboard/HealthMetrics';
 import { useAnalytics } from '../../../hooks/useAnalytics';
 import { UserRole } from '../../../lib/types/user';
 import { SecurityClassification } from '../../../lib/types/healthRecord';
-import { AccessLevel, ThemePreference } from '../../../components/dashboard/HealthMetrics';
 
 // Constants
 const REFRESH_INTERVAL = 30000; // 30 seconds
