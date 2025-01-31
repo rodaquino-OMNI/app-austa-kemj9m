@@ -72,8 +72,7 @@ const LoginPage: React.FC = () => {
     state: authState,
     isLoading,
     error,
-    login: handleLogin,
-    verifyBiometric
+    login: handleLogin
   } = useAuth();
 
   // State management
