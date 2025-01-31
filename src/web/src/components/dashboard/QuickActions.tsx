@@ -42,19 +42,19 @@ interface QuickAction {
 const ActionsContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  padding: 16px;
-  background: #F8FBFF;
-  border-radius: 16px;
-  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
+  gap: ${theme.spacing(2)}px;
+  padding: ${theme.spacing(2)}px;
+  background: ${theme.palette.background.paper};
+  border-radius: ${theme.shape.borderRadius}px;
+  box-shadow: ${theme.shadows[1]};
 `;
 
 const ActionButton = styled(Button)`
   width: 100%;
   height: 64px;
   justify-content: flex-start;
-  padding: 16px;
-  gap: 8px;
+  padding: ${theme.spacing(2)}px;
+  gap: ${theme.spacing(1)}px;
   
   svg {
     width: 24px;
