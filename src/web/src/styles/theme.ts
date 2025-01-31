@@ -1,29 +1,5 @@
 import { createTheme, Theme, ThemeOptions } from '@mui/material'; // @mui/material ^5.14.0
 
-// Augment the Material-UI theme types to include custom properties
-declare module '@mui/material/styles' {
-  interface Palette {
-    clinical: Palette['primary'];
-  }
-  interface PaletteOptions {
-    clinical?: PaletteOptions['primary'];
-  }
-
-  interface Shape {
-    borderRadiusSmall: number;
-    borderRadiusLarge: number;
-    clinicalCard: number;
-    buttonRadius: number;
-  }
-
-  interface Theme {
-    shadows: string[];
-  }
-  interface ThemeOptions {
-    shadows?: string[];
-  }
-}
-
 // Healthcare-specific color palette with WCAG 2.1 AA compliant contrast ratios
 const palette = {
   primary: {
@@ -130,7 +106,16 @@ const breakpoints = {
 };
 
 // Healthcare-optimized spacing system
-const createSpacing = (factor: number) => factor * 8;
+const spacing = {
+  unit: 8,
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
+  section: 64,
+};
 
 // Medical interface shape configurations
 const shape = {
@@ -142,50 +127,21 @@ const shape = {
 };
 
 // Healthcare-specific elevation system
-const shadows = {
+const customShadows = {
   clinical: '0px 4px 20px rgba(0, 0, 0, 0.08)',
   elevated: '0px 8px 24px rgba(0, 0, 0, 0.12)',
   modal: '0px 16px 32px rgba(0, 0, 0, 0.16)',
 };
 
-// Default MUI shadows with clinical shadow
-const defaultShadows = [
-  'none',
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-];
-
 // Component-specific overrides for healthcare context
 const components = {
   MuiButton: {
     styleOverrides: {
-      root: ({ theme }: { theme: Theme }) => ({
-        borderRadius: shape.buttonRadius,
+      root: {
+        borderRadius: 8,
         textTransform: 'none',
-        fontWeight: typography.fontWeightMedium,
-      }),
+        fontWeight: 500,
+      },
       containedPrimary: {
         '&:hover': {
           backgroundColor: palette.primary.dark,
@@ -201,8 +157,8 @@ const components = {
   MuiCard: {
     styleOverrides: {
       root: {
-        borderRadius: shape.clinicalCard,
-        boxShadow: shadows.clinical,
+        borderRadius: 16,
+        boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08)',
       },
     },
   },
@@ -210,7 +166,7 @@ const components = {
     styleOverrides: {
       root: {
         '& .MuiOutlinedInput-root': {
-          borderRadius: shape.borderRadiusSmall,
+          borderRadius: 4,
         },
       },
     },
@@ -221,18 +177,47 @@ const components = {
         backgroundColor: palette.text.primary,
         fontSize: '0.875rem',
         padding: '8px 16px',
-        borderRadius: shape.borderRadiusSmall,
+        borderRadius: 4,
       },
     },
   },
 };
+
+// Create base shadows array with 25 elements
+const defaultShadows = [
+  'none',
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+  customShadows.clinical,
+];
 
 // Create the theme with all configurations
 const themeOptions: ThemeOptions = {
   palette,
   typography,
   breakpoints,
-  spacing: createSpacing,
+  spacing,
   shape,
   components,
   shadows: defaultShadows,
