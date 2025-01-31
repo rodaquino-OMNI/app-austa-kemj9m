@@ -92,6 +92,7 @@ export interface IAuthContext {
     sessionTimeout: number;
     isAuthenticated: boolean;
     checkAccess: (level: SecurityLevel) => Promise<boolean>;
+    verifyBiometric: () => Promise<boolean>;
 }
 
 /**
