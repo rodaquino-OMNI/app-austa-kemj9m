@@ -10,22 +10,24 @@ import jwtDecode from 'jwt-decode'; // v3.1.2
 import CryptoJS from 'crypto-js'; // v4.1.1
 
 import {
-  login as authLogin,
-  verifyBiometric as authVerifyBiometric,
-  validateDeviceFingerprint as authValidateDeviceFingerprint
+  login,
+  logout,
+  refreshToken,
+  verifyMFA,
 } from '../lib/api/auth';
 
 import {
   IAuthTokens,
   ILoginCredentials,
   IMFACredentials,
+  IBiometricCredentials,
   AuthState,
   IAuthContext,
   IAuthError,
   SecurityEvent
 } from '../lib/types/auth';
 
-import { IUser } from '../lib/types/user';
+import { IUser, IUserSecurityProfile } from '../lib/types/user';
 import { WebEncryptionService } from '../lib/utils/encryption';
 
 // Security constants
@@ -45,7 +47,6 @@ const useAuth = (): IAuthContext & {
   login: (credentials: ILoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   verifyMFA: (credentials: IMFACredentials) => Promise<void>;
-  verifyBiometric: () => Promise<boolean>;
   refreshSession: () => Promise<void>;
 } => {
   // State management with security context
@@ -60,7 +61,6 @@ const useAuth = (): IAuthContext & {
   // Security references
   const refreshTokenTimeoutRef = useRef<NodeJS.Timeout>();
   const sessionTimeoutRef = useRef<NodeJS.Timeout>();
-  const deviceFingerprintRef = useRef<string>('');
 
   /**
    * Securely stores encrypted tokens in localStorage
@@ -83,7 +83,7 @@ const useAuth = (): IAuthContext & {
    */
   const validateToken = useCallback((token: string): boolean => {
     try {
-      const decoded = jwtDecode<{ exp: number }>(token);
+      const decoded = jwtDecode(token);
       const currentTime = Date.now() / 1000;
       return decoded.exp > currentTime + TOKEN_EXPIRY_BUFFER / 1000;
     } catch {
@@ -106,7 +106,7 @@ const useAuth = (): IAuthContext & {
   /**
    * Sets up automatic token refresh
    */
-  const setupTokenRefresh = useCallback(async () => {
+  const setupTokenRefresh = useCallback(() => {
     if (refreshTokenTimeoutRef.current) {
       clearTimeout(refreshTokenTimeoutRef.current);
     }
@@ -114,14 +114,7 @@ const useAuth = (): IAuthContext & {
     refreshTokenTimeoutRef.current = setTimeout(async () => {
       try {
         if (tokens?.refreshToken) {
-          const response = await fetch('/api/auth/refresh', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ refreshToken: tokens.refreshToken })
-          });
-          const newTokens = await response.json();
+          const newTokens = await refreshToken(tokens.refreshToken);
           await securelyStoreTokens(newTokens);
           setTokens(newTokens);
           setupTokenRefresh();
@@ -165,7 +158,8 @@ const useAuth = (): IAuthContext & {
       sessionId: tokens?.accessToken || '',
       metadata: { lastActivity },
       severity: 'MEDIUM',
-      outcome: 'SUCCESS'
+      outcome: 'SUCCESS',
+      timestamp: Date.now()
     });
 
     await handleLogout();
@@ -185,23 +179,19 @@ const useAuth = (): IAuthContext & {
         throw new Error('Account locked due to multiple failed attempts');
       }
 
-      // Generate and validate device fingerprint
-      deviceFingerprintRef.current = await authValidateDeviceFingerprint();
-      
       const enhancedCredentials = {
         ...credentials,
-        deviceId: deviceFingerprintRef.current,
         clientMetadata: {
           userAgent: navigator.userAgent,
           timestamp: Date.now().toString()
         }
       };
 
-      const authTokens = await authLogin(enhancedCredentials);
+      const authTokens = await login(enhancedCredentials);
       await securelyStoreTokens(authTokens);
       setTokens(authTokens);
       setState(AuthState.AUTHENTICATED);
-      await setupTokenRefresh();
+      setupTokenRefresh();
       setupSessionMonitoring();
       setLoginAttempts(0);
 
@@ -209,9 +199,10 @@ const useAuth = (): IAuthContext & {
         eventType: 'LOGIN_SUCCESS',
         userId: credentials.email,
         sessionId: authTokens.accessToken,
-        metadata: { deviceId: deviceFingerprintRef.current },
+        metadata: { deviceId: credentials.deviceId },
         severity: 'MEDIUM',
-        outcome: 'SUCCESS'
+        outcome: 'SUCCESS',
+        timestamp: Date.now()
       });
     } catch (error) {
       setLoginAttempts(prev => prev + 1);
@@ -240,7 +231,8 @@ const useAuth = (): IAuthContext & {
       sessionId: tokens?.accessToken || '',
       metadata: authError,
       severity: 'HIGH',
-      outcome: 'FAILURE'
+      outcome: 'FAILURE',
+      timestamp: Date.now()
     });
   };
 
@@ -251,12 +243,7 @@ const useAuth = (): IAuthContext & {
     try {
       setIsLoading(true);
       if (tokens?.accessToken) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${tokens.accessToken}`
-          }
-        });
+        await logout(tokens.accessToken);
       }
       
       // Clear security context
@@ -278,7 +265,8 @@ const useAuth = (): IAuthContext & {
         sessionId: tokens?.accessToken || '',
         metadata: { timestamp: Date.now() },
         severity: 'LOW',
-        outcome: 'SUCCESS'
+        outcome: 'SUCCESS',
+        timestamp: Date.now()
       });
     } catch (error) {
       handleAuthError(error);
@@ -296,7 +284,7 @@ const useAuth = (): IAuthContext & {
           const decryptedTokens = JSON.parse(storedTokens) as IAuthTokens;
           setTokens(decryptedTokens);
           setState(AuthState.AUTHENTICATED);
-          await setupTokenRefresh();
+          setupTokenRefresh();
           setupSessionMonitoring();
         }
       } catch (error) {
@@ -326,16 +314,8 @@ const useAuth = (): IAuthContext & {
     sessionTimeout: SESSION_TIMEOUT,
     login: handleLogin,
     logout: handleLogout,
-    verifyMFA: async (credentials: IMFACredentials) => {
-      // Implementation would be added based on MFA requirements
-      throw new Error('MFA verification not implemented');
-    },
-    verifyBiometric: async () => {
-      return await authVerifyBiometric();
-    },
-    refreshSession: async () => {
-      await setupTokenRefresh();
-    }
+    verifyMFA,
+    refreshSession: setupTokenRefresh
   };
 };
 
