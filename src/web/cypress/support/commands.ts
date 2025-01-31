@@ -1,12 +1,11 @@
 // External imports
 import '@testing-library/cypress/add-commands'; // v10.0.0
 import '@cypress/code-coverage/support'; // v3.12.0
-import 'cypress-file-upload'; // Add this for file upload support
 
 // Internal imports
-import { IUser } from '../../lib/types/user';
-import { IHealthRecord } from '../../lib/types/healthRecord';
-import { IClaim } from '../../lib/types/claim';
+import { IUser } from '../../src/lib/types/user';
+import { IHealthRecord } from '../../src/lib/types/healthRecord';
+import { IClaim } from '../../src/lib/types/claim';
 
 declare global {
   namespace Cypress {
@@ -15,10 +14,6 @@ declare global {
       uploadHealthRecord(recordData: IHealthRecord, documentFile: File): Chainable<void>;
       submitClaim(claimData: IClaim, supportingDocuments: File[]): Chainable<void>;
       verifyBiometricAuth(shouldSucceed: boolean): Chainable<void>;
-      findByLabelText(label: string): Chainable<JQuery<HTMLElement>>;
-      findByRole(role: string, options?: any): Chainable<JQuery<HTMLElement>>;
-      findByText(text: string | RegExp): Chainable<JQuery<HTMLElement>>;
-      attachFile(file: any): Chainable<JQuery<HTMLElement>>;
     }
   }
 }
@@ -48,7 +43,7 @@ Cypress.Commands.add('login', (credentials: IUser) => {
 
   // Input validation and form submission
   cy.findByLabelText('Email').type(credentials.email);
-  cy.findByLabelText('Password').type(credentials.password, { sensitive: true });
+  cy.findByLabelText('Password').type(credentials.password, { log: false });
   cy.findByRole('button', { name: /sign in/i }).click();
 
   // Verify authentication and session
@@ -145,11 +140,9 @@ Cypress.Commands.add('verifyBiometricAuth', (shouldSucceed: boolean) => {
 
   // Mock biometric capability
   cy.window().then((win) => {
-    Object.defineProperty(win.navigator, 'credentials', {
-      value: {
-        get: cy.stub().resolves(shouldSucceed ? { id: 'bio-credential-id' } : null)
-      }
-    });
+    win.navigator.credentials = {
+      get: cy.stub().resolves(shouldSucceed ? { id: 'bio-credential-id' } : null)
+    };
   });
 
   // Trigger biometric auth
