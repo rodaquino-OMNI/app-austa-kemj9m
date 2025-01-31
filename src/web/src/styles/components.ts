@@ -1,9 +1,9 @@
-import styled from '@emotion/styled'; // @emotion/styled ^11.11.0
-import { css } from '@emotion/react'; // @emotion/react ^11.11.0
+import styled from '@emotion/styled';
+import { css } from '@emotion/react';
 import { theme } from './theme';
 
 // Global constants for medical interface components
-export const COMPONENT_SIZES = {
+const COMPONENT_SIZES = {
   small: {
     padding: '12px 20px',
     fontSize: '16px',
@@ -24,7 +24,7 @@ export const COMPONENT_SIZES = {
   }
 } as const;
 
-export const CLINICAL_STATES = {
+const CLINICAL_STATES = {
   standard: {
     contrast: '4.5:1',
     focus: '3px solid'
@@ -41,11 +41,9 @@ export const CLINICAL_STATES = {
 
 const TRANSITION_DURATION = '0.2s';
 
-type ComponentVariant = 'primary' | 'secondary' | 'clinical' | 'emergency';
-
 // Helper function for component variants
 const getComponentVariant = (
-  variant: ComponentVariant,
+  variant: 'primary' | 'secondary' | 'clinical' | 'emergency',
   component: string,
   isEmergency?: boolean
 ) => {
@@ -81,16 +79,16 @@ const getComponentVariant = (
     `
   };
 
-  return isEmergency ? baseStyles.emergency : baseStyles[variant] || baseStyles.primary;
+  return isEmergency ? baseStyles.emergency : baseStyles[variant];
 };
 
 // Enhanced Button Component
 export const Button = styled.button<{
-  variant?: ComponentVariant;
-  size?: keyof typeof COMPONENT_SIZES;
+  variant?: 'primary' | 'secondary' | 'clinical' | 'emergency';
+  size?: 'small' | 'medium' | 'large';
   fullWidth?: boolean;
   isEmergency?: boolean;
-  clinicalMode?: keyof typeof CLINICAL_STATES;
+  clinicalMode?: 'standard' | 'critical' | 'monitoring';
 }>`
   ${({ variant = 'primary', size = 'medium', fullWidth, isEmergency, clinicalMode = 'standard' }) => css`
     display: inline-flex;
@@ -151,7 +149,7 @@ export const Input = styled.input<{
     color: ${theme.palette.text.primary};
     background-color: ${theme.palette.background.paper};
     border: 1px solid ${error ? theme.palette.error.main : theme.palette.text.disabled};
-    border-radius: ${theme.shape.borderRadius / 2}px;
+    border-radius: ${theme.shape.borderRadius}px;
     transition: border-color ${TRANSITION_DURATION} ease-in-out;
 
     ${clinicalValidation === 'warning' && css`
@@ -196,7 +194,7 @@ export const Input = styled.input<{
 // Clinical Information Card Component
 export const Card = styled.div<{
   elevation?: 'clinical' | 'elevated' | 'modal';
-  clinicalMode?: keyof typeof CLINICAL_STATES;
+  clinicalMode?: 'standard' | 'critical' | 'monitoring';
   secure?: boolean;
 }>`
   ${({ elevation = 'clinical', clinicalMode = 'standard', secure }) => css`
