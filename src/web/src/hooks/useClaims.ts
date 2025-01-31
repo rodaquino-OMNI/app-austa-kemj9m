@@ -166,35 +166,11 @@ export const useClaims = (options: ClaimsOptions = {}) => {
 
       const { claims, total } = await response.json();
 
-      // Create a proper IClaim object for validation
-      const claimData: IClaim = {
-        id: '',
-        version: 1,
-        claimNumber: '',
-        patientId: '',
-        providerId: '',
-        type: ClaimType.MEDICAL,
-        serviceDate: new Date(),
-        submissionDate: new Date(),
-        status: ClaimStatus.DRAFT,
-        amount: 0,
-        documents: claims.documents || [],
-        healthRecordId: '',
-        auditTrail: [],
-        securityMetadata: {
-          encryptionLevel: '',
-          dataClassification: '',
-          lastSecurityReview: new Date(),
-          accessControlList: []
-        },
-        complianceChecks: []
-      };
-
       setState(prev => ({
         ...prev,
         claims,
         totalClaims: total,
-        complianceStatus: validateCompliance(claimData)
+        complianceStatus: validateCompliance({ documents: claims })
       }));
 
       await auditLogger.log('CLAIMS_RETRIEVAL_SUCCESSFUL', {
