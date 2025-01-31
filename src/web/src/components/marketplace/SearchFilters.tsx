@@ -17,20 +17,20 @@ import { theme } from '../../styles/theme';
 const FilterContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.md}px;
-  padding: ${theme.spacing.lg}px;
+  gap: ${theme.spacing(2)}px;
+  padding: ${theme.spacing(3)}px;
   background-color: ${theme.palette.background.paper};
   border-radius: ${theme.shape.borderRadius}px;
-  box-shadow: ${theme.shadows.clinical};
+  box-shadow: ${theme.shadows[1]};
 
   @media (max-width: ${theme.breakpoints.values.sm}px) {
-    padding: ${theme.spacing.sm}px;
+    padding: ${theme.spacing(1)}px;
   }
 `;
 
 const FilterRow = styled.div`
   display: flex;
-  gap: ${theme.spacing.md}px;
+  gap: ${theme.spacing(2)}px;
   align-items: center;
   flex-wrap: wrap;
   min-height: 48px;
@@ -43,7 +43,7 @@ const FilterRow = styled.div`
 
 const PriceRangeContainer = styled.div`
   display: flex;
-  gap: ${theme.spacing.sm}px;
+  gap: ${theme.spacing(1)}px;
   align-items: center;
 
   @media (max-width: ${theme.breakpoints.values.sm}px) {
@@ -129,10 +129,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
   // Category selection handler
   const handleCategoryChange = useCallback(
-    (selectedValues: string[], validationResult: { isValid: boolean }) => {
+    (value: string | string[], validationResult: { isValid: boolean }) => {
       if (!validationResult.isValid) return;
 
-      const categories = selectedValues.map(value => value as ProductCategory);
+      const categories = (Array.isArray(value) ? value : [value]) as ProductCategory[];
       setFilters(prev => {
         const newFilters = { ...prev, categories };
         onFilterChange(newFilters);
@@ -157,8 +157,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
       setFilters(prev => {
         const newPriceRange = {
-          min: field === 'min' ? numValue : prev.priceRange?.min || 0,
-          max: field === 'max' ? numValue : prev.priceRange?.max || 0
+          ...prev.priceRange,
+          [field]: numValue,
         };
         const newFilters = { ...prev, priceRange: newPriceRange };
         onFilterChange(newFilters);
@@ -175,7 +175,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
   // Sort option handler
   const handleSortChange = useCallback(
-    (value: string, validationResult: { isValid: boolean }) => {
+    (value: string | string[], validationResult: { isValid: boolean }) => {
       if (!validationResult.isValid) return;
 
       const sortBy = value as ProductSortOption;
@@ -213,6 +213,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
         <Select
           id="product-categories"
           name="categories"
+          label="Categories"
           options={categoryOptions}
           value={filters.categories || []}
           onChange={handleCategoryChange}
@@ -224,6 +225,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
         <Select
           id="product-sort"
           name="sort"
+          label="Sort By"
           options={sortOptions}
           value={filters.sortBy || ''}
           onChange={handleSortChange}
