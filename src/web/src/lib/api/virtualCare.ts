@@ -4,7 +4,7 @@
  * @license HIPAA-compliant
  */
 
-import { connect, Room, LocalTrack, RemoteParticipant, BandwidthProfileOptions } from 'twilio-video'; // v2.27.0
+import { connect, Room, LocalTrack, RemoteParticipant, NetworkQualityMonitor, BandwidthProfileOptions } from 'twilio-video'; // v2.27.0
 import axios from 'axios'; // v1.5.0
 import winston from 'winston'; // v3.10.0
 
@@ -13,7 +13,7 @@ import {
   IConsultationRoom,
   ConsultationStatus,
   ConsultationType,
-  ConnectionQuality,
+  IConnectionQuality,
   isSecureRoom
 } from '../types/consultation';
 import { VirtualCareEndpoints } from '../constants/endpoints';
@@ -131,26 +131,29 @@ class VirtualCareApi {
 
       // Initialize Twilio Video client with security options
       const room = await connect(tokenResponse.data.token, {
+        ...SECURITY_CONFIG.bandwidthProfile,
         networkQuality: {
           local: 3,
           remote: 3
         },
         dominantSpeaker: true,
-        automaticSubscription: true,
-        video: true
+        automaticSubscription: true
       });
 
-      // Monitor network quality through room events
-      room.on('networkQualityLevelChanged', this.handleNetworkQualityUpdate);
+      // Set up network quality monitoring
+      room.localParticipant.on('networkQualityLevelChanged', this.handleNetworkQualityUpdate);
+      room.participants.forEach(participant => {
+        participant.on('networkQualityLevelChanged', this.handleNetworkQualityUpdate);
+      });
 
       // Initialize automatic token refresh
       this.startTokenRefreshInterval(consultationId, room);
 
       const consultationRoom: IConsultationRoom = {
         room,
-        localTracks: Array.from(room.localParticipant.tracks.values()).map(pub => pub.track),
+        localTracks: room.localParticipant.tracks,
         participants: room.participants,
-        connectionState: ConnectionQuality.GOOD,
+        connectionState: 'CONNECTED',
         encryptionEnabled: true
       };
 
@@ -232,7 +235,7 @@ class VirtualCareApi {
    * Handles network quality updates
    * @param quality Updated network quality metrics
    */
-  private handleNetworkQualityUpdate(quality: ConnectionQuality): void {
+  private handleNetworkQualityUpdate(quality: IConnectionQuality): void {
     logger.info('Network quality updated', {
       quality,
       timestamp: new Date().toISOString()
@@ -250,8 +253,7 @@ class VirtualCareApi {
         const response = await this.axiosInstance.post(
           `${VirtualCareEndpoints.JOIN_SESSION}/${consultationId}/refresh`
         );
-        await room.disconnect();
-        await connect(response.data.token);
+        await room.localParticipant.setToken(response.data.token);
       } catch (error) {
         logger.error('Token refresh failed', {
           error,
