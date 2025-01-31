@@ -3,7 +3,7 @@
 import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Grid, Container, Typography, ThemeProvider } from '@mui/material';
-import { Analytics } from '@vercel/analytics';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 
 // Internal imports
 import Header from '../components/layout/Header';
@@ -25,7 +25,7 @@ const ERROR_BOUNDARY_CONFIG = { maxRetries: 3, fallbackUI: true };
  * Enhanced security check for authentication and role validation
  */
 const checkAuth = () => {
-  const { user, isAuthenticated, userRole } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -35,22 +35,22 @@ const checkAuth = () => {
     }
 
     // Track secure page view
-    Analytics.track('page_view', {
+    VercelAnalytics.track('page_view', {
       page: 'dashboard',
-      userRole,
+      userRole: user?.role,
       timestamp: Date.now(),
       isAuthenticated: true
     });
-  }, [isAuthenticated, userRole, router]);
+  }, [isAuthenticated, user?.role, router]);
 
-  return { user, userRole };
+  return { user };
 };
 
 /**
  * Main landing page component with role-based content and security features
  */
 const HomePage = () => {
-  const { user, userRole } = checkAuth();
+  const { user } = checkAuth();
   const router = useRouter();
 
   // Security context for components
@@ -63,10 +63,10 @@ const HomePage = () => {
 
   // Handle component errors with audit logging
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
-    Analytics.track('error_boundary_triggered', {
+    VercelAnalytics.track('error_boundary_triggered', {
       error: error.message,
       component: 'HomePage',
-      userRole,
+      userRole: user?.role,
       timestamp: Date.now()
     });
   };
@@ -106,14 +106,14 @@ const HomePage = () => {
             <Grid item xs={12}>
               <Suspense fallback={<div>Loading actions...</div>}>
                 <QuickActions
-                  userRole={userRole as UserRole}
+                  userRole={user?.role as UserRole}
                   securityContext={securityContext}
                 />
               </Suspense>
             </Grid>
 
             {/* Health Metrics Section - Only for patients and providers */}
-            {(userRole === UserRole.PATIENT || userRole === UserRole.PROVIDER) && (
+            {(user?.role === UserRole.PATIENT || user?.role === UserRole.PROVIDER) && (
               <Grid item xs={12}>
                 <Suspense fallback={<div>Loading health metrics...</div>}>
                   <HealthMetrics
@@ -121,8 +121,8 @@ const HomePage = () => {
                     refreshInterval={REFRESH_INTERVAL}
                     showHistory={true}
                     encryptionKey={user?.securitySettings?.lastLoginAt.toString() || ''}
-                    accessLevel="read"
-                    theme="light"
+                    accessLevel={SecurityClassification.CONFIDENTIAL}
+                    theme={theme}
                   />
                 </Suspense>
               </Grid>
@@ -130,12 +130,12 @@ const HomePage = () => {
 
             {/* Role-specific Content */}
             <Grid item xs={12}>
-              {userRole === UserRole.ADMIN && (
+              {user?.role === UserRole.ADMIN && (
                 <Typography variant="h2" component="h2">
                   System Overview
                 </Typography>
               )}
-              {userRole === UserRole.INSURANCE && (
+              {user?.role === UserRole.INSURANCE && (
                 <Typography variant="h2" component="h2">
                   Claims Dashboard
                 </Typography>
@@ -148,4 +148,5 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+// Export with analytics wrapper
+export default VercelAnalytics.withAnalytics(HomePage);
