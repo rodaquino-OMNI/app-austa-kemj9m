@@ -106,15 +106,8 @@ const breakpoints = {
 };
 
 // Healthcare-optimized spacing system
-const spacing = {
-  unit: 8,
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 40,
-  section: 64,
+const createSpacing = (factor: number) => {
+  return factor * 8;
 };
 
 // Medical interface shape configurations
@@ -127,21 +120,50 @@ const shape = {
 };
 
 // Healthcare-specific elevation system
-const customShadows = {
+const shadows = {
   clinical: '0px 4px 20px rgba(0, 0, 0, 0.08)',
   elevated: '0px 8px 24px rgba(0, 0, 0, 0.12)',
   modal: '0px 16px 32px rgba(0, 0, 0, 0.16)',
 };
 
+// Create default shadows array
+const defaultShadows = [
+  'none',
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+];
+
 // Component-specific overrides for healthcare context
 const components = {
   MuiButton: {
     styleOverrides: {
-      root: {
-        borderRadius: 8,
+      root: ({ theme }: { theme: Theme }) => ({
+        borderRadius: shape.buttonRadius,
         textTransform: 'none',
-        fontWeight: 500,
-      },
+        fontWeight: typography.fontWeightMedium,
+      }),
       containedPrimary: {
         '&:hover': {
           backgroundColor: palette.primary.dark,
@@ -157,8 +179,8 @@ const components = {
   MuiCard: {
     styleOverrides: {
       root: {
-        borderRadius: 16,
-        boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08)',
+        borderRadius: shape.clinicalCard,
+        boxShadow: shadows.clinical,
       },
     },
   },
@@ -166,7 +188,7 @@ const components = {
     styleOverrides: {
       root: {
         '& .MuiOutlinedInput-root': {
-          borderRadius: 4,
+          borderRadius: shape.borderRadiusSmall,
         },
       },
     },
@@ -177,47 +199,18 @@ const components = {
         backgroundColor: palette.text.primary,
         fontSize: '0.875rem',
         padding: '8px 16px',
-        borderRadius: 4,
+        borderRadius: shape.borderRadiusSmall,
       },
     },
   },
 };
-
-// Create base shadows array with 25 elements
-const defaultShadows = [
-  'none',
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-  customShadows.clinical,
-];
 
 // Create the theme with all configurations
 const themeOptions: ThemeOptions = {
   palette,
   typography,
   breakpoints,
-  spacing,
+  spacing: createSpacing,
   shape,
   components,
   shadows: defaultShadows,
