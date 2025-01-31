@@ -34,10 +34,10 @@ const formatAppointmentTime = (date: Date, locale: string, timezone: string): st
 
 const getStatusColor = (
   status: ConsultationStatus,
-  isEmergency: boolean,
+  isUrgent: boolean,
   theme: typeof import('../../styles/theme').theme
 ): string => {
-  if (isEmergency) return theme.palette.error.main;
+  if (isUrgent) return theme.palette.error.main;
 
   const statusColors = {
     [ConsultationStatus.SCHEDULED]: theme.palette.primary.main,
@@ -132,10 +132,12 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
     }
   }, [appointment.id, onReschedule]);
 
+  const isUrgent = appointment.metadata?.isUrgent || false;
+
   return (
     <Card
       elevation="clinical"
-      clinicalMode={appointment.isEmergency ? 'critical' : 'standard'}
+      clinicalMode={isUrgent ? 'critical' : 'standard'}
       role="article"
       aria-label={t('appointment.card.label')}
     >
@@ -145,13 +147,13 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
             {`${provider.profile.firstName} ${provider.profile.lastName}`}
           </span>
           <span className="provider-specialization" aria-label={t('appointment.provider.specialization')}>
-            {provider.specialization}
+            {provider.profile.metadata?.specialization || ''}
           </span>
         </div>
         <div 
           className="appointment-type"
           aria-label={t('appointment.type')}
-          style={{ color: getStatusColor(appointment.status, appointment.isEmergency, theme) }}
+          style={{ color: getStatusColor(appointment.status, isUrgent, theme) }}
         >
           {appointment.type === ConsultationType.VIDEO && '📹'}
           {appointment.type === ConsultationType.AUDIO && '🎤'}
@@ -176,7 +178,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           className="status-indicator"
           role="status"
           aria-live="polite"
-          style={{ color: getStatusColor(appointment.status, appointment.isEmergency, theme) }}
+          style={{ color: getStatusColor(appointment.status, isUrgent, theme) }}
         >
           {t(`appointment.status.${appointment.status.toLowerCase()}`)}
         </div>
