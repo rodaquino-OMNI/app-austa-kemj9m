@@ -43,7 +43,7 @@ const encryptionService = new WebEncryptionService();
  */
 const useAuth = (): IAuthContext & {
   login: (credentials: ILoginCredentials) => Promise<void>;
-  logout: () => Promise<void>;
+  secureLogout: () => Promise<void>;
   verifyMFA: (credentials: IMFACredentials) => Promise<void>;
   verifyBiometric: (credentials: any) => Promise<void>;
   refreshSession: () => Promise<void>;
@@ -169,7 +169,7 @@ const useAuth = (): IAuthContext & {
       outcome: 'SUCCESS'
     });
 
-    await handleLogout();
+    await handleSecureLogout();
     setState(AuthState.SESSION_EXPIRED);
   }, [user, lastActivity, logSecurityEvent]);
 
@@ -250,7 +250,7 @@ const useAuth = (): IAuthContext & {
   /**
    * Secure logout handler
    */
-  const handleLogout = async (): Promise<void> => {
+  const handleSecureLogout = async (): Promise<void> => {
     try {
       setIsLoading(true);
       
@@ -321,7 +321,7 @@ const useAuth = (): IAuthContext & {
     lastActivity,
     sessionTimeout: SESSION_TIMEOUT,
     login: handleLogin,
-    logout: handleLogout,
+    secureLogout: handleSecureLogout,
     verifyMFA: async (credentials: IMFACredentials) => {
       // Implement MFA verification logic
       setState(AuthState.AUTHENTICATED);
