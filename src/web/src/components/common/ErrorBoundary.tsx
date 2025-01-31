@@ -3,7 +3,7 @@ import styled from '@emotion/styled'; // ^11.11.0
 import { Alert, Button, Typography, Box } from '@mui/material'; // ^5.0.0
 import { Analytics, PrivacyLevel, AnalyticsCategory } from '../../lib/utils/analytics';
 import Loader from './Loader';
-import { themeSpacing } from '../../styles/theme';
+import { Theme } from '@mui/material';
 
 // Styled components for error UI
 const ErrorContainer = styled(Box)`
@@ -11,14 +11,14 @@ const ErrorContainer = styled(Box)`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: ${themeSpacing(3)}px;
+  padding: ${({ theme }: { theme: Theme }) => theme.spacing(3)};
   text-align: center;
   min-height: 200px;
   width: 100%;
 `;
 
 const ErrorMessage = styled(Typography)`
-  margin: ${themeSpacing(2)}px 0;
+  margin: ${({ theme }: { theme: Theme }) => theme.spacing(2, 0)};
 `;
 
 // Interface definitions
