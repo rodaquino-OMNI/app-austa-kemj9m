@@ -84,7 +84,7 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await toggleAudio();
       setIsAudioEnabled(prev => !prev);
-    } catch (error: unknown) {
+    } catch (error) {
       onError(new Error(`Failed to toggle audio: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [toggleAudio, onError]);
@@ -96,7 +96,7 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await toggleVideo();
       setIsVideoEnabled(prev => !prev);
-    } catch (error: unknown) {
+    } catch (error) {
       onError(new Error(`Failed to toggle video: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [toggleVideo, onError]);
@@ -108,7 +108,7 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await shareScreen();
       setIsScreenSharing(prev => !prev);
-    } catch (error: unknown) {
+    } catch (error) {
       onError(new Error(`Failed to toggle screen sharing: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [shareScreen, onError]);
@@ -120,7 +120,7 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await disconnect();
       onEnd();
-    } catch (error: unknown) {
+    } catch (error) {
       onError(new Error(`Failed to end consultation: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [disconnect, onEnd, onError]);
@@ -132,20 +132,11 @@ const Controls: React.FC<IControlsProps> = ({
     const monitorConnection = async () => {
       try {
         const stats = await getConnectionStats();
-        let quality = ConnectionQuality.GOOD;
-        let latency = 0;
-        
-        stats.forEach(report => {
-          if (report.type === 'transport') {
-            latency = report.currentRoundTripTime || 0;
-          }
-        });
-
         setConnectionState(prev => ({
           ...prev,
-          quality,
-          latency,
-          encrypted: true
+          quality: ConnectionQuality.GOOD, // Default to GOOD as we're using stats differently now
+          latency: stats.packetLoss || 0,
+          encrypted: true // Assuming encryption is handled at connection level
         }));
       } catch (error) {
         console.error('Connection monitoring error:', error);
