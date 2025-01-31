@@ -10,7 +10,7 @@ import styled from '@emotion/styled';
 import { Button, TextField, CircularProgress, Alert, FormControlLabel, Checkbox } from '@mui/material';
 import { useAuditLog } from '@healthcare/audit-logger';
 
-import { useAuth } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
 import { ILoginCredentials, AuthState, MFAMethod } from '../../lib/types/auth';
 
 // Styled components with enhanced accessibility
@@ -69,7 +69,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   emergencyAccess = false
 }) => {
   // Hooks
-  const { login, isLoading, verifyBiometric, verifyMFA } = useAuth();
+  const { handleLogin, isLoading, handleBiometricAuth, handleMFAVerification } = useAuth();
   const auditLog = useAuditLog();
 
   // State management
@@ -106,8 +106,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
         clientMetadata: {
           userAgent: navigator.userAgent,
           timestamp: new Date().toISOString(),
-          securityLevel,
-          emergencyAccess
+          securityLevel: securityLevel.toString(),
+          emergencyAccess: emergencyAccess.toString()
         }
       }));
     });
@@ -150,17 +150,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
       // Attempt biometric authentication if available
       if (securityLevel === 'HIGH' && window.PublicKeyCredential) {
-        const biometricResult = await verifyBiometric({
-          type: 'fingerprint',
-          deviceId: formData.deviceId,
-          timestamp: Date.now()
-        });
+        const biometricResult = await handleBiometricAuth();
         if (!biometricResult) {
           throw new Error('Biometric authentication failed');
         }
       }
 
-      const response = await login(formData);
+      const response = await handleLogin(formData);
 
       // Handle MFA if required
       if (response.requiresMFA) {
@@ -177,15 +173,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
       onSuccess(response);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+      
       auditLog.error('Login failed', {
         userId: formData.email,
-        error: error.message,
+        error: errorMessage,
         securityLevel
       });
 
       setErrors(prev => ({
         ...prev,
-        general: error.message
+        general: errorMessage
       }));
 
       onError?.(error);
@@ -196,7 +194,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     e.preventDefault();
     
     try {
-      const mfaResult = await verifyMFA({
+      const mfaResult = await handleMFAVerification({
         code: mfaCode,
         method: MFAMethod.AUTHENTICATOR,
         verificationId: formData.email,
@@ -208,9 +206,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
         onSuccess(mfaResult.tokens);
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'MFA verification failed';
       setErrors(prev => ({
         ...prev,
-        mfa: error.message
+        mfa: errorMessage
       }));
     }
   };
