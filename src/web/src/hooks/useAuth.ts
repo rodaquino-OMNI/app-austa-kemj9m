@@ -10,24 +10,25 @@ import jwtDecode from 'jwt-decode'; // v3.1.2
 import CryptoJS from 'crypto-js'; // v4.1.1
 
 import {
-  login,
-  logout,
-  refreshToken,
-  verifyMFA,
+  login as loginApi,
+  verifyMFA as verifyMFAApi,
+  refreshToken as refreshTokenApi,
+  logout as logoutApi,
+  verifyBiometric as verifyBiometricApi,
+  validateDeviceFingerprint as validateDeviceFingerprintApi
 } from '../lib/api/auth';
 
 import {
   IAuthTokens,
   ILoginCredentials,
   IMFACredentials,
-  IBiometricCredentials,
   AuthState,
   IAuthContext,
   IAuthError,
   SecurityEvent
 } from '../lib/types/auth';
 
-import { IUser, IUserSecurityProfile } from '../lib/types/user';
+import { IUser } from '../lib/types/user';
 import { WebEncryptionService } from '../lib/utils/encryption';
 
 // Security constants
@@ -47,6 +48,7 @@ const useAuth = (): IAuthContext & {
   login: (credentials: ILoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   verifyMFA: (credentials: IMFACredentials) => Promise<void>;
+  verifyBiometric: (credentials: IMFACredentials) => Promise<void>;
   refreshSession: () => Promise<void>;
 } => {
   // State management with security context
@@ -61,6 +63,7 @@ const useAuth = (): IAuthContext & {
   // Security references
   const refreshTokenTimeoutRef = useRef<NodeJS.Timeout>();
   const sessionTimeoutRef = useRef<NodeJS.Timeout>();
+  const deviceFingerprintRef = useRef<string>('');
 
   /**
    * Securely stores encrypted tokens in localStorage
@@ -83,7 +86,7 @@ const useAuth = (): IAuthContext & {
    */
   const validateToken = useCallback((token: string): boolean => {
     try {
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode<{ exp: number }>(token);
       const currentTime = Date.now() / 1000;
       return decoded.exp > currentTime + TOKEN_EXPIRY_BUFFER / 1000;
     } catch {
@@ -106,7 +109,7 @@ const useAuth = (): IAuthContext & {
   /**
    * Sets up automatic token refresh
    */
-  const setupTokenRefresh = useCallback(() => {
+  const setupTokenRefresh = useCallback(async () => {
     if (refreshTokenTimeoutRef.current) {
       clearTimeout(refreshTokenTimeoutRef.current);
     }
@@ -114,7 +117,7 @@ const useAuth = (): IAuthContext & {
     refreshTokenTimeoutRef.current = setTimeout(async () => {
       try {
         if (tokens?.refreshToken) {
-          const newTokens = await refreshToken(tokens.refreshToken);
+          const newTokens = await refreshTokenApi(tokens.refreshToken);
           await securelyStoreTokens(newTokens);
           setTokens(newTokens);
           setupTokenRefresh();
@@ -158,8 +161,7 @@ const useAuth = (): IAuthContext & {
       sessionId: tokens?.accessToken || '',
       metadata: { lastActivity },
       severity: 'MEDIUM',
-      outcome: 'SUCCESS',
-      timestamp: Date.now()
+      outcome: 'SUCCESS'
     });
 
     await handleLogout();
@@ -179,19 +181,23 @@ const useAuth = (): IAuthContext & {
         throw new Error('Account locked due to multiple failed attempts');
       }
 
+      // Generate and validate device fingerprint
+      deviceFingerprintRef.current = await validateDeviceFingerprintApi();
+      
       const enhancedCredentials = {
         ...credentials,
+        deviceId: deviceFingerprintRef.current,
         clientMetadata: {
           userAgent: navigator.userAgent,
           timestamp: Date.now().toString()
         }
       };
 
-      const authTokens = await login(enhancedCredentials);
+      const authTokens = await loginApi(enhancedCredentials);
       await securelyStoreTokens(authTokens);
       setTokens(authTokens);
       setState(AuthState.AUTHENTICATED);
-      setupTokenRefresh();
+      await setupTokenRefresh();
       setupSessionMonitoring();
       setLoginAttempts(0);
 
@@ -199,10 +205,9 @@ const useAuth = (): IAuthContext & {
         eventType: 'LOGIN_SUCCESS',
         userId: credentials.email,
         sessionId: authTokens.accessToken,
-        metadata: { deviceId: credentials.deviceId },
+        metadata: { deviceId: deviceFingerprintRef.current },
         severity: 'MEDIUM',
-        outcome: 'SUCCESS',
-        timestamp: Date.now()
+        outcome: 'SUCCESS'
       });
     } catch (error) {
       setLoginAttempts(prev => prev + 1);
@@ -231,8 +236,7 @@ const useAuth = (): IAuthContext & {
       sessionId: tokens?.accessToken || '',
       metadata: authError,
       severity: 'HIGH',
-      outcome: 'FAILURE',
-      timestamp: Date.now()
+      outcome: 'FAILURE'
     });
   };
 
@@ -243,7 +247,7 @@ const useAuth = (): IAuthContext & {
     try {
       setIsLoading(true);
       if (tokens?.accessToken) {
-        await logout(tokens.accessToken);
+        await logoutApi(tokens.accessToken);
       }
       
       // Clear security context
@@ -265,8 +269,7 @@ const useAuth = (): IAuthContext & {
         sessionId: tokens?.accessToken || '',
         metadata: { timestamp: Date.now() },
         severity: 'LOW',
-        outcome: 'SUCCESS',
-        timestamp: Date.now()
+        outcome: 'SUCCESS'
       });
     } catch (error) {
       handleAuthError(error);
@@ -284,7 +287,7 @@ const useAuth = (): IAuthContext & {
           const decryptedTokens = JSON.parse(storedTokens) as IAuthTokens;
           setTokens(decryptedTokens);
           setState(AuthState.AUTHENTICATED);
-          setupTokenRefresh();
+          await setupTokenRefresh();
           setupSessionMonitoring();
         }
       } catch (error) {
@@ -314,7 +317,8 @@ const useAuth = (): IAuthContext & {
     sessionTimeout: SESSION_TIMEOUT,
     login: handleLogin,
     logout: handleLogout,
-    verifyMFA,
+    verifyMFA: verifyMFAApi,
+    verifyBiometric: verifyMFAApi,
     refreshSession: setupTokenRefresh
   };
 };
