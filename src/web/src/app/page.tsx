@@ -3,7 +3,7 @@
 import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Grid, Container, Typography, ThemeProvider } from '@mui/material';
-import { Analytics } from '@vercel/analytics/react';
+import Analytics from '@vercel/analytics';
 
 // Internal imports
 import Header from '../components/layout/Header';
@@ -13,7 +13,7 @@ import ErrorBoundary from '../components/common/ErrorBoundary';
 import useAuth from '../hooks/useAuth';
 import theme from '../styles/theme';
 import { UserRole } from '../lib/types/user';
-import { SecurityClassification } from '../lib/types/healthRecord';
+import { SecurityClassification, AccessLevel, ThemePreference } from '../lib/types/healthRecord';
 
 // Constants
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -25,24 +25,32 @@ const ERROR_BOUNDARY_CONFIG = { maxRetries: 3, fallbackUI: true };
  * Enhanced security check for authentication and role validation
  */
 const checkAuth = () => {
-  const { user, isAuthenticated, userRole } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!user) {
       router.push('/auth/login');
       return;
     }
-  }, [isAuthenticated, userRole, router]);
 
-  return { user, userRole };
+    // Track secure page view
+    Analytics.track('page_view', {
+      page: 'dashboard',
+      userRole: user?.role,
+      timestamp: Date.now(),
+      isAuthenticated: !!user
+    });
+  }, [user, router]);
+
+  return { user };
 };
 
 /**
  * Main landing page component with role-based content and security features
  */
 const HomePage = () => {
-  const { user, userRole } = checkAuth();
+  const { user } = checkAuth();
   const router = useRouter();
 
   // Security context for components
@@ -55,7 +63,12 @@ const HomePage = () => {
 
   // Handle component errors with audit logging
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
-    console.error('Error in HomePage:', error, errorInfo);
+    Analytics.track('error_boundary_triggered', {
+      error: error.message,
+      component: 'HomePage',
+      userRole: user?.role,
+      timestamp: Date.now()
+    });
   };
 
   return (
@@ -93,14 +106,14 @@ const HomePage = () => {
             <Grid item xs={12}>
               <Suspense fallback={<div>Loading actions...</div>}>
                 <QuickActions
-                  userRole={userRole as UserRole}
+                  userRole={user?.role as UserRole}
                   securityContext={securityContext}
                 />
               </Suspense>
             </Grid>
 
             {/* Health Metrics Section - Only for patients and providers */}
-            {(userRole === UserRole.PATIENT || userRole === UserRole.PROVIDER) && (
+            {(user?.role === UserRole.PATIENT || user?.role === UserRole.PROVIDER) && (
               <Grid item xs={12}>
                 <Suspense fallback={<div>Loading health metrics...</div>}>
                   <HealthMetrics
@@ -108,8 +121,8 @@ const HomePage = () => {
                     refreshInterval={REFRESH_INTERVAL}
                     showHistory={true}
                     encryptionKey={user?.securitySettings?.lastLoginAt.toString() || ''}
-                    accessLevel="read"
-                    theme="light"
+                    accessLevel={AccessLevel.READ}
+                    theme={ThemePreference.LIGHT}
                   />
                 </Suspense>
               </Grid>
@@ -117,12 +130,12 @@ const HomePage = () => {
 
             {/* Role-specific Content */}
             <Grid item xs={12}>
-              {userRole === UserRole.ADMIN && (
+              {user?.role === UserRole.ADMIN && (
                 <Typography variant="h2" component="h2">
                   System Overview
                 </Typography>
               )}
-              {userRole === UserRole.INSURANCE && (
+              {user?.role === UserRole.INSURANCE && (
                 <Typography variant="h2" component="h2">
                   Claims Dashboard
                 </Typography>
@@ -131,9 +144,9 @@ const HomePage = () => {
           </Grid>
         </Container>
       </ErrorBoundary>
-      <Analytics />
     </ThemeProvider>
   );
 };
 
-export default HomePage;
+// Export with analytics wrapper
+export default Analytics.withAnalytics(HomePage);
