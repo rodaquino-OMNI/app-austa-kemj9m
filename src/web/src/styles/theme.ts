@@ -106,16 +106,7 @@ const breakpoints = {
 };
 
 // Healthcare-optimized spacing system
-const spacing = {
-  unit: 8,
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 40,
-  section: 64,
-};
+const createSpacing = (factor: number) => factor * 8;
 
 // Medical interface shape configurations
 const shape = {
@@ -133,15 +124,44 @@ const shadows = {
   modal: '0px 16px 32px rgba(0, 0, 0, 0.16)',
 };
 
+// Default MUI shadows with clinical shadow
+const defaultShadows = [
+  'none',
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+];
+
 // Component-specific overrides for healthcare context
 const components = {
   MuiButton: {
     styleOverrides: {
-      root: {
+      root: ({ theme }: { theme: Theme }) => ({
         borderRadius: shape.buttonRadius,
         textTransform: 'none',
         fontWeight: typography.fontWeightMedium,
-      },
+      }),
       containedPrimary: {
         '&:hover': {
           backgroundColor: palette.primary.dark,
@@ -183,41 +203,12 @@ const components = {
   },
 };
 
-// Create array of 25 shadows as required by Material-UI
-const defaultShadows = [
-  'none',
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-] as const;
-
 // Create the theme with all configurations
 const themeOptions: ThemeOptions = {
   palette,
   typography,
   breakpoints,
-  spacing,
+  spacing: createSpacing,
   shape,
   components,
   shadows: defaultShadows,
