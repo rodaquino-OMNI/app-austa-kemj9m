@@ -2,20 +2,20 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
 import DatePicker from 'react-datepicker';
 import { AdminAPI } from '../../../lib/api/admin';
-import { Analytics } from '../../../lib/utils/analytics';
+import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../../lib/utils/analytics';
 import Table from '../../../components/common/Table';
 import { theme } from '../../../styles/theme';
 
 // Register ChartJS components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
 // Styled Components
 const DashboardContainer = styled.div`
-  padding: 32px;
+  padding: ${theme.spacing.section}px;
   background: ${theme.palette.background.default};
 `;
 
@@ -23,30 +23,33 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: ${theme.spacing.xl}px;
 `;
 
 const StyledTitle = styled.h1`
-  ${theme.typography.h1};
+  font-size: ${theme.typography.h1.fontSize};
+  font-weight: ${theme.typography.h1.fontWeight};
+  line-height: ${theme.typography.h1.lineHeight};
+  letter-spacing: ${theme.typography.h1.letterSpacing};
   color: ${theme.palette.text.primary};
 `;
 
 const Controls = styled.div`
   display: flex;
-  gap: 16px;
+  gap: ${theme.spacing.md}px;
   align-items: center;
 `;
 
 const MetricsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: ${theme.spacing.lg}px;
+  margin-bottom: ${theme.spacing.section}px;
 `;
 
 const MetricCard = styled.div`
   background: ${theme.palette.background.paper};
-  padding: 24px;
+  padding: ${theme.spacing.lg}px;
   border-radius: ${theme.shape.borderRadius}px;
   box-shadow: ${theme.shadows[0]};
 `;
@@ -99,14 +102,14 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ searchParams }) => {
       // Track analytics access
       await Analytics.trackEvent({
         name: 'admin_view_analytics',
-        category: 'BUSINESS_METRICS',
+        category: AnalyticsCategory.BUSINESS_METRICS,
         properties: {
           dateRange: { startDate, endDate },
           metrics: DEFAULT_METRICS.map(m => m.id)
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'INTERNAL',
+        privacyLevel: PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
