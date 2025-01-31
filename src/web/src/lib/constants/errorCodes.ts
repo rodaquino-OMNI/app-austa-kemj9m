@@ -9,7 +9,7 @@ import * as Sentry from '@sentry/browser'; // v7.0.0
 import i18next from 'i18next'; // v23.0.0
 
 // Internal imports
-import { ErrorCategory, ErrorCode } from '../../backend/shared/constants/error-codes';
+import { ErrorCategory, ErrorCode } from '../../../backend/shared/constants/error-codes';
 
 /**
  * HTTP status codes used in API responses
@@ -93,12 +93,6 @@ export const ErrorMessage: Record<ErrorCode, {
     httpStatus: HTTP_STATUS.CONFLICT,
     tracking: { severity: 'low', shouldReport: false }
   },
-  [ErrorCode.INVALID_OPERATION]: {
-    message: i18next.t('errors.invalidOperation'),
-    category: ErrorCategory.BUSINESS_LOGIC,
-    httpStatus: HTTP_STATUS.BAD_REQUEST,
-    tracking: { severity: 'medium', shouldReport: true }
-  },
   [ErrorCode.DATABASE_ERROR]: {
     message: i18next.t('errors.systemError'),
     category: ErrorCategory.DATABASE,
@@ -131,13 +125,7 @@ export const ErrorMessage: Record<ErrorCode, {
   },
   [ErrorCode.HIPAA_VIOLATION]: {
     message: i18next.t('errors.securityViolation'),
-    category: ErrorCategory.COMPLIANCE,
-    httpStatus: HTTP_STATUS.FORBIDDEN,
-    tracking: { severity: 'high', shouldReport: true }
-  },
-  [ErrorCode.LGPD_VIOLATION]: {
-    message: i18next.t('errors.securityViolation'),
-    category: ErrorCategory.COMPLIANCE,
+    category: ErrorCategory.SYSTEM,
     httpStatus: HTTP_STATUS.FORBIDDEN,
     tracking: { severity: 'high', shouldReport: true }
   },
@@ -146,24 +134,6 @@ export const ErrorMessage: Record<ErrorCode, {
     category: ErrorCategory.SYSTEM,
     httpStatus: HTTP_STATUS.TOO_MANY_REQUESTS,
     tracking: { severity: 'medium', shouldReport: true }
-  },
-  [ErrorCode.SESSION_EXPIRED]: {
-    message: i18next.t('errors.sessionExpired'),
-    category: ErrorCategory.SECURITY,
-    httpStatus: HTTP_STATUS.UNAUTHORIZED,
-    tracking: { severity: 'medium', shouldReport: true }
-  },
-  [ErrorCode.DATA_ENCRYPTION_ERROR]: {
-    message: i18next.t('errors.systemError'),
-    category: ErrorCategory.SECURITY,
-    httpStatus: HTTP_STATUS.INTERNAL_SERVER_ERROR,
-    tracking: { severity: 'high', shouldReport: true }
-  },
-  [ErrorCode.AUDIT_LOG_ERROR]: {
-    message: i18next.t('errors.systemError'),
-    category: ErrorCategory.SECURITY,
-    httpStatus: HTTP_STATUS.INTERNAL_SERVER_ERROR,
-    tracking: { severity: 'high', shouldReport: true }
   }
 };
 
@@ -176,7 +146,7 @@ export const ErrorTracker = {
    * @param error - Error object to track
    * @param context - Additional context for the error
    */
-  captureError: (error: Error, context?: Sentry.Context): void => {
+  captureError: (error: Error, context?: Record<string, any>): void => {
     const errorCode = (error as any).code as ErrorCode;
     const errorInfo = errorCode ? ErrorMessage[errorCode] : null;
 
