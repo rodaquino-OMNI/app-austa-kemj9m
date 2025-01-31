@@ -28,37 +28,37 @@ import ErrorBoundary from '../common/ErrorBoundary';
 import { Analytics } from '../../lib/utils/analytics';
 
 // Styled components with Material Design 3.0 patterns
-const TimelineContainer = styled(Box)`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background-color: ${({ theme }) => theme.palette.background.paper};
-  border-radius: ${({ theme }) => theme.shape.borderRadius}px;
-  box-shadow: ${({ theme }) => theme.shadows[1]};
-  overflow: hidden;
-`;
+const TimelineContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  backgroundColor: theme.palette?.background?.paper || '#fff',
+  borderRadius: theme.shape?.borderRadius || 8,
+  boxShadow: theme.shadows?.[1] || 'none',
+  overflow: 'hidden'
+}));
 
-const TimelineGroup = styled(Box)`
-  padding: ${({ theme }) => theme.spacing(2)};
-  border-bottom: 1px solid ${({ theme }) => theme.palette.divider};
-  &:last-child {
-    border-bottom: none;
+const TimelineGroup = styled(Box)(({ theme }) => ({
+  padding: theme.spacing?.(2) || 16,
+  borderBottom: `1px solid ${theme.palette?.divider || '#e0e0e0'}`,
+  '&:last-child': {
+    borderBottom: 'none'
   }
-`;
+}));
 
 const TimelineItem = styled(Box, {
   shouldForwardProp: prop => prop !== 'isHighlighted'
 })<{ isHighlighted?: boolean }>(({ theme, isHighlighted }) => ({
   display: 'flex',
-  padding: theme.spacing(2),
-  backgroundColor: isHighlighted ? theme.palette.background.default : 'transparent',
+  padding: theme.spacing?.(2) || 16,
+  backgroundColor: isHighlighted ? theme.palette?.background?.default || '#f5f5f5' : 'transparent',
   transition: 'background-color 0.2s ease',
   cursor: 'pointer',
   '&:hover': {
-    backgroundColor: theme.palette.background.default
+    backgroundColor: theme.palette?.background?.default || '#f5f5f5'
   },
   '&:focus-visible': {
-    outline: `2px solid ${theme.palette.primary.main}`,
+    outline: `2px solid ${theme.palette?.primary?.main || '#1976d2'}`,
     outlineOffset: '-2px'
   }
 }));
@@ -133,14 +133,14 @@ const Timeline: React.FC<TimelineProps> = ({
     // Track interaction with sanitized data
     Analytics.trackEvent({
       name: 'health_record_viewed',
-      category: 'USER_INTERACTION',
+      category: Analytics.AnalyticsCategory.USER_INTERACTION,
       properties: {
         recordType: record.type,
         securityLevel: record.securityClassification
       },
       timestamp: Date.now(),
       userConsent: true,
-      privacyLevel: 'INTERNAL',
+      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
       auditInfo: {
         eventId: `record_view_${Date.now()}`,
         timestamp: Date.now(),
@@ -152,13 +152,13 @@ const Timeline: React.FC<TimelineProps> = ({
   }, [onRecordClick, securityContext]);
 
   // Render timeline item with accessibility support
-  const renderTimelineItem = useCallback(({ index, style }) => {
+  const renderTimelineItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const dateKeys = Array.from(groupedRecords.keys());
     const dateKey = dateKeys[index];
     const dayRecords = groupedRecords.get(dateKey) || [];
 
     return (
-      <TimelineGroup>
+      <TimelineGroup style={style}>
         <Typography 
           variant="h6" 
           component="h2"
@@ -168,7 +168,7 @@ const Timeline: React.FC<TimelineProps> = ({
           {format(new Date(dateKey), 'PPPP', { timeZone: timezone })}
         </Typography>
         
-        {dayRecords.map(record => (
+        {dayRecords.map((record: IHealthRecord) => (
           <TimelineItem
             key={record.id}
             isHighlighted={record.id === selectedRecordId}
