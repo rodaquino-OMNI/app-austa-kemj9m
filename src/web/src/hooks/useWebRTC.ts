@@ -31,6 +31,13 @@ interface WebRTCError extends Error {
   details?: any;
 }
 
+// Custom interface for connection quality statistics
+interface ConnectionQualityStats {
+  audioInputLevel?: number;
+  videoBitrate?: number;
+  packetLoss?: number;
+}
+
 /**
  * Enhanced hook for managing WebRTC video consultation sessions with security and quality monitoring
  * @param consultationId - Unique identifier for the consultation session
@@ -60,20 +67,20 @@ export const useWebRTC = (
     if (!room?.room) return;
 
     try {
-      const stats = await room.room.getStats();
+      const statsReports = await room.room.getStats();
       let audioLevel = 0;
       let videoBitrate = 0;
       let packetLoss = 0;
 
-      // Process StatsReport array to extract metrics
-      stats.forEach(report => {
+      // Parse stats from the StatsReport array
+      statsReports.forEach(report => {
         if (report.type === 'media-source' && report.kind === 'audio') {
           audioLevel = report.audioLevel || 0;
         }
         if (report.type === 'media-source' && report.kind === 'video') {
           videoBitrate = report.bitrate || 0;
         }
-        if (report.type === 'transport') {
+        if (report.type === 'remote-inbound-rtp') {
           packetLoss = report.packetsLost || 0;
         }
       });
@@ -86,8 +93,7 @@ export const useWebRTC = (
       }
 
       setConnectionQuality(quality);
-      // Log quality metrics instead of reporting to non-existent API endpoint
-      console.log('Connection Quality Metrics:', {
+      await virtualCareApi.reportConnectionQuality({
         consultationId,
         quality,
         metrics: { audioLevel, videoBitrate, packetLoss }
@@ -227,7 +233,7 @@ export const useWebRTC = (
   /**
    * Retrieves current connection quality statistics
    */
-  const getConnectionStats = useCallback(async () => {
+  const getConnectionStats = useCallback(async (): Promise<ConnectionQualityStats> => {
     if (!room?.room) {
       throw new Error('Room not connected');
     }
