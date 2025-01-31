@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Product, ProductCategory, ProductSortOption } from '../lib/types/product';
 import { useAnalytics } from './useAnalytics';
-import { MarketplaceAPI } from '../lib/api/marketplace';
+import * as marketplaceApi from '../lib/api/marketplace';
 import { ErrorCode } from '../lib/constants/errorCodes';
 
 // Security context type for HIPAA compliance
@@ -97,7 +97,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
     const startTime = performance.now();
 
     try {
-      const response = await MarketplaceAPI.getProducts({
+      const response = await marketplaceApi.getProducts({
         page: filters.page,
         limit: filters.limit,
         category: filters.category,
@@ -117,14 +117,6 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
       // Track successful fetch
       logEvent({
         name: 'marketplace_products_fetched',
-        category: 'MARKETPLACE',
-        timestamp: Date.now(),
-        userConsent: true,
-        privacyLevel: 'PROTECTED',
-        auditInfo: {
-          eventId: crypto.randomUUID(),
-          timestamp: Date.now()
-        },
         properties: {
           productCount: response.products.length,
           category: filters.category,
@@ -136,11 +128,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
       logPerformance({
         name: 'marketplace_fetch_duration',
         value: performance.now() - startTime,
-        tags: { category: filters.category?.toString() || 'all' },
-        timestamp: Date.now(),
-        context: {
-          operation: 'fetchProducts'
-        }
+        tags: { category: filters.category?.toString() || 'all' }
       });
 
     } catch (error: any) {
@@ -162,25 +150,17 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'fetchProducts',
         filters
-      }, 'PROTECTED');
+      }, 'INTERNAL');
     }
   }, [filters, logEvent, logError, logPerformance]);
 
   // Secure product retrieval by ID
   const getProductById = useCallback(async (productId: string) => {
     try {
-      const product = await MarketplaceAPI.getProductById(productId);
+      const product = await marketplaceApi.getProductById(productId);
       
       logEvent({
         name: 'marketplace_product_viewed',
-        category: 'MARKETPLACE',
-        timestamp: Date.now(),
-        userConsent: true,
-        privacyLevel: 'PROTECTED',
-        auditInfo: {
-          eventId: crypto.randomUUID(),
-          timestamp: Date.now()
-        },
         properties: {
           productId,
           category: product.category
@@ -193,7 +173,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'getProductById',
         productId
-      }, 'PROTECTED');
+      }, 'INTERNAL');
       throw error;
     }
   }, [logEvent, logError]);
@@ -204,18 +184,10 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
     paymentDetails: { paymentMethodId: string; encryptedData: string }
   ) => {
     try {
-      const result = await MarketplaceAPI.purchaseProduct(productId, paymentDetails);
+      const result = await marketplaceApi.purchaseProduct(productId, paymentDetails);
 
       logEvent({
         name: 'marketplace_product_purchased',
-        category: 'MARKETPLACE',
-        timestamp: Date.now(),
-        userConsent: true,
-        privacyLevel: 'PROTECTED',
-        auditInfo: {
-          eventId: crypto.randomUUID(),
-          timestamp: Date.now()
-        },
         properties: {
           productId,
           transactionId: result.transactionId
@@ -228,7 +200,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'purchaseProduct',
         productId
-      }, 'PROTECTED');
+      }, 'INTERNAL');
       throw error;
     }
   }, [logEvent, logError]);
