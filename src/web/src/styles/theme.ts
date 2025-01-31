@@ -1,5 +1,30 @@
 import { createTheme, Theme, ThemeOptions } from '@mui/material'; // @mui/material ^5.14.0
 
+// Augment the Theme and ThemeOptions interfaces
+declare module '@mui/material/styles' {
+  interface Palette {
+    clinical: Palette['primary'];
+  }
+  interface PaletteOptions {
+    clinical?: PaletteOptions['primary'];
+  }
+
+  interface Shape {
+    borderRadiusSmall: number;
+    borderRadiusLarge: number;
+    clinicalCard: number;
+    buttonRadius: number;
+  }
+
+  interface ThemeOptions {
+    shape?: Partial<Shape>;
+  }
+
+  interface Theme {
+    shape: Shape;
+  }
+}
+
 // Healthcare-specific color palette with WCAG 2.1 AA compliant contrast ratios
 const palette = {
   primary: {
