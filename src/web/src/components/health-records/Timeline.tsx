@@ -51,15 +51,15 @@ const TimelineItem = styled(Box, {
   shouldForwardProp: prop => prop !== 'isHighlighted'
 })<{ isHighlighted?: boolean; theme?: Theme }>(({ theme, isHighlighted }) => ({
   display: 'flex',
-  padding: theme.spacing(2),
-  backgroundColor: isHighlighted ? theme.palette.background.default : 'transparent',
+  padding: theme?.spacing(2),
+  backgroundColor: isHighlighted ? theme?.palette.background.default : 'transparent',
   transition: 'background-color 0.2s ease',
   cursor: 'pointer',
   '&:hover': {
-    backgroundColor: theme.palette.background.default
+    backgroundColor: theme?.palette.background.default
   },
   '&:focus-visible': {
-    outline: `2px solid ${theme.palette.primary.main}`,
+    outline: `2px solid ${theme?.palette.primary.main}`,
     outlineOffset: '-2px'
   }
 }));
@@ -134,14 +134,14 @@ const Timeline: React.FC<TimelineProps> = ({
     // Track interaction with sanitized data
     Analytics.trackEvent({
       name: 'health_record_viewed',
-      category: 'USER_INTERACTION',
+      category: Analytics.AnalyticsCategory.USER_INTERACTION,
       properties: {
         recordType: record.type,
         securityLevel: record.securityClassification
       },
       timestamp: Date.now(),
       userConsent: true,
-      privacyLevel: 'INTERNAL',
+      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
       auditInfo: {
         eventId: `record_view_${Date.now()}`,
         timestamp: Date.now(),
@@ -153,7 +153,7 @@ const Timeline: React.FC<TimelineProps> = ({
   }, [onRecordClick, securityContext]);
 
   // Render timeline item with accessibility support
-  const renderTimelineItem = useCallback(({ index, style }) => {
+  const renderTimelineItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const dateKeys = Array.from(groupedRecords.keys());
     const dateKey = dateKeys[index];
     const dayRecords = groupedRecords.get(dateKey) || [];
@@ -169,7 +169,7 @@ const Timeline: React.FC<TimelineProps> = ({
           {format(new Date(dateKey), 'PPPP', { timeZone: timezone })}
         </Typography>
         
-        {dayRecords.map(record => (
+        {dayRecords.map((record: IHealthRecord) => (
           <TimelineItem
             key={record.id}
             isHighlighted={record.id === selectedRecordId}
