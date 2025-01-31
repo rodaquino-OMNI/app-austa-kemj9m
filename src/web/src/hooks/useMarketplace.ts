@@ -150,7 +150,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'fetchProducts',
         filters
-      }, 'INTERNAL');
+      }, 'PROTECTED');
     }
   }, [filters, logEvent, logError, logPerformance]);
 
@@ -173,7 +173,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'getProductById',
         productId
-      }, 'INTERNAL');
+      }, 'PROTECTED');
       throw error;
     }
   }, [logEvent, logError]);
@@ -200,7 +200,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'purchaseProduct',
         productId
-      }, 'INTERNAL');
+      }, 'PROTECTED');
       throw error;
     }
   }, [logEvent, logError]);
