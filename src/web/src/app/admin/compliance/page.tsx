@@ -46,10 +46,10 @@ interface ComplianceRecord {
 
 // Styled Components
 const StyledCompliancePage = styled.div<{ theme?: Theme }>`
-  padding: ${({ theme }) => theme.spacing(2)}px;
+  padding: ${({ theme }) => theme?.spacing(4)}px;
   max-width: 1600px;
   margin: 0 auto;
-  background-color: ${({ theme }) => theme.palette.background.default};
+  background-color: ${({ theme }) => theme?.palette.background.default};
   min-height: calc(100vh - 64px);
 `;
 
@@ -57,13 +57,13 @@ const Header = styled.div<{ theme?: Theme }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing(3)}px;
+  margin-bottom: ${({ theme }) => theme?.spacing(4)}px;
 `;
 
 const Controls = styled.div<{ theme?: Theme }>`
   display: flex;
-  gap: ${({ theme }) => theme.spacing(2)}px;
-  margin-bottom: ${({ theme }) => theme.spacing(2)}px;
+  gap: ${({ theme }) => theme?.spacing(2)}px;
+  margin-bottom: ${({ theme }) => theme?.spacing(4)}px;
 `;
 
 const CompliancePage: React.FC = () => {
@@ -93,7 +93,7 @@ const CompliancePage: React.FC = () => {
       });
     },
     onError: (error) => {
-      Analytics.trackError(error as Error, {
+      Analytics.trackError(error instanceof Error ? error : new Error('WebSocket connection failed'), {
         context: 'compliance_websocket',
         endpoint: WEBSOCKET_ENDPOINT
       });
@@ -156,8 +156,68 @@ const CompliancePage: React.FC = () => {
     }
   ], []);
 
-  // Rest of the component remains unchanged...
-  // (keeping all the existing code below this point)
+  // Fetch compliance records
+  const fetchRecords = useCallback(async () => {
+    try {
+      setLoading(true);
+      // API call would go here
+      const mockData: ComplianceRecord[] = []; // Replace with actual API call
+      setRecords(mockData);
+    } catch (error) {
+      Analytics.trackError(error instanceof Error ? error : new Error('Failed to fetch records'), {
+        context: 'compliance_fetch_records'
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Handle real-time updates
+  useEffect(() => {
+    if (lastMessage) {
+      const update = JSON.parse(lastMessage.data);
+      setRecords(prev => prev.map(record => 
+        record.id === update.id ? { ...record, ...update } : record
+      ));
+    }
+  }, [lastMessage]);
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
+
+  // Record selection handler
+  const handleRecordSelect = useCallback((record: ComplianceRecord) => {
+    setSelectedRecord(record);
+    setIsModalOpen(true);
+    
+    Analytics.trackEvent({
+      name: 'compliance_record_viewed',
+      category: 'USER_INTERACTION',
+      properties: {
+        recordId: record.id,
+        complianceType: record.type
+      },
+      timestamp: Date.now(),
+      userConsent: true,
+      privacyLevel: 'INTERNAL',
+      auditInfo: {
+        eventId: crypto.randomUUID(),
+        timestamp: Date.now(),
+        userId: 'admin',
+        ipAddress: 'masked',
+        actionType: 'record_view'
+      }
+    });
+  }, []);
+
+  // Filtered records
+  const filteredRecords = useMemo(() => {
+    return filter === 'All' 
+      ? records 
+      : records.filter(record => record.status === filter);
+  }, [records, filter]);
 
   return (
     <ErrorBoundary>
