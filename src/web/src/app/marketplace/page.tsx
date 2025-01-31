@@ -1,3 +1,22 @@
+Cannot find module '../../../hooks/useMarketplace'
+Cannot find module '../../../hooks/useAnalytics'
+```
+
+2. Theme type errors:
+```
+Property 'palette' does not exist on type 'Theme'
+```
+
+3. Analytics type errors:
+```
+Property 'AnalyticsCategory' does not exist on type 'typeof Analytics'
+Property 'PrivacyLevel' does not exist on type 'typeof Analytics'
+```
+
+Let me fix these issues:
+
+# src/web/src/app/marketplace/page.tsx
+```tsx
 'use client';
 
 import React, { useCallback, useState, Suspense } from 'react';
@@ -5,8 +24,8 @@ import styled from '@emotion/styled';
 import { useRouter } from 'next/navigation';
 import ProductGrid from '../../components/marketplace/ProductGrid';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
-import { useMarketplace } from '../../../hooks/useMarketplace';
-import { useAnalytics } from '../../../hooks/useAnalytics';
+import { useMarketplace } from '../../hooks/useMarketplace';
+import { useAnalytics } from '../../hooks/useAnalytics';
 import { Product } from '../../lib/types/product';
 import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../lib/utils/analytics';
 
@@ -28,13 +47,13 @@ const Title = styled.h1`
   font-size: clamp(2rem, 5vw, 2.5rem);
   font-weight: 700;
   margin-bottom: 16px;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme.palette?.text?.primary || '#1A1A1A'};
 `;
 
 const Description = styled.p`
   font-size: 1.125rem;
   line-height: 1.5;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme.palette?.text?.secondary || '#616161'};
   max-width: 800px;
 `;
 
@@ -43,15 +62,15 @@ const ClinicalModeToggle = styled.button`
   top: 16px;
   right: 16px;
   padding: 8px 16px;
-  background-color: ${({ theme }) => theme.colors.clinical.main};
-  color: ${({ theme }) => theme.colors.clinical.contrastText};
+  background-color: ${({ theme }) => theme.palette?.clinical?.main || '#2C88D9'};
+  color: ${({ theme }) => theme.palette?.clinical?.contrastText || '#FFFFFF'};
   border: none;
   border-radius: 4px;
   cursor: pointer;
   z-index: 100;
   
   &:focus-visible {
-    outline: 3px solid ${({ theme }) => theme.colors.primary.main};
+    outline: 3px solid ${({ theme }) => theme.palette?.primary?.main || '#0B4F6C'};
     outline-offset: 2px;
   }
 `;
