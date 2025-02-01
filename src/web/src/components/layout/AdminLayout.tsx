@@ -88,7 +88,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   securityLevel = 'MEDIUM'
 }) => {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, state } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [highContrast, setHighContrast] = useState(false);
   const auditLogger = new AuditLogger();
@@ -97,7 +97,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   const checkAdminAccess = useCallback(
     async (requiredLevel: AdminSecurityLevel): Promise<boolean> => {
       try {
-        if (!isAuthenticated || !user) {
+        if (state !== 'AUTHENTICATED' || !user) {
           await auditLogger.log({
             action: 'ADMIN_ACCESS_DENIED',
             userId: 'unknown',
@@ -128,7 +128,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         return false;
       }
     },
-    [isAuthenticated, user, auditLogger]
+    [state, user, auditLogger]
   );
 
   // Handle emergency mode changes
