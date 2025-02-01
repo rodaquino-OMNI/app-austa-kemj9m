@@ -5,9 +5,10 @@
  */
 
 import React, { useEffect, useCallback, useState } from 'react'; // v18.0.0
-import { Document, Page, pdf } from '@react-pdf/renderer'; // v3.1.0
+import { Document, Page, pdfjs } from '@react-pdf/renderer'; // v3.1.0
 import * as cornerstone from 'cornerstone-core'; // v2.6.1
 import { useFocusRing } from '@react-aria/focus'; // v3.14.0
+import { useSecureViewer } from '@medical-viewer/secure'; // v1.0.0
 
 import { IHealthRecordAttachment } from '../../lib/types/healthRecord';
 import { useHealthRecords } from '../../hooks/useHealthRecords';
@@ -16,7 +17,7 @@ import Loader from '../common/Loader';
 import { Analytics } from '../../lib/utils/analytics';
 
 // Configure PDF.js worker
-pdf.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdf.version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 // Viewer access level enum
 export enum ViewerAccessLevel {
@@ -58,17 +59,34 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [scale, setScale] = useState(1);
 
   // Custom hooks
-  const { records } = useHealthRecords('current-patient');
+  const { logDocumentAccess } = useHealthRecords();
   const { focusProps, isFocusVisible } = useFocusRing();
+  const { initSecureViewer, cleanupSecureViewer } = useSecureViewer();
 
   // Security context initialization
   useEffect(() => {
     const initSecurity = async () => {
       try {
+        await initSecureViewer({
+          documentId: attachmentId,
+          accessLevel,
+          preventScreenCapture: true,
+          watermarkText,
+          auditLogging: true
+        });
+
+        // Log document access
+        await logDocumentAccess({
+          recordId,
+          attachmentId,
+          action: 'VIEW',
+          timestamp: new Date().toISOString()
+        });
+
         // Track analytics
         Analytics.trackEvent({
           name: 'document_view',
-          category: 'USER_INTERACTION',
+          category: Analytics.AnalyticsCategory.USER_INTERACTION,
           properties: {
             contentType,
             accessLevel,
@@ -76,7 +94,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
           },
           timestamp: Date.now(),
           userConsent: true,
-          privacyLevel: 'SENSITIVE',
+          privacyLevel: Analytics.PrivacyLevel.SENSITIVE,
           auditInfo: {
             eventId: crypto.randomUUID(),
             timestamp: Date.now(),
@@ -93,7 +111,8 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     };
 
     initSecurity();
-  }, [attachmentId, accessLevel, recordId, contentType]);
+    return () => cleanupSecureViewer();
+  }, [attachmentId, accessLevel, recordId]);
 
   // Secure document loading handler
   const handleDocumentLoad = useCallback(({ numPages }: { numPages: number }) => {
@@ -123,14 +142,16 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const renderSecurePDFViewer = () => (
     <div className="secure-pdf-container" role="document">
       <Document
+        file={url}
         onLoadSuccess={handleDocumentLoad}
-        onLoadError={(err: Error) => {
+        onLoadError={(error) => {
           setError('Failed to load document');
-          console.error('PDF load error:', err);
+          console.error('PDF load error:', error);
         }}
         loading={<Loader size="large" />}
       >
         <Page
+          pageNumber={currentPage}
           scale={scale}
           renderTextLayer={accessLevel !== ViewerAccessLevel.READ_ONLY}
           renderAnnotationLayer={accessLevel === ViewerAccessLevel.FULL_ACCESS}
