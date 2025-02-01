@@ -1,7 +1,6 @@
-import { useEffect, useCallback, useContext, useState } from 'react'; // v18.0.0
+import { useEffect, useCallback, useContext } from 'react'; // v18.0.0
 import { Analytics } from '../lib/utils/analytics';
 import { IAuthContext } from '../lib/types/auth';
-import { AuthContext } from '../contexts/AuthContext';
 
 // Enhanced types for analytics hook
 export enum PrivacyStatus {
