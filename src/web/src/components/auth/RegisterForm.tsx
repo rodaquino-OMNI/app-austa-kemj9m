@@ -63,9 +63,9 @@ const registrationSchema = yup.object().shape({
 
 // Interface definitions
 interface RegisterFormProps {
-  onSuccess: (user: any, mfaSetup: any) => void;
-  onError: (error: any) => void;
-  onSecurityEvent: (event: any) => void;
+  onSuccess: (user: IUser, mfaSetup: IMFASetup) => void;
+  onError: (error: IAuthError) => void;
+  onSecurityEvent: (event: ISecurityEvent) => void;
 }
 
 interface RegisterFormState {
@@ -127,11 +127,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   }, []);
 
   // Secure input handling with sanitization
-  const handleSecureInput = useCallback((
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  const handleSecureInput = useCallback(async (
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const { name, value, type } = event.target;
-    const fieldValue = type === 'checkbox' ? (event.target as HTMLInputElement).checked : value;
+    const { name, value, type, checked } = event.target;
+    const fieldValue = type === 'checkbox' ? checked : value;
 
     try {
       // Sanitize input
@@ -167,9 +167,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       if (!validationResult.isValid) {
         setFormState(prev => ({
           ...prev,
-          errors: validationResult.errors.reduce((acc: Record<string, string>, error: string) => ({
+          errors: validationResult.errors.reduce((acc, error) => ({
             ...acc,
-            [error]: error
+            [error.field]: error.message
           }), {}),
           loading: false
         }));
@@ -184,7 +184,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       };
 
       // Initialize Auth0 registration
-      await loginWithRedirect({
+      const auth0Response = await loginWithRedirect({
         screen_hint: 'signup',
         login_hint: formState.email,
         mfa_setup: formState.mfaPreference,
@@ -193,18 +193,18 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           deviceFingerprint: formState.deviceFingerprint,
           biometricConsent: formState.biometricConsent
         }
-      } as any);
+      });
 
       // Handle biometric registration if selected
       if (formState.mfaPreference === 'biometric' && formState.biometricConsent) {
         const biometricCredential = await startRegistration({
-          challenge: 'challenge',
+          challenge: auth0Response.challenge,
           rp: {
             name: 'AUSTA SuperApp',
             id: window.location.hostname
           },
           user: {
-            id: 'user_id',
+            id: auth0Response.user.sub,
             name: formState.email,
             displayName: `${formState.firstName} ${formState.lastName}`
           },
@@ -227,7 +227,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         }
       }
 
-      onSuccess({ email: formState.email }, {
+      onSuccess(auth0Response.user, {
         type: formState.mfaPreference,
         verified: true
       });
