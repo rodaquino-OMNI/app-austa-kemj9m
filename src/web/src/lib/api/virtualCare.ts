@@ -4,7 +4,7 @@
  * @license HIPAA-compliant
  */
 
-import { connect, Room, LocalTrack, RemoteParticipant, BandwidthProfileOptions } from 'twilio-video'; // v2.27.0
+import { connect, Room, LocalTrack, RemoteParticipant, NetworkQualityMonitor, BandwidthProfileOptions } from 'twilio-video'; // v2.27.0
 import axios from 'axios'; // v1.5.0
 import winston from 'winston'; // v3.10.0
 
@@ -13,7 +13,7 @@ import {
   IConsultationRoom,
   ConsultationStatus,
   ConsultationType,
-  ConnectionQuality,
+  IConnectionQuality,
   isSecureRoom
 } from '../types/consultation';
 import { VirtualCareEndpoints } from '../constants/endpoints';
@@ -84,7 +84,6 @@ class VirtualCareApi {
   public async createConsultation(params: ConsultationCreateParams): Promise<IConsultation> {
     try {
       await this.verifyEncryptionCapabilities(params.encryptionRequirements);
-      await this.verifyEncryption(params.securityLevel);
 
       const response = await this.axiosInstance.post(
         VirtualCareEndpoints.CREATE_SESSION,
@@ -114,35 +113,6 @@ class VirtualCareApi {
   }
 
   /**
-   * Verifies encryption status and security level for the consultation
-   * @param securityLevel Required security level for the consultation
-   */
-  private async verifyEncryption(securityLevel: string): Promise<void> {
-    try {
-      const response = await this.axiosInstance.post(
-        `${VirtualCareEndpoints.CREATE_SESSION}/verify-encryption`,
-        { securityLevel }
-      );
-
-      if (!response.data.verified) {
-        throw new Error('Encryption verification failed');
-      }
-
-      logger.info('Encryption verification successful', {
-        securityLevel,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      logger.error('Encryption verification failed', {
-        error,
-        securityLevel,
-        timestamp: new Date().toISOString()
-      });
-      throw error;
-    }
-  }
-
-  /**
    * Joins an existing virtual consultation with security verification
    * @param consultationId ID of the consultation to join
    * @param securityContext Security context for the session
@@ -161,26 +131,27 @@ class VirtualCareApi {
 
       // Initialize Twilio Video client with security options
       const room = await connect(tokenResponse.data.token, {
+        ...SECURITY_CONFIG.bandwidthProfile,
         networkQuality: {
           local: 3,
           remote: 3
         },
         dominantSpeaker: true,
-        automaticSubscription: true,
-        video: true
+        automaticSubscription: true
       });
 
       // Set up connection quality monitoring
-      this.monitorNetworkQuality(room);
+      const networkMonitor = new NetworkQualityMonitor(room);
+      networkMonitor.on('updated', this.handleNetworkQualityUpdate);
 
       // Initialize automatic token refresh
       this.startTokenRefreshInterval(consultationId, room);
 
       const consultationRoom: IConsultationRoom = {
         room,
-        localTracks: Array.from(room.localParticipant.videoTracks.values()),
+        localTracks: Array.from(room.localParticipant.tracks.values()) as LocalTrack[],
         participants: room.participants,
-        connectionState: ConnectionQuality.GOOD,
+        connectionState: 'CONNECTED',
         encryptionEnabled: true
       };
 
@@ -259,15 +230,13 @@ class VirtualCareApi {
   }
 
   /**
-   * Monitors network quality for the room
-   * @param room Active Twilio room
+   * Handles network quality updates
+   * @param quality Updated network quality metrics
    */
-  private monitorNetworkQuality(room: Room): void {
-    room.on('networkQualityLevelChanged', (level) => {
-      logger.info('Network quality updated', {
-        quality: level,
-        timestamp: new Date().toISOString()
-      });
+  private handleNetworkQualityUpdate(quality: IConnectionQuality): void {
+    logger.info('Network quality updated', {
+      quality,
+      timestamp: new Date().toISOString()
     });
   }
 
@@ -282,8 +251,7 @@ class VirtualCareApi {
         const response = await this.axiosInstance.post(
           `${VirtualCareEndpoints.JOIN_SESSION}/${consultationId}/refresh`
         );
-        await room.disconnect();
-        await connect(response.data.token);
+        await room.localParticipant.setToken(response.data.token);
       } catch (error) {
         logger.error('Token refresh failed', {
           error,
