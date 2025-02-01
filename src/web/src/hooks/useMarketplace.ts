@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Product, ProductCategory, ProductSortOption } from '../lib/types/product';
 import { useAnalytics } from './useAnalytics';
-import * as MarketplaceAPI from '../lib/api/marketplace';
+import { MarketplaceAPI } from '../lib/api/marketplace';
 import { ErrorCode } from '../lib/constants/errorCodes';
 
 // Security context type for HIPAA compliance
@@ -150,7 +150,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'fetchProducts',
         filters
-      }, 'INTERNAL');
+      });
     }
   }, [filters, logEvent, logError, logPerformance]);
 
@@ -173,7 +173,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'getProductById',
         productId
-      }, 'INTERNAL');
+      });
       throw error;
     }
   }, [logEvent, logError]);
@@ -200,7 +200,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'purchaseProduct',
         productId
-      }, 'INTERNAL');
+      });
       throw error;
     }
   }, [logEvent, logError]);
