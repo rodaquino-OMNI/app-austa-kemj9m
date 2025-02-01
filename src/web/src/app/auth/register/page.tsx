@@ -1,3 +1,14 @@
+interface RegisterFormProps {
+  onSuccess: (user: IUser, mfaSetup: IMFASetup) => void;
+  onError: (error: IAuthError) => void;
+  onSecurityEvent: (event: ISecurityEvent) => void;
+}
+```
+
+Let me regenerate the file with the fixes:
+
+# src/web/src/app/auth/register/page.tsx
+```typescript
 /**
  * @fileoverview Next.js registration page component for AUSTA SuperApp
  * Implements HIPAA-compliant registration with OAuth 2.0 + OIDC, MFA, and biometric support
@@ -11,17 +22,19 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Auth0Provider } from '@auth0/auth0-react'; // v2.0.0
 import { startRegistration } from '@simplewebauthn/browser'; // v7.0.0
-import { WebEncryptionService } from '../../../lib/utils/encryption';
-import { ErrorTracker } from '../../../lib/constants/errorCodes';
+import { WebEncryptionService } from '@austa/encryption'; // v1.0.0
+import { SecurityLogger } from '@austa/security-logger'; // v1.0.0
 
 // Internal imports
 import RegisterForm from '../../../components/auth/RegisterForm';
 import useAuth from '../../../hooks/useAuth';
 import { IUser, UserRole, UserStatus } from '../../../lib/types/user';
 import { IAuthError, MFAMethod } from '../../../lib/types/auth';
+import { ErrorCode, ErrorTracker } from '../../../lib/constants/errorCodes';
 
 // Initialize security services
 const encryptionService = new WebEncryptionService();
+const securityLogger = new SecurityLogger();
 
 /**
  * Enhanced registration page component with comprehensive security features
@@ -103,6 +116,18 @@ const RegisterPage: React.FC = () => {
         }
       };
 
+      // Log security event
+      await securityLogger.log({
+        eventType: 'REGISTRATION_SUCCESS',
+        userId: user.id,
+        severity: 'MEDIUM',
+        metadata: {
+          mfaType: mfaSetup.type,
+          deviceFingerprint: securityContext.deviceFingerprint,
+          biometricEnabled: mfaSetup.type === MFAMethod.BIOMETRIC
+        }
+      });
+
       // Perform login with enhanced security
       await login({
         email: user.email,
@@ -133,6 +158,16 @@ const RegisterPage: React.FC = () => {
    * Handles registration errors with security logging
    */
   const handleRegistrationError = async (error: IAuthError) => {
+    await securityLogger.log({
+      eventType: 'REGISTRATION_ERROR',
+      severity: 'HIGH',
+      metadata: {
+        errorCode: error.code,
+        errorMessage: error.message,
+        deviceFingerprint: securityContext.deviceFingerprint
+      }
+    });
+
     ErrorTracker.captureError(new Error(error.message), {
       context: 'Registration',
       errorCode: error.code
@@ -166,19 +201,18 @@ const RegisterPage: React.FC = () => {
     <Auth0Provider
       domain={process.env.NEXT_PUBLIC_AUTH0_DOMAIN!}
       clientId={process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID!}
-      redirectUri={window.location.origin}
-      audience={process.env.NEXT_PUBLIC_AUTH0_AUDIENCE}
-      scope="openid profile email"
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE,
+        scope: "openid profile email"
+      }}
     >
       <div className="register-page">
         <RegisterForm
           onSuccess={handleRegistrationSuccess}
           onError={handleRegistrationError}
-          onSecurityEvent={ErrorTracker.captureError}
-          securityContext={{
-            deviceFingerprint: securityContext.deviceFingerprint,
-            biometricSupport: securityContext.biometricSupport
-          }}
+          onSecurityEvent={securityLogger.log}
+          isLoading={isLoading}
         />
       </div>
     </Auth0Provider>
