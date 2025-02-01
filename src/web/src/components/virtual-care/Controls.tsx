@@ -84,8 +84,8 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await toggleAudio();
       setIsAudioEnabled(prev => !prev);
-    } catch (error: unknown) {
-      onError(new Error(`Failed to toggle audio: ${error instanceof Error ? error.message : 'Unknown error'}`));
+    } catch (error) {
+      onError(new Error('Failed to toggle audio: ' + error.message));
     }
   }, [toggleAudio, onError]);
 
@@ -96,8 +96,8 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await toggleVideo();
       setIsVideoEnabled(prev => !prev);
-    } catch (error: unknown) {
-      onError(new Error(`Failed to toggle video: ${error instanceof Error ? error.message : 'Unknown error'}`));
+    } catch (error) {
+      onError(new Error('Failed to toggle video: ' + error.message));
     }
   }, [toggleVideo, onError]);
 
@@ -108,8 +108,8 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await shareScreen();
       setIsScreenSharing(prev => !prev);
-    } catch (error: unknown) {
-      onError(new Error(`Failed to toggle screen sharing: ${error instanceof Error ? error.message : 'Unknown error'}`));
+    } catch (error) {
+      onError(new Error('Failed to toggle screen sharing: ' + error.message));
     }
   }, [shareScreen, onError]);
 
@@ -120,8 +120,8 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await disconnect();
       onEnd();
-    } catch (error: unknown) {
-      onError(new Error(`Failed to end consultation: ${error instanceof Error ? error.message : 'Unknown error'}`));
+    } catch (error) {
+      onError(new Error('Failed to end consultation: ' + error.message));
     }
   }, [disconnect, onEnd, onError]);
 
@@ -132,20 +132,11 @@ const Controls: React.FC<IControlsProps> = ({
     const monitorConnection = async () => {
       try {
         const stats = await getConnectionStats();
-        let quality = ConnectionQuality.GOOD;
-        let latency = 0;
-
-        stats.forEach((report: RTCStatsReport) => {
-          if (report.type === 'inbound-rtp') {
-            latency = (report as any).jitter || 0;
-          }
-        });
-
         setConnectionState(prev => ({
           ...prev,
-          quality,
-          latency,
-          encrypted: true
+          quality: stats.quality,
+          latency: stats.latency,
+          encrypted: stats.encrypted
         }));
       } catch (error) {
         console.error('Connection monitoring error:', error);
