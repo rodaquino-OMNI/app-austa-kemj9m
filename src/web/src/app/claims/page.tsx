@@ -17,22 +17,22 @@ import { Analytics } from '@/lib/utils/analytics';
 const ClaimsPageContainer = styled.main`
   display: grid;
   grid-template-columns: 1fr;
-  gap: ${theme.spacing(4)}px;
-  padding: ${theme.spacing(4)}px;
+  gap: ${theme.spacing.lg}px;
+  padding: ${theme.spacing.lg}px;
   max-width: 1440px;
   margin: 0 auto;
   min-height: 100vh;
 
   @media (max-width: ${theme.breakpoints.values.sm}px) {
-    padding: ${theme.spacing(2)}px;
-    gap: ${theme.spacing(2)}px;
+    padding: ${theme.spacing.md}px;
+    gap: ${theme.spacing.md}px;
   }
 `;
 
 const ClaimsHeader = styled.header`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing(2)}px;
+  gap: ${theme.spacing.md}px;
 `;
 
 const ClaimsTitle = styled.h1`
@@ -44,13 +44,13 @@ const ClaimsTitle = styled.h1`
 
 const ClaimsContent = styled.section`
   display: grid;
-  gap: ${theme.spacing(4)}px;
+  gap: ${theme.spacing.xl}px;
 `;
 
 const StatusTrackerWrapper = styled.div`
   background: ${theme.palette.background.paper};
-  border-radius: ${theme.shape.borderRadius}px;
-  box-shadow: ${theme.shadows[1]};
+  border-radius: ${theme.shape.borderRadiusSmall}px;
+  box-shadow: ${theme.shadows.clinical};
   overflow: hidden;
 `;
 
@@ -97,7 +97,7 @@ const ClaimsPage: React.FC = () => {
       // Track analytics event
       await Analytics.trackEvent({
         name: 'claim_selected',
-        category: 'USER_INTERACTION',
+        category: Analytics.AnalyticsCategory.USER_INTERACTION,
         properties: {
           claimId: claim.id,
           claimType: claim.type,
@@ -105,7 +105,7 @@ const ClaimsPage: React.FC = () => {
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'INTERNAL',
+        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: `claim_select_${Date.now()}`,
           timestamp: Date.now(),
