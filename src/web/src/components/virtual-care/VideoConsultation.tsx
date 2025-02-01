@@ -230,7 +230,7 @@ const VideoConsultation: React.FC<IVideoConsultationProps> = ({
                     const trackPublication = Array.from(participant.videoTracks.values())[0];
                     if (trackPublication.track) {
                       const mediaStream = new MediaStream();
-                      mediaStream.addTrack(trackPublication.track);
+                      mediaStream.addTrack(trackPublication.track.mediaStreamTrack);
                       el.srcObject = mediaStream;
                     }
                   }
@@ -258,7 +258,7 @@ const VideoConsultation: React.FC<IVideoConsultationProps> = ({
                   const videoTrack = localTracks.find(track => track.kind === 'video');
                   if (videoTrack) {
                     const mediaStream = new MediaStream();
-                    mediaStream.addTrack(videoTrack);
+                    mediaStream.addTrack(videoTrack.mediaStreamTrack);
                     el.srcObject = mediaStream;
                   }
                 }
