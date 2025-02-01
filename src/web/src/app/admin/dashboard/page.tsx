@@ -128,7 +128,9 @@ MetricCard.displayName = 'MetricCard';
 
 // Admin Dashboard Page Component
 const AdminDashboardPage = () => {
-  const [metrics, setMetrics] = useState({
+  const [metrics, setMetrics] = useState<{
+    [key: string]: { value: number; trend: number[]; loading: boolean; error: string | null };
+  }>({
     userGrowth: { value: 0, trend: [], loading: true, error: null },
     retention: { value: 0, trend: [], loading: true, error: null },
     nps: { value: 0, trend: [], loading: true, error: null },
@@ -169,13 +171,13 @@ const AdminDashboardPage = () => {
       // Log successful metrics update
       logEvent({
         name: 'metrics_updated',
-        category: 'SYSTEM_PERFORMANCE',
+        category: AnalyticsCategory.USER_INTERACTION,
         properties: {
           metrics: Object.keys(newMetrics)
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'INTERNAL',
+        privacyLevel: PrivacyLevel.PUBLIC,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -189,7 +191,7 @@ const AdminDashboardPage = () => {
       logError(error as Error, {
         component: 'AdminDashboard',
         action: 'fetchMetrics'
-      }, 'INTERNAL');
+      }, PrivacyLevel.PUBLIC);
 
       setMetrics(prev => ({
         ...prev,
@@ -225,7 +227,7 @@ const AdminDashboardPage = () => {
           logError(error, {
             component: 'AdminDashboard',
             severity: 'HIGH'
-          }, 'INTERNAL');
+          }, PrivacyLevel.PUBLIC);
         }}
       >
         <Grid container spacing={3}>
@@ -314,8 +316,8 @@ const AdminDashboardPage = () => {
               refreshInterval={REFRESH_INTERVAL}
               showHistory={true}
               encryptionKey={process.env.NEXT_PUBLIC_ENCRYPTION_KEY || ''}
-              accessLevel="admin"
-              theme="light"
+              accessLevel={AccessLevel.READ}
+              theme={ThemePreference.LIGHT}
             />
           </Grid>
         </Grid>
