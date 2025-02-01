@@ -168,12 +168,12 @@ export async function validateHealthRecord(record: IHealthRecord): Promise<Valid
 export async function validateForm(
   formData: Record<string, any>,
   validationSchema: yup.Schema<any>,
-  options: { abortEarly?: boolean; context?: any } = {}
+  options: yup.ValidateOptions = {}
 ): Promise<ValidationResult> {
   try {
     await validationSchema.validate(formData, {
-      abortEarly: options.abortEarly ?? false,
-      context: options.context
+      ...options,
+      abortEarly: options.abortEarly ?? false
     });
 
     return {
