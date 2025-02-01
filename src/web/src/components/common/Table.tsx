@@ -40,7 +40,7 @@ interface SortConfig {
 const StyledTableContainer = styled.div`
   width: 100%;
   overflow: auto;
-  border-radius: ${theme.shape.borderRadius}px;
+  border-radius: ${theme.shape.borderRadiusSmall}px;
   background: ${theme.palette.background.paper};
   box-shadow: ${theme.shadows[0]};
 
@@ -66,7 +66,7 @@ const StyledTableHeader = styled.thead<{ sticky?: boolean }>`
 `;
 
 const StyledTableHeaderCell = styled.th<{ sortable?: boolean }>`
-  padding: ${theme.spacing(2)}px;
+  padding: ${theme.spacing.md}px;
   text-align: left;
   font-weight: ${theme.typography.fontWeightMedium};
   color: ${theme.palette.text.primary};
@@ -103,7 +103,7 @@ const StyledTableRow = styled.tr<{ selected?: boolean }>`
 `;
 
 const StyledTableCell = styled.td`
-  padding: ${theme.spacing(2)}px;
+  padding: ${theme.spacing.md}px;
   color: ${theme.palette.text.primary};
   border-bottom: 1px solid ${theme.palette.divider};
 `;
@@ -112,8 +112,8 @@ const StyledPagination = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: ${theme.spacing(2)}px;
-  gap: ${theme.spacing(1)}px;
+  padding: ${theme.spacing.md}px;
+  gap: ${theme.spacing.sm}px;
 `;
 
 // Custom Hooks
@@ -230,9 +230,7 @@ export const Table: React.FC<TableProps> = React.memo(({
             sortable={sortable && column.sortable}
             onClick={() => column.sortable && handleSort(column.id)}
             style={{ width: column.width }}
-            aria-sort={sortConfig?.column === column.id ? 
-              sortConfig.direction === 'asc' ? 'ascending' : 'descending' 
-              : undefined}
+            aria-sort={sortConfig?.column === column.id ? sortConfig.direction : undefined}
           >
             {column.header}
             {sortable && column.sortable && sortConfig?.column === column.id && (
@@ -249,7 +247,7 @@ export const Table: React.FC<TableProps> = React.memo(({
   const renderTableBody = () => (
     <tbody>
       {virtualScroll ? (
-        rowVirtualizer.virtualItems.map(virtualRow => {
+        rowVirtualizer.virtualItems.map((virtualRow: { index: number; size: number; start: number }) => {
           const row = displayData[virtualRow.index];
           return (
             <StyledTableRow
