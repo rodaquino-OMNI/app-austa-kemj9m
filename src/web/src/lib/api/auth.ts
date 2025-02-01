@@ -14,8 +14,7 @@ import {
   ILoginCredentials, 
   IAuthTokens, 
   IMFACredentials, 
-  IAuthError, 
-  IBiometricCredentials,
+  IAuthError,
   AuthState,
   SecurityEvent
 } from '../types/auth';
@@ -41,6 +40,10 @@ interface SecurityConfig {
   encryptionConfig: {
     algorithm: string;
     keySize: number;
+    ivSize: number;
+    tagLength: number;
+    iterations: number;
+    saltLength: number;
   };
 }
 
@@ -53,9 +56,22 @@ const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   timeout: 30000,
   encryptionConfig: {
     algorithm: 'AES-GCM',
-    keySize: 256
+    keySize: 256,
+    ivSize: 96,
+    tagLength: 128,
+    iterations: 100000,
+    saltLength: 32
   }
 };
+
+/**
+ * Interface for biometric credentials
+ */
+interface IBiometricCredentials {
+  deviceId: string;
+  type: string;
+  data: string;
+}
 
 /**
  * HIPAA-compliant authentication API client
