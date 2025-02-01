@@ -1,19 +1,3 @@
-```
-
-2. Second error is about incorrect enum value usage:
-```
-error TS2322: Type '"USER_INTERACTION"' is not assignable to type 'AnalyticsCategory'.
-```
-
-3. Third error is about incorrect enum value usage:
-```
-error TS2322: Type '"SENSITIVE"' is not assignable to type 'PrivacyLevel'.
-```
-
-Let me regenerate the file with these fixes:
-
-# src/web/src/app/health-records/page.tsx
-```tsx
 'use client';
 
 /**
