@@ -44,7 +44,7 @@ import {
   ADMIN_ROUTES
 } from '../../lib/constants/routes';
 
-import { useAuth } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
 import { UserRole } from '../../lib/types/user';
 
 // Constants
@@ -70,17 +70,17 @@ interface SidebarProps {
 
 // Styled Components
 const SidebarContainer = styled('nav')<{ isCollapsed: boolean; width: number }>`
-  width: ${props => (props.isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : props.width)}px;
+  width: ${({ isCollapsed, width }) => (isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : width)}px;
   height: 100vh;
-  background: ${props => props.theme.palette.background.paper};
-  border-right: 1px solid ${props => props.theme.palette.divider};
+  background: ${({ theme }) => theme.palette.background.paper};
+  border-right: 1px solid ${({ theme }) => theme.palette.divider};
   transition: width ${TRANSITION_DURATION} ease-in-out;
   overflow-x: hidden;
   overflow-y: auto;
   position: fixed;
   left: 0;
   top: 0;
-  z-index: ${props => props.theme.zIndex.drawer};
+  z-index: ${({ theme }) => theme.zIndex.drawer};
   
   /* Scrollbar styling */
   &::-webkit-scrollbar {
@@ -92,7 +92,7 @@ const SidebarContainer = styled('nav')<{ isCollapsed: boolean; width: number }>`
   }
   
   &::-webkit-scrollbar-thumb {
-    background: ${props => props.theme.palette.grey[300]};
+    background: ${({ theme }) => theme.palette.grey[300]};
     border-radius: 2px;
   }
 `;
@@ -101,22 +101,22 @@ const SidebarHeader = styled('div')`
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: ${props => props.theme.spacing(2)};
+  padding: ${({ theme }) => theme.spacing(2)};
   min-height: 64px;
 `;
 
 const NavigationList = styled(List)`
-  padding: ${props => props.theme.spacing(1)};
+  padding: ${({ theme }) => theme.spacing(1)};
 `;
 
-const StyledListItem = styled(ListItem)<{ active?: boolean }>`
-  border-radius: ${props => props.theme.shape.borderRadius}px;
-  margin-bottom: ${props => props.theme.spacing(0.5)};
-  background-color: ${props =>
-    props.active ? props.theme.palette.action.selected : 'transparent'};
+const NavigationItem = styled(ListItem)<{ active?: boolean }>`
+  border-radius: ${({ theme }) => theme.shape.borderRadius}px;
+  margin-bottom: ${({ theme }) => theme.spacing(0.5)};
+  background-color: ${({ active, theme }) =>
+    active ? theme.palette.action.selected : 'transparent'};
   
   &:hover {
-    background-color: ${props => props.theme.palette.action.hover};
+    background-color: ${({ theme }) => theme.palette.action.hover};
   }
 `;
 
@@ -250,8 +250,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           placement="right"
           arrow
         >
-          <StyledListItem
-            button
+          <NavigationItem
+            component="div"
             active={isRouteActive(item.route)}
             onClick={() => item.children ? handleExpand(item.id) : router.push(item.route)}
             sx={{ pl: level * 2 }}
@@ -280,7 +280,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {expandedItems.includes(item.id) ? <CollapseIcon /> : <ExpandIcon />}
               </IconButton>
             )}
-          </StyledListItem>
+          </NavigationItem>
         </Tooltip>
         
         {item.children && (
