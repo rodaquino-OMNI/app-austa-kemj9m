@@ -1,9 +1,8 @@
 import React from 'react'; // ^18.2.0
 import styled from '@emotion/styled'; // ^11.11.0
 import { Alert, Button, Typography, Box } from '@mui/material'; // ^5.0.0
-import { Analytics, PrivacyLevel, AnalyticsCategory } from '../../lib/utils/analytics';
+import { Analytics } from '../../lib/utils/analytics';
 import Loader from './Loader';
-import { themeSpacing } from '../../styles/theme';
 
 // Styled components for error UI
 const ErrorContainer = styled(Box)`
@@ -11,21 +10,21 @@ const ErrorContainer = styled(Box)`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: ${themeSpacing(3)}px;
+  padding: ${({ theme }) => theme.spacing(3)};
   text-align: center;
   min-height: 200px;
   width: 100%;
 `;
 
 const ErrorMessage = styled(Typography)`
-  margin: ${themeSpacing(2)}px 0;
+  margin: ${({ theme }) => theme.spacing(2, 0)};
 `;
 
 // Interface definitions
 interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
-  onError?: (error: Error, errorInfo: React.ErrorInfo, context: Record<string, unknown>) => void;
+  onError?: (error: Error, errorInfo: React.ErrorInfo, context: Analytics.ErrorContext) => void;
   retryAttempts?: number;
   recoveryInterval?: number;
 }
@@ -126,7 +125,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       // Track recovery attempt
       Analytics.trackEvent({
         name: 'error_recovery_attempt',
-        category: AnalyticsCategory.SYSTEM_PERFORMANCE,
+        category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
         properties: {
           retryCount: retryCount + 1,
           maxRetries: retryAttempts,
@@ -134,7 +133,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: PrivacyLevel.INTERNAL,
+        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: `recovery_${Date.now()}`,
           timestamp: Date.now(),
