@@ -1,22 +1,10 @@
-interface RegisterFormProps {
-  onSuccess: (user: IUser, mfaSetup: IMFASetup) => void;
-  onError: (error: IAuthError) => void;
-  onSecurityEvent: (event: ISecurityEvent) => void;
-}
-```
-
-Let me regenerate the file with the fixes:
-
-# src/web/src/app/auth/register/page.tsx
-```typescript
+'use client';
 /**
  * @fileoverview Next.js registration page component for AUSTA SuperApp
  * Implements HIPAA-compliant registration with OAuth 2.0 + OIDC, MFA, and biometric support
  * @version 1.0.0
  * @license HIPAA-compliant
  */
-
-'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';

@@ -100,8 +100,59 @@ const CompliancePage: React.FC = () => {
     }
   });
 
-  // Rest of the component code remains unchanged...
-  // (keeping all the existing code from line 95 onwards)
-});
+  // Handle WebSocket updates
+  useEffect(() => {
+    if (lastMessage?.data) {
+      const update = JSON.parse(lastMessage.data);
+      setRecords(prevRecords => 
+        prevRecords.map(record => 
+          record.id === update.id ? { ...record, ...update } : record
+        )
+      );
+    }
+  }, [lastMessage]);
+
+  // Filter records based on selected status
+  const filteredRecords = useMemo(() => {
+    if (filter === 'All') return records;
+    return records.filter(record => record.status === filter);
+  }, [records, filter]);
+
+  return (
+    <ErrorBoundary>
+      <AdminLayout>
+        <StyledCompliancePage>
+          <Header>
+            <h1>Compliance Dashboard</h1>
+            <Controls>
+              {/* Add your control components here */}
+            </Controls>
+          </Header>
+          
+          <Table 
+            data={filteredRecords}
+            loading={loading}
+            onRowClick={record => {
+              setSelectedRecord(record);
+              setIsModalOpen(true);
+            }}
+          />
+
+          {selectedRecord && (
+            <Modal
+              open={isModalOpen}
+              onClose={() => {
+                setIsModalOpen(false);
+                setSelectedRecord(null);
+              }}
+            >
+              {/* Add your modal content here */}
+            </Modal>
+          )}
+        </StyledCompliancePage>
+      </AdminLayout>
+    </ErrorBoundary>
+  );
+};
 
 export default CompliancePage;
