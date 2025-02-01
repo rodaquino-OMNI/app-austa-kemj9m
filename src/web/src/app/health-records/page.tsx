@@ -1,19 +1,3 @@
-import { audit-log } from '@austa/audit-log';
-```
-This is a syntax error in the import statement. The hyphen is not valid in an import identifier.
-
-2. The `ViewerAccessLevel` error indicates we need to use the correct import from the DocumentViewer component.
-
-3. The `subscribeToUpdates` error shows this method doesn't exist in the useHealthRecords hook.
-
-4. The Analytics category and privacy level errors indicate we need to use the correct enums from the analytics module.
-
-5. The selectedRecord null/undefined errors need proper null checks.
-
-Let me regenerate the file with all fixes:
-
-# src/web/src/app/health-records/page.tsx
-```typescript
 'use client';
 
 /**
