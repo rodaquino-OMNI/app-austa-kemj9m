@@ -3,7 +3,7 @@
 import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Grid, Container, Typography, ThemeProvider } from '@mui/material';
-import { Analytics } from '@vercel/analytics';
+import Analytics from '@vercel/analytics';
 
 // Internal imports
 import Header from '../components/layout/Header';
@@ -13,6 +13,7 @@ import ErrorBoundary from '../components/common/ErrorBoundary';
 import useAuth from '../hooks/useAuth';
 import theme from '../styles/theme';
 import { UserRole } from '../lib/types/user';
+import { SecurityClassification } from '../lib/types/healthRecord';
 
 // Constants
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -24,7 +25,7 @@ const ERROR_BOUNDARY_CONFIG = { maxRetries: 3, fallbackUI: true };
  * Enhanced security check for authentication and role validation
  */
 const checkAuth = () => {
-  const { user, isAuthenticated, userRole } = useAuth();
+  const { user, isAuthenticated, userRole } = useAuth() as { user: any; isAuthenticated: boolean; userRole: UserRole };
   const router = useRouter();
 
   useEffect(() => {
@@ -34,25 +35,11 @@ const checkAuth = () => {
     }
 
     // Track secure page view
-    Analytics.trackEvent({
-      name: 'page_view',
-      category: Analytics.AnalyticsCategory.USER_INTERACTION,
-      properties: {
-        page: 'dashboard',
-        userRole: userRole || 'unknown',
-        timestamp: Date.now(),
-        isAuthenticated: true
-      },
+    Analytics.track('page_view', {
+      page: 'dashboard',
+      userRole,
       timestamp: Date.now(),
-      userConsent: true,
-      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
-      auditInfo: {
-        eventId: crypto.randomUUID(),
-        timestamp: Date.now(),
-        userId: user?.id || 'anonymous',
-        ipAddress: 'masked',
-        actionType: 'page_view'
-      }
+      isAuthenticated: true
     });
   }, [isAuthenticated, userRole, router]);
 
@@ -76,25 +63,11 @@ const HomePage = () => {
 
   // Handle component errors with audit logging
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
-    Analytics.trackEvent({
-      name: 'error_boundary_triggered',
-      category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
-      properties: {
-        error: error.message,
-        component: 'HomePage',
-        userRole: userRole || 'unknown',
-        timestamp: Date.now()
-      },
-      timestamp: Date.now(),
-      userConsent: true,
-      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
-      auditInfo: {
-        eventId: crypto.randomUUID(),
-        timestamp: Date.now(),
-        userId: user?.id || 'anonymous',
-        ipAddress: 'masked',
-        actionType: 'error_boundary'
-      }
+    Analytics.track('error_boundary_triggered', {
+      error: error.message,
+      component: 'HomePage',
+      userRole,
+      timestamp: Date.now()
     });
   };
 
@@ -148,8 +121,8 @@ const HomePage = () => {
                     refreshInterval={REFRESH_INTERVAL}
                     showHistory={true}
                     encryptionKey={user?.securitySettings?.lastLoginAt.toString() || ''}
-                    accessLevel="read"
-                    theme="light"
+                    accessLevel={AccessLevel.READ}
+                    theme={ThemePreference.LIGHT}
                   />
                 </Suspense>
               </Grid>
@@ -175,4 +148,5 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+// Export with analytics wrapper
+export default Analytics.withAnalytics(HomePage);
