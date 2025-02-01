@@ -5,9 +5,9 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import * as yup from 'yup';
-import CryptoJS from 'crypto-js';
+import { useForm, Controller } from 'react-hook-form'; // v7.45.0
+import * as yup from 'yup'; // v1.2.0
+import CryptoJS from 'crypto-js'; // v4.1.1
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorTracker } from '../../lib/constants/errorCodes';
 import { submitClaim } from '../../lib/api/claims';
@@ -189,15 +189,13 @@ const ClaimForm: React.FC<ClaimFormProps> = ({
         <Controller
           name="serviceDate"
           control={control}
-          render={({ field: { value, onChange, ...field } }) => (
+          render={({ field }) => (
             <div className="form-field">
               <label htmlFor="service-date">Service Date</label>
               <input
                 {...field}
                 type="date"
                 id="service-date"
-                value={value instanceof Date ? value.toISOString().split('T')[0] : ''}
-                onChange={(e) => onChange(new Date(e.target.value))}
                 max={new Date().toISOString().split('T')[0]}
                 aria-invalid={!!errors.serviceDate}
                 aria-describedby={errors.serviceDate ? "date-error" : undefined}
@@ -267,13 +265,12 @@ const ClaimForm: React.FC<ClaimFormProps> = ({
         <Controller
           name="hipaaAuthorization"
           control={control}
-          render={({ field: { value, ...field } }) => (
+          render={({ field }) => (
             <div className="form-field">
               <label className="checkbox-label">
                 <input
                   type="checkbox"
                   {...field}
-                  checked={value}
                   aria-invalid={!!errors.hipaaAuthorization}
                   aria-describedby={errors.hipaaAuthorization ? "hipaa-error" : undefined}
                 />
@@ -291,13 +288,12 @@ const ClaimForm: React.FC<ClaimFormProps> = ({
         <Controller
           name="consentAcknowledgment"
           control={control}
-          render={({ field: { value, ...field } }) => (
+          render={({ field }) => (
             <div className="form-field">
               <label className="checkbox-label">
                 <input
                   type="checkbox"
                   {...field}
-                  checked={value}
                   aria-invalid={!!errors.consentAcknowledgment}
                   aria-describedby={errors.consentAcknowledgment ? "consent-error" : undefined}
                 />
