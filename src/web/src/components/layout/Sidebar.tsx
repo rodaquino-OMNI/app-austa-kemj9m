@@ -18,8 +18,7 @@ import {
   ListItemIcon,
   ListItemText,
   useTheme,
-  useMediaQuery,
-  Theme
+  useMediaQuery
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -44,7 +43,7 @@ import {
   ADMIN_ROUTES
 } from '../../lib/constants/routes';
 
-import { useAuth } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
 import { UserRole } from '../../lib/types/user';
 
 // Constants
@@ -72,15 +71,15 @@ interface SidebarProps {
 const SidebarContainer = styled.nav<{ isCollapsed: boolean; width: number }>`
   width: ${({ isCollapsed, width }) => (isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : width)}px;
   height: 100vh;
-  background: ${({ theme }) => (theme as Theme).palette.background.paper};
-  border-right: 1px solid ${({ theme }) => (theme as Theme).palette.divider};
+  background: ${({ theme }) => theme.palette.background.paper};
+  border-right: 1px solid ${({ theme }) => theme.palette.divider};
   transition: width ${TRANSITION_DURATION} ease-in-out;
   overflow-x: hidden;
   overflow-y: auto;
   position: fixed;
   left: 0;
   top: 0;
-  z-index: ${({ theme }) => (theme as Theme).zIndex.drawer};
+  z-index: ${({ theme }) => theme.zIndex.drawer};
   
   /* Scrollbar styling */
   &::-webkit-scrollbar {
@@ -92,7 +91,7 @@ const SidebarContainer = styled.nav<{ isCollapsed: boolean; width: number }>`
   }
   
   &::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => (theme as Theme).palette.grey[300]};
+    background: ${({ theme }) => theme.palette.grey[300]};
     border-radius: 2px;
   }
 `;
@@ -101,22 +100,22 @@ const SidebarHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: ${({ theme }) => (theme as Theme).spacing(2)};
+  padding: ${({ theme }) => theme.spacing(2)};
   min-height: 64px;
 `;
 
 const NavigationList = styled(List)`
-  padding: ${({ theme }) => (theme as Theme).spacing(1)};
+  padding: ${({ theme }) => theme.spacing(1)};
 `;
 
 const NavigationItem = styled(ListItem)<{ active?: boolean }>`
-  border-radius: ${({ theme }) => (theme as Theme).shape.borderRadius}px;
-  margin-bottom: ${({ theme }) => (theme as Theme).spacing(0.5)};
+  border-radius: ${({ theme }) => theme.shape.borderRadius}px;
+  margin-bottom: ${({ theme }) => theme.spacing(0.5)};
   background-color: ${({ active, theme }) =>
-    active ? (theme as Theme).palette.action.selected : 'transparent'};
+    active ? theme.palette.action.selected : 'transparent'};
   
   &:hover {
-    background-color: ${({ theme }) => (theme as Theme).palette.action.hover};
+    background-color: ${({ theme }) => theme.palette.action.hover};
   }
 `;
 
@@ -251,7 +250,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           arrow
         >
           <NavigationItem
-            button
             active={isRouteActive(item.route)}
             onClick={() => item.children ? handleExpand(item.id) : router.push(item.route)}
             sx={{ pl: level * 2 }}
