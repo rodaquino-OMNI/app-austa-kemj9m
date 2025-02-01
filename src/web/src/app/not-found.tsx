@@ -3,8 +3,8 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // ^13.0.0
 import styled from '@emotion/styled'; // ^11.11.0
-import Button from '../../components/common/Button';
-import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../lib/utils/analytics';
+import Button from '../components/common/Button';
+import { Analytics } from '../lib/utils/analytics';
 
 // Styled components with Material Design 3.0 and WCAG compliance
 const NotFoundContainer = styled.main`
@@ -88,14 +88,14 @@ const NotFound: React.FC = () => {
   const handleReturnHome = () => {
     Analytics.trackEvent({
       name: 'return_home_click',
-      category: AnalyticsCategory.USER_INTERACTION,
+      category: Analytics.AnalyticsCategory.USER_INTERACTION,
       properties: {
         source: '404_page',
         path: window.location.pathname
       },
       timestamp: Date.now(),
       userConsent: true,
-      privacyLevel: PrivacyLevel.PUBLIC,
+      privacyLevel: Analytics.PrivacyLevel.PUBLIC,
       auditInfo: {
         eventId: crypto.randomUUID(),
         timestamp: Date.now(),
