@@ -65,6 +65,29 @@ interface ConsultationCreateParams {
 }
 
 /**
+ * Interface for secure file upload parameters
+ */
+interface SecureFileUploadParams {
+  consultationId: string;
+  file: File;
+  metadata: {
+    fileName: string;
+    fileType: string;
+    encryptionKey?: string;
+  };
+}
+
+/**
+ * Interface for chat message parameters
+ */
+interface ChatMessageParams {
+  consultationId: string;
+  message: string;
+  senderId: string;
+  metadata?: Record<string, any>;
+}
+
+/**
  * Virtual care API client with HIPAA-compliant security measures
  */
 class VirtualCareApi {
@@ -191,6 +214,80 @@ class VirtualCareApi {
       logger.error('Failed to end consultation', {
         error,
         consultationId,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Uploads a file securely within a consultation
+   * @param params Secure file upload parameters
+   * @returns Encrypted file metadata
+   */
+  public async uploadSecureFile(params: SecureFileUploadParams): Promise<Record<string, any>> {
+    try {
+      const formData = new FormData();
+      formData.append('file', params.file);
+      formData.append('metadata', JSON.stringify(params.metadata));
+
+      const response = await this.axiosInstance.post(
+        `${VirtualCareEndpoints.SEND_CHAT_MESSAGE}/${params.consultationId}/files`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      logger.info('File uploaded successfully', {
+        consultationId: params.consultationId,
+        fileName: params.metadata.fileName,
+        timestamp: new Date().toISOString()
+      });
+
+      return response.data;
+    } catch (error) {
+      logger.error('Failed to upload file', {
+        error,
+        consultationId: params.consultationId,
+        fileName: params.metadata.fileName,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Sends an encrypted chat message in a consultation
+   * @param params Chat message parameters
+   * @returns Sent message data
+   */
+  public async sendChatMessage(params: ChatMessageParams): Promise<Record<string, any>> {
+    try {
+      const response = await this.axiosInstance.post(
+        `${VirtualCareEndpoints.SEND_CHAT_MESSAGE}/${params.consultationId}`,
+        {
+          message: params.message,
+          senderId: params.senderId,
+          metadata: params.metadata,
+          timestamp: new Date().toISOString()
+        }
+      );
+
+      logger.info('Chat message sent successfully', {
+        consultationId: params.consultationId,
+        senderId: params.senderId,
+        timestamp: new Date().toISOString()
+      });
+
+      return response.data;
+    } catch (error) {
+      logger.error('Failed to send chat message', {
+        error,
+        consultationId: params.consultationId,
+        senderId: params.senderId,
         timestamp: new Date().toISOString()
       });
       throw error;
