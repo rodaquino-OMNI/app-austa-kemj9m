@@ -23,7 +23,8 @@ import {
   AuthState,
   IAuthContext,
   IAuthError,
-  SecurityEvent
+  SecurityEvent,
+  IResourcePermission
 } from '../lib/types/auth';
 
 import { IUser, IUserSecurityProfile } from '../lib/types/user';
@@ -48,6 +49,8 @@ const useAuth = (): IAuthContext & {
   verifyMFA: (credentials: IMFACredentials) => Promise<void>;
   verifyBiometric: (credentials: IBiometricCredentials) => Promise<void>;
   refreshSession: () => Promise<void>;
+  isAuthenticated: boolean;
+  checkAccess: (resource: string, requiredPermission: string) => boolean;
 } => {
   // State management with security context
   const [state, setState] = useState<AuthState>(AuthState.UNAUTHENTICATED);
@@ -65,6 +68,29 @@ const useAuth = (): IAuthContext & {
 
   // Initialize AuthAPI instance
   const authAPI = new AuthAPI(process.env.NEXT_PUBLIC_API_URL || '');
+
+  // Computed authentication state
+  const isAuthenticated = state === AuthState.AUTHENTICATED && !!tokens?.accessToken;
+
+  /**
+   * Checks if user has required access to a resource
+   */
+  const checkAccess = useCallback((resource: string, requiredPermission: string): boolean => {
+    if (!isAuthenticated || !user) {
+      return false;
+    }
+
+    // Admin role has full access
+    if (user.role === 'ADMIN') {
+      return true;
+    }
+
+    // Check user's permissions for the specific resource
+    const userPermissions = user.securitySettings?.permissions || [];
+    const resourcePermission = userPermissions.find(p => p.resourceType === resource);
+    
+    return resourcePermission?.level === requiredPermission;
+  }, [isAuthenticated, user]);
 
   /**
    * Securely stores encrypted tokens in localStorage
@@ -343,7 +369,9 @@ const useAuth = (): IAuthContext & {
     logout: handleLogout,
     verifyMFA: handleVerifyMFA,
     verifyBiometric: handleVerifyBiometric,
-    refreshSession: setupTokenRefresh
+    refreshSession: setupTokenRefresh,
+    isAuthenticated,
+    checkAccess
   };
 };
 
