@@ -4,7 +4,7 @@
  * @license HIPAA-compliant
  */
 
-import { connect, Room, LocalTrack, RemoteParticipant, BandwidthProfileOptions } from 'twilio-video'; // v2.27.0
+import { connect, Room, LocalTrack, RemoteParticipant, NetworkQualityMonitor, BandwidthProfileOptions } from 'twilio-video'; // v2.27.0
 import axios from 'axios'; // v1.5.0
 import winston from 'winston'; // v3.10.0
 
@@ -13,7 +13,7 @@ import {
   IConsultationRoom,
   ConsultationStatus,
   ConsultationType,
-  ConnectionQuality,
+  IConnectionQuality,
   isSecureRoom
 } from '../types/consultation';
 import { VirtualCareEndpoints } from '../constants/endpoints';
@@ -62,29 +62,6 @@ interface ConsultationCreateParams {
     algorithm: string;
     keySize: number;
   };
-}
-
-/**
- * Interface for secure file upload parameters
- */
-interface SecureFileUploadParams {
-  consultationId: string;
-  file: File;
-  metadata: {
-    fileName: string;
-    fileType: string;
-    encryptionKey?: string;
-  };
-}
-
-/**
- * Interface for chat message parameters
- */
-interface ChatMessageParams {
-  consultationId: string;
-  message: string;
-  senderId: string;
-  metadata?: Record<string, any>;
 }
 
 /**
@@ -154,26 +131,29 @@ class VirtualCareApi {
 
       // Initialize Twilio Video client with security options
       const room = await connect(tokenResponse.data.token, {
+        ...SECURITY_CONFIG.bandwidthProfile,
         networkQuality: {
           local: 3,
           remote: 3
         },
         dominantSpeaker: true,
-        automaticSubscription: true,
-        video: true
+        automaticSubscription: true
       });
 
-      // Monitor network quality through room events
-      room.on('networkQualityLevelChanged', this.handleNetworkQualityUpdate);
+      // Set up network quality monitoring
+      room.localParticipant.on('networkQualityLevelChanged', this.handleNetworkQualityUpdate);
+      room.participants.forEach(participant => {
+        participant.on('networkQualityLevelChanged', this.handleNetworkQualityUpdate);
+      });
 
       // Initialize automatic token refresh
       this.startTokenRefreshInterval(consultationId, room);
 
       const consultationRoom: IConsultationRoom = {
         room,
-        localTracks: Array.from(room.localParticipant.tracks.values()).map(pub => pub.track),
+        localTracks: room.localParticipant.tracks,
         participants: room.participants,
-        connectionState: ConnectionQuality.GOOD,
+        connectionState: 'CONNECTED',
         encryptionEnabled: true
       };
 
@@ -221,80 +201,6 @@ class VirtualCareApi {
   }
 
   /**
-   * Uploads a file securely within a consultation
-   * @param params Secure file upload parameters
-   * @returns Encrypted file metadata
-   */
-  public async uploadSecureFile(params: SecureFileUploadParams): Promise<Record<string, any>> {
-    try {
-      const formData = new FormData();
-      formData.append('file', params.file);
-      formData.append('metadata', JSON.stringify(params.metadata));
-
-      const response = await this.axiosInstance.post(
-        `${VirtualCareEndpoints.SEND_CHAT_MESSAGE}/${params.consultationId}/files`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
-
-      logger.info('File uploaded successfully', {
-        consultationId: params.consultationId,
-        fileName: params.metadata.fileName,
-        timestamp: new Date().toISOString()
-      });
-
-      return response.data;
-    } catch (error) {
-      logger.error('Failed to upload file', {
-        error,
-        consultationId: params.consultationId,
-        fileName: params.metadata.fileName,
-        timestamp: new Date().toISOString()
-      });
-      throw error;
-    }
-  }
-
-  /**
-   * Sends an encrypted chat message in a consultation
-   * @param params Chat message parameters
-   * @returns Sent message data
-   */
-  public async sendChatMessage(params: ChatMessageParams): Promise<Record<string, any>> {
-    try {
-      const response = await this.axiosInstance.post(
-        `${VirtualCareEndpoints.SEND_CHAT_MESSAGE}/${params.consultationId}`,
-        {
-          message: params.message,
-          senderId: params.senderId,
-          metadata: params.metadata,
-          timestamp: new Date().toISOString()
-        }
-      );
-
-      logger.info('Chat message sent successfully', {
-        consultationId: params.consultationId,
-        senderId: params.senderId,
-        timestamp: new Date().toISOString()
-      });
-
-      return response.data;
-    } catch (error) {
-      logger.error('Failed to send chat message', {
-        error,
-        consultationId: params.consultationId,
-        senderId: params.senderId,
-        timestamp: new Date().toISOString()
-      });
-      throw error;
-    }
-  }
-
-  /**
    * Verifies encryption capabilities for the session
    * @param requirements Encryption requirements
    */
@@ -329,7 +235,7 @@ class VirtualCareApi {
    * Handles network quality updates
    * @param quality Updated network quality metrics
    */
-  private handleNetworkQualityUpdate(quality: ConnectionQuality): void {
+  private handleNetworkQualityUpdate(quality: IConnectionQuality): void {
     logger.info('Network quality updated', {
       quality,
       timestamp: new Date().toISOString()
@@ -347,7 +253,7 @@ class VirtualCareApi {
         const response = await this.axiosInstance.post(
           `${VirtualCareEndpoints.JOIN_SESSION}/${consultationId}/refresh`
         );
-        await connect(response.data.token, { name: room.name });
+        await room.localParticipant.setToken(response.data.token);
       } catch (error) {
         logger.error('Token refresh failed', {
           error,
