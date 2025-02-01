@@ -25,16 +25,16 @@ interface StatusTrackerProps {
 const TrackerContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: ${theme.spacing.md}px;
-  padding: ${theme.spacing.md}px;
+  gap: ${theme.spacing(2)}px;
+  padding: ${theme.spacing(2)}px;
   background: ${theme.palette.background.paper};
-  border-radius: ${theme.shape.clinicalCard}px;
-  box-shadow: ${theme.shadows.clinical};
+  border-radius: ${theme.shape.borderRadius}px;
+  box-shadow: ${theme.shadows[1]};
   position: relative;
 
   @media (max-width: ${theme.breakpoints.values.sm}px) {
     grid-template-columns: 1fr;
-    gap: ${theme.spacing.sm}px;
+    gap: ${theme.spacing(1)}px;
   }
 `;
 
@@ -48,7 +48,7 @@ const StatusStep = styled.div<{
   flex-direction: column;
   align-items: center;
   position: relative;
-  padding: ${theme.spacing.sm}px;
+  padding: ${theme.spacing(1)}px;
   
   &::before {
     content: '';
@@ -88,7 +88,7 @@ const StatusStep = styled.div<{
 
 // Styled status label with accessibility considerations
 const StatusLabel = styled.span<{ active: boolean }>`
-  margin-top: ${theme.spacing.sm}px;
+  margin-top: ${theme.spacing(1)}px;
   color: ${({ active }) =>
     active ? theme.palette.text.primary : theme.palette.text.secondary};
   font-size: ${theme.typography.body2.fontSize};
