@@ -41,6 +41,7 @@ export interface AnalyticsEvent {
 }
 
 export interface PerformanceContext {
+  [key: string]: string | undefined;
   page?: string;
   component?: string;
   browser?: string;
@@ -222,7 +223,7 @@ export namespace Analytics {
 
     try {
       const sanitizedTags = sanitizeData(metric.tags);
-      const sanitizedContext = sanitizeData(metric.context);
+      const sanitizedContext = sanitizeData(metric.context as Record<string, unknown>);
 
       const performanceData = {
         metric_name: metric.name,
@@ -233,10 +234,7 @@ export namespace Analytics {
         environment: process.env.NODE_ENV,
       };
 
-      datadogRum.addTiming(metric.name, metric.value, {
-        ...performanceData,
-        privacy_level: PrivacyLevel.PUBLIC,
-      });
+      datadogRum.addTiming(metric.name, metric.value);
 
     } catch (error) {
       console.error('Performance tracking failed:', error);
