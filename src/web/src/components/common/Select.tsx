@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import styled from '@emotion/styled';
-import { css } from '@emotion/react';
+import React, { useCallback, useMemo, useState } from 'react'; // ^18.0.0
+import styled from '@emotion/styled'; // ^11.11.0
+import { css } from '@emotion/react'; // ^11.11.0
 import { theme } from '../../styles/theme';
 import { COMPONENT_SIZES, CLINICAL_STATES } from '../../styles/components';
 
@@ -62,9 +62,9 @@ const StyledSelectContainer = styled.div<{
 `;
 
 const StyledSelect = styled.select<{
-  size?: string;
+  size?: 'small' | 'medium' | 'large';
   error?: boolean;
-  clinicalMode?: string;
+  clinicalMode?: 'standard' | 'critical' | 'monitoring';
   validationLevel?: string;
   secureContent?: boolean;
 }>`
@@ -80,7 +80,7 @@ const StyledSelect = styled.select<{
     props.validationLevel === 'critical' ? theme.palette.error.main :
     theme.palette.text.disabled
   };
-  border-radius: ${theme.shape.borderRadius}px;
+  border-radius: ${theme.shape.borderRadiusSmall}px;
   cursor: pointer;
   appearance: none;
   transition: all 0.2s ease-in-out;
@@ -93,7 +93,7 @@ const StyledSelect = styled.select<{
   &:focus {
     outline: none;
     border-color: ${theme.palette.primary.main};
-    box-shadow: 0 0 0 ${({ clinicalMode }) => CLINICAL_STATES[clinicalMode || 'standard'].focus} ${theme.palette.primary.light}30;
+    box-shadow: 0 0 0 ${props => CLINICAL_STATES[props.clinicalMode || 'standard'].focus} ${theme.palette.primary.light}30;
   }
 
   &:disabled {
@@ -117,8 +117,8 @@ const HelperText = styled.span<{ error?: boolean }>`
 // Validation Functions
 const validateMedicalData = (
   value: string | string[],
-  options: SelectOption[],
-  medicalDataType?: string
+  medicalDataType?: string,
+  options: SelectOption[]
 ): ValidationResult => {
   if (!medicalDataType) return { isValid: true, severity: 'none' };
 
@@ -186,7 +186,7 @@ export const Select: React.FC<SelectProps> = ({
       ? Array.from(event.target.selectedOptions, option => option.value)
       : event.target.value;
 
-    const validationResult = validateMedicalData(newValue, options, medicalDataType);
+    const validationResult = validateMedicalData(newValue, medicalDataType, options);
     onChange(newValue, validationResult);
   }, [multiple, medicalDataType, options, onChange]);
 
