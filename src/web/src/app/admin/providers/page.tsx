@@ -165,7 +165,7 @@ const ProvidersPage: React.FC = () => {
   }, [filters.page, logAudit]);
 
   // Handle sort changes with audit logging
-  const handleSort = useCallback(({ column, direction }) => {
+  const handleSort = useCallback(({ column, direction }: { column: string; direction: 'asc' | 'desc' }) => {
     logAudit('PROVIDER_SORT_CHANGE', {
       action: 'SORT',
       column,
@@ -183,14 +183,14 @@ const ProvidersPage: React.FC = () => {
   useEffect(() => {
     Analytics.trackEvent({
       name: 'admin_providers_view',
-      category: Analytics.AnalyticsCategory.USER_INTERACTION,
+      category: 'USER_INTERACTION',
       properties: {
         filters,
         adminId: JSON.parse(localStorage.getItem('currentUser') || '{}').id
       },
       timestamp: Date.now(),
       userConsent: true,
-      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+      privacyLevel: 'INTERNAL',
       auditInfo: {
         eventId: crypto.randomUUID(),
         timestamp: Date.now(),
