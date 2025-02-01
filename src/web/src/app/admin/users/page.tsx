@@ -7,7 +7,7 @@ import Table from '../../../components/common/Table';
 import Modal from '../../../components/common/Modal';
 import { AdminAPI } from '../../../lib/api/admin';
 import { UserRole, UserStatus, IUser } from '../../../lib/types/user';
-import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../../lib/utils/analytics';
+import { Analytics } from '../../../lib/utils/analytics';
 import { SecurityUtils } from '@company/security-utils';
 
 // Table column definitions with security considerations
@@ -17,7 +17,8 @@ const USER_TABLE_COLUMNS = [
     header: 'Name',
     accessor: 'profile.firstName',
     sortable: true,
-    render: (value: any, row: Record<string, any>) => 
+    secure: true,
+    render: (value: string, row: IUser) => 
       SecurityUtils.maskPII(`${row.profile.firstName} ${row.profile.lastName}`)
   },
   {
@@ -25,7 +26,8 @@ const USER_TABLE_COLUMNS = [
     header: 'Email',
     accessor: 'email',
     sortable: true,
-    render: (value: any) => SecurityUtils.maskPII(value)
+    secure: true,
+    render: (value: string) => SecurityUtils.maskPII(value)
   },
   {
     id: 'role',
@@ -44,13 +46,13 @@ const USER_TABLE_COLUMNS = [
     header: 'Last Login',
     accessor: 'securitySettings.lastLoginAt',
     sortable: true,
-    render: (value: any) => new Date(value).toLocaleString()
+    render: (value: Date) => new Date(value).toLocaleString()
   },
   {
     id: 'mfaStatus',
     header: 'MFA Status',
     accessor: 'securitySettings.mfaEnabled',
-    render: (value: any) => value ? 'Enabled' : 'Disabled'
+    render: (value: boolean) => value ? 'Enabled' : 'Disabled'
   }
 ];
 
@@ -99,14 +101,14 @@ const UsersPage: React.FC = () => {
     try {
       await Analytics.trackEvent({
         name: 'admin_update_user',
-        category: AnalyticsCategory.USER_INTERACTION,
+        category: 'USER_INTERACTION',
         properties: {
           userId,
           updateType: Object.keys(updates).join(',')
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: PrivacyLevel.SENSITIVE,
+        privacyLevel: 'SENSITIVE',
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -150,13 +152,13 @@ const UsersPage: React.FC = () => {
     {
       label: 'Update',
       onClick: () => selectedUser && handleUserUpdate(selectedUser.id, selectedUser),
-      variant: 'primary' as const,
+      variant: 'primary',
       requiresConfirmation: true
     },
     {
       label: 'Cancel',
       onClick: () => setIsModalOpen(false),
-      variant: 'secondary' as const
+      variant: 'secondary'
     }
   ], [selectedUser]);
 
