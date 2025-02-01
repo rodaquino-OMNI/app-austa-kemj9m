@@ -2,10 +2,10 @@
 
 import React, { useEffect } from 'react';
 import styled from '@emotion/styled';
-import ErrorBoundary from '../../components/common/ErrorBoundary';
-import Button from '../../components/common/Button';
-import { Analytics } from '../../lib/utils/analytics';
-import { theme } from '../../styles/theme';
+import ErrorBoundary from '../components/common/ErrorBoundary';
+import Button from '../components/common/Button';
+import { Analytics } from '../lib/utils/analytics';
+import { theme } from '../styles/theme';
 
 // Styled components with Material Design 3.0 and WCAG compliance
 const ErrorContainer = styled.div`
