@@ -39,31 +39,31 @@ const GRID_COLUMNS = {
 // Styled Components
 const GridContainer = styled.div<{ clinicalMode?: boolean }>`
   display: grid;
-  gap: ${theme.spacing.lg}px;
-  padding: ${theme.spacing.lg}px;
+  gap: ${theme.spacing(3)}px;
+  padding: ${theme.spacing(3)}px;
   width: 100%;
   max-width: ${GRID_BREAKPOINTS.wide}px;
   margin: 0 auto;
   grid-template-columns: repeat(var(--grid-columns), minmax(280px, 1fr));
   
   ${({ clinicalMode }) => clinicalMode && `
-    gap: ${theme.spacing.xl}px;
-    padding: ${theme.spacing.xl}px;
-    background-color: ${theme.palette.background.clinical};
+    gap: ${theme.spacing(4)}px;
+    padding: ${theme.spacing(4)}px;
+    background-color: ${theme.palette.background.default};
   `}
 
   @media (max-width: ${GRID_BREAKPOINTS.tablet}px) {
-    padding: ${theme.spacing.md}px;
-    gap: ${theme.spacing.md}px;
+    padding: ${theme.spacing(2)}px;
+    gap: ${theme.spacing(2)}px;
   }
 `;
 
 const FiltersContainer = styled.div`
-  margin-bottom: ${theme.spacing.lg}px;
-  padding: 0 ${theme.spacing.lg}px;
+  margin-bottom: ${theme.spacing(3)}px;
+  padding: 0 ${theme.spacing(3)}px;
 
   @media (max-width: ${GRID_BREAKPOINTS.tablet}px) {
-    padding: 0 ${theme.spacing.md}px;
+    padding: 0 ${theme.spacing(2)}px;
   }
 `;
 
@@ -160,7 +160,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
     // Track filter usage
     Analytics.trackEvent({
       name: 'marketplace_filter_applied',
-      category: Analytics.AnalyticsCategory.USER_INTERACTION,
+      category: 'USER_INTERACTION',
       properties: {
         filterCount: Object.keys(filters).length,
         resultCount: filtered.length,
@@ -168,7 +168,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
       },
       timestamp: Date.now(),
       userConsent: true,
-      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+      privacyLevel: 'INTERNAL',
       auditInfo: {
         eventId: `filter_${Date.now()}`,
         timestamp: Date.now(),
@@ -197,7 +197,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
         <FiltersContainer>
           <SearchFilters
             onFilterChange={handleFilterChange}
-            clinicalMode={clinicalMode}
           />
         </FiltersContainer>
 
