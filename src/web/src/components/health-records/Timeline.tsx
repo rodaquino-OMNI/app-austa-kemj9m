@@ -14,8 +14,7 @@ import {
   Divider, 
   IconButton, 
   Tooltip,
-  useTheme,
-  Theme 
+  useTheme 
 } from '@mui/material';
 
 // Internal imports
@@ -29,37 +28,37 @@ import ErrorBoundary from '../common/ErrorBoundary';
 import { Analytics } from '../../lib/utils/analytics';
 
 // Styled components with Material Design 3.0 patterns
-const TimelineContainer = styled(Box)(({ theme }: { theme: Theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  height: '100%',
-  backgroundColor: theme.palette.background.paper,
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[1],
-  overflow: 'hidden'
-}));
+const TimelineContainer = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: ${({ theme }) => theme.palette.background.paper};
+  border-radius: ${({ theme }) => theme.shape.borderRadiusLarge}px;
+  box-shadow: ${({ theme }) => theme.shadows[1]};
+  overflow: hidden;
+`;
 
-const TimelineGroup = styled(Box)(({ theme }: { theme: Theme }) => ({
-  padding: theme.spacing(2),
-  borderBottom: `1px solid ${theme.palette.divider}`,
-  '&:last-child': {
-    borderBottom: 'none'
+const TimelineGroup = styled(Box)`
+  padding: ${({ theme }) => theme.spacing(2)};
+  border-bottom: 1px solid ${({ theme }) => theme.palette.divider};
+  &:last-child {
+    border-bottom: none;
   }
-}));
+`;
 
 const TimelineItem = styled(Box, {
   shouldForwardProp: prop => prop !== 'isHighlighted'
-})<{ isHighlighted?: boolean; theme?: Theme }>(({ theme, isHighlighted }) => ({
+})<{ isHighlighted?: boolean }>(({ theme, isHighlighted }) => ({
   display: 'flex',
-  padding: theme?.spacing(2),
-  backgroundColor: isHighlighted ? theme?.palette.background.default : 'transparent',
+  padding: theme.spacing(2),
+  backgroundColor: isHighlighted ? theme.palette.background.clinical : 'transparent',
   transition: 'background-color 0.2s ease',
   cursor: 'pointer',
   '&:hover': {
-    backgroundColor: theme?.palette.background.default
+    backgroundColor: theme.palette.background.clinical
   },
   '&:focus-visible': {
-    outline: `2px solid ${theme?.palette.primary.main}`,
+    outline: `2px solid ${theme.palette.primary.main}`,
     outlineOffset: '-2px'
   }
 }));
@@ -153,7 +152,7 @@ const Timeline: React.FC<TimelineProps> = ({
   }, [onRecordClick, securityContext]);
 
   // Render timeline item with accessibility support
-  const renderTimelineItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
+  const renderTimelineItem = useCallback(({ index, style }) => {
     const dateKeys = Array.from(groupedRecords.keys());
     const dateKey = dateKeys[index];
     const dayRecords = groupedRecords.get(dateKey) || [];
@@ -169,7 +168,7 @@ const Timeline: React.FC<TimelineProps> = ({
           {format(new Date(dateKey), 'PPPP', { timeZone: timezone })}
         </Typography>
         
-        {dayRecords.map((record: IHealthRecord) => (
+        {dayRecords.map(record => (
           <TimelineItem
             key={record.id}
             isHighlighted={record.id === selectedRecordId}
