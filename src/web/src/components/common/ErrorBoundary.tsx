@@ -1,11 +1,10 @@
-import React from 'react'; // ^18.2.0
-import styled from '@emotion/styled'; // ^11.11.0
-import { Alert, Button, Typography, Box } from '@mui/material'; // ^5.0.0
+import React from 'react';
+import styled from '@emotion/styled';
+import { Alert, Button, Typography, Box } from '@mui/material';
 import { Analytics } from '../../lib/utils/analytics';
 import Loader from './Loader';
 import { theme } from '../../styles/theme';
 
-// Styled components for error UI
 const ErrorContainer = styled(Box)`
   display: flex;
   flex-direction: column;
@@ -21,7 +20,6 @@ const ErrorMessage = styled(Typography)`
   margin: ${theme.spacing(2, 0)}px;
 `;
 
-// Interface definitions
 interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
@@ -66,7 +64,6 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    // Collect error context
     this.errorContext = {
       componentStack: errorInfo.componentStack,
       timestamp: Date.now(),
@@ -75,25 +72,20 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       retryCount: this.state.retryCount,
     };
 
-    // Update state with error info
     this.setState({
       errorInfo,
     });
 
-    // Track error with sanitized data
     Analytics.trackError(error, this.errorContext).catch(console.error);
 
-    // Call optional error handler
     if (this.props.onError) {
       this.props.onError(error, errorInfo, this.errorContext);
     }
 
-    // Attempt recovery if retries are available
     if (this.state.retryCount < (this.props.retryAttempts || 3)) {
       this.attemptRecovery();
     }
 
-    // Log sanitized error in development
     if (process.env.NODE_ENV === 'development') {
       console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
@@ -123,7 +115,6 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         }));
       }, recoveryInterval);
 
-      // Track recovery attempt
       Analytics.trackEvent({
         name: 'error_recovery_attempt',
         category: 'SYSTEM_PERFORMANCE',
