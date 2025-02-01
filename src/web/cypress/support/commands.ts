@@ -1,7 +1,7 @@
 // External imports
 import '@testing-library/cypress/add-commands'; // v10.0.0
 import '@cypress/code-coverage/support'; // v3.12.0
-import 'cypress-file-upload'; // Add cypress-file-upload for attachFile command
+import 'cypress-file-upload'; // Add this for file upload support
 
 // Internal imports
 import { IUser } from '../../lib/types/user';
@@ -141,11 +141,9 @@ Cypress.Commands.add('verifyBiometricAuth', (shouldSucceed: boolean) => {
 
   // Mock biometric capability
   cy.window().then((win) => {
-    Object.defineProperty(win.navigator, 'credentials', {
-      value: {
-        get: cy.stub().resolves(shouldSucceed ? { id: 'bio-credential-id' } : null)
-      }
-    });
+    win.navigator.credentials = {
+      get: cy.stub().resolves(shouldSucceed ? { id: 'bio-credential-id' } : null)
+    };
   });
 
   // Trigger biometric auth
