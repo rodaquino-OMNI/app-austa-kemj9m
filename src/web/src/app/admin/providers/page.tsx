@@ -7,7 +7,7 @@ import Table from '../../../components/common/Table';
 import Button from '../../../components/common/Button';
 import ErrorBoundary from '../../../components/common/ErrorBoundary';
 import { AdminAPI } from '../../../lib/api/admin';
-import { Analytics } from '../../../lib/utils/analytics';
+import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../../lib/utils/analytics';
 import { UserRole, UserStatus } from '../../../lib/types/user';
 
 // Provider management interfaces
@@ -165,7 +165,7 @@ const ProvidersPage: React.FC = () => {
   }, [filters.page, logAudit]);
 
   // Handle sort changes with audit logging
-  const handleSort = useCallback(({ column, direction }: { column: string; direction: 'asc' | 'desc' }) => {
+  const handleSort = useCallback(({ column, direction }) => {
     logAudit('PROVIDER_SORT_CHANGE', {
       action: 'SORT',
       column,
@@ -183,14 +183,14 @@ const ProvidersPage: React.FC = () => {
   useEffect(() => {
     Analytics.trackEvent({
       name: 'admin_providers_view',
-      category: 'USER_INTERACTION',
+      category: AnalyticsCategory.USER_INTERACTION,
       properties: {
         filters,
         adminId: JSON.parse(localStorage.getItem('currentUser') || '{}').id
       },
       timestamp: Date.now(),
       userConsent: true,
-      privacyLevel: 'INTERNAL',
+      privacyLevel: PrivacyLevel.INTERNAL,
       auditInfo: {
         eventId: crypto.randomUUID(),
         timestamp: Date.now(),
