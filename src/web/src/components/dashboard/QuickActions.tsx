@@ -2,7 +2,7 @@ import React from 'react'; // ^18.0.0
 import styled from '@emotion/styled'; // ^11.11.0
 import { Button } from '../common/Button';
 import { UserRole } from '../../lib/types/user';
-import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../lib/utils/analytics';
+import { Analytics } from '../../lib/utils/analytics';
 import { theme } from '../../styles/theme';
 
 // Security level enum for action classification
@@ -42,19 +42,19 @@ interface QuickAction {
 const ActionsContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: ${theme.spacing(2)}px;
-  padding: ${theme.spacing(2)}px;
-  background: ${theme.palette.background.paper};
-  border-radius: ${theme.shape.borderRadius}px;
-  box-shadow: ${theme.shadows[1]};
+  gap: ${theme.spacing.md}px;
+  padding: ${theme.spacing.md}px;
+  background: ${theme.palette.background.clinical};
+  border-radius: ${theme.shape.clinicalCard}px;
+  box-shadow: ${theme.shadows.clinical};
 `;
 
 const ActionButton = styled(Button)`
   width: 100%;
   height: 64px;
   justify-content: flex-start;
-  padding: ${theme.spacing(2)}px;
-  gap: ${theme.spacing(1)}px;
+  padding: ${theme.spacing.md}px;
+  gap: ${theme.spacing.sm}px;
   
   svg {
     width: 24px;
@@ -139,7 +139,7 @@ const handleActionClick = async (
   // Track secure analytics event
   await Analytics.trackEvent({
     name: 'quick_action_click',
-    category: AnalyticsCategory.USER_INTERACTION,
+    category: Analytics.AnalyticsCategory.USER_INTERACTION,
     properties: {
       actionId: action.id,
       securityLevel: action.securityLevel,
@@ -148,8 +148,8 @@ const handleActionClick = async (
     timestamp: Date.now(),
     userConsent: true,
     privacyLevel: action.securityLevel === SecurityLevel.CRITICAL ? 
-      PrivacyLevel.SENSITIVE : 
-      PrivacyLevel.INTERNAL,
+      Analytics.PrivacyLevel.SENSITIVE : 
+      Analytics.PrivacyLevel.INTERNAL,
     auditInfo: {
       eventId: crypto.randomUUID(),
       timestamp: Date.now(),
