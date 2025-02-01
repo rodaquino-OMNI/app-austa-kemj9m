@@ -6,7 +6,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { Line, Bar } from 'react-chartjs-2';
 import DatePicker from 'react-datepicker';
 import { AdminAPI } from '../../../lib/api/admin';
-import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../../lib/utils/analytics';
+import { Analytics } from '../../../lib/utils/analytics';
 import Table from '../../../components/common/Table';
 import { theme } from '../../../styles/theme';
 
@@ -15,7 +15,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 
 // Styled Components
 const DashboardContainer = styled.div`
-  padding: ${theme.spacing.section}px;
+  padding: ${theme.spacing(4)}px;
   background: ${theme.palette.background.default};
 `;
 
@@ -23,34 +23,31 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${theme.spacing.xl}px;
+  margin-bottom: ${theme.spacing(4)}px;
 `;
 
-const StyledTitle = styled.h1`
-  font-size: ${theme.typography.h1.fontSize};
-  font-weight: ${theme.typography.h1.fontWeight};
-  line-height: ${theme.typography.h1.lineHeight};
-  letter-spacing: ${theme.typography.h1.letterSpacing};
+const Title = styled.h1`
+  ${theme.typography.h1};
   color: ${theme.palette.text.primary};
 `;
 
 const Controls = styled.div`
   display: flex;
-  gap: ${theme.spacing.md}px;
+  gap: ${theme.spacing(2)}px;
   align-items: center;
 `;
 
 const MetricsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: ${theme.spacing.lg}px;
-  margin-bottom: ${theme.spacing.section}px;
+  gap: ${theme.spacing(3)}px;
+  margin-bottom: ${theme.spacing(4)}px;
 `;
 
 const MetricCard = styled.div`
   background: ${theme.palette.background.paper};
-  padding: ${theme.spacing.lg}px;
-  border-radius: ${theme.shape.borderRadiusSmall}px;
+  padding: ${theme.spacing(3)}px;
+  border-radius: ${theme.shape.borderRadius}px;
   box-shadow: ${theme.shadows[0]};
 `;
 
@@ -102,14 +99,14 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ searchParams }) => {
       // Track analytics access
       await Analytics.trackEvent({
         name: 'admin_view_analytics',
-        category: AnalyticsCategory.BUSINESS_METRICS,
+        category: Analytics.AnalyticsCategory.BUSINESS_METRICS,
         properties: {
           dateRange: { startDate, endDate },
           metrics: DEFAULT_METRICS.map(m => m.id)
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: PrivacyLevel.INTERNAL,
+        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -182,7 +179,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ searchParams }) => {
   return (
     <DashboardContainer>
       <Header>
-        <StyledTitle>Analytics Dashboard</StyledTitle>
+        <Title>Analytics Dashboard</Title>
         <Controls>
           <DatePicker
             selected={startDate}
