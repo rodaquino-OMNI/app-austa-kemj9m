@@ -3,7 +3,7 @@
 import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Grid, Container, Typography, ThemeProvider } from '@mui/material';
-import { Analytics } from '@vercel/analytics';
+import Analytics from '@vercel/analytics';
 
 // Internal imports
 import Header from '../components/layout/Header';
@@ -25,11 +25,11 @@ const ERROR_BOUNDARY_CONFIG = { maxRetries: 3, fallbackUI: true };
  * Enhanced security check for authentication and role validation
  */
 const checkAuth = () => {
-  const auth = useAuth();
+  const { user, isAuthenticated, userRole } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!auth.state || auth.state === 'UNAUTHENTICATED') {
+    if (!isAuthenticated) {
       router.push('/auth/login');
       return;
     }
@@ -37,13 +37,13 @@ const checkAuth = () => {
     // Track secure page view
     Analytics.track('page_view', {
       page: 'dashboard',
-      userRole: auth.user?.role,
+      userRole,
       timestamp: Date.now(),
       isAuthenticated: true
     });
-  }, [auth.state, auth.user?.role, router]);
+  }, [isAuthenticated, userRole, router]);
 
-  return { user: auth.user, userRole: auth.user?.role };
+  return { user, userRole };
 };
 
 /**
@@ -121,8 +121,8 @@ const HomePage = () => {
                     refreshInterval={REFRESH_INTERVAL}
                     showHistory={true}
                     encryptionKey={user?.securitySettings?.lastLoginAt.toString() || ''}
-                    accessLevel="read"
-                    theme="light"
+                    accessLevel={AccessLevel.READ}
+                    theme={ThemePreference.LIGHT}
                   />
                 </Suspense>
               </Grid>
@@ -148,4 +148,5 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+// Export with analytics wrapper
+export default Analytics.withAnalytics(HomePage);
