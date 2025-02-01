@@ -10,24 +10,25 @@ import jwtDecode from 'jwt-decode'; // v3.1.2
 import CryptoJS from 'crypto-js'; // v4.1.1
 
 import {
-  login as authLogin,
-  verifyBiometric as authVerifyBiometric,
-  AuthAPI
+  login,
+  verifyMFA,
+  refreshToken,
+  logout,
+  verifyBiometric,
+  validateDeviceFingerprint
 } from '../lib/api/auth';
 
 import {
   IAuthTokens,
   ILoginCredentials,
   IMFACredentials,
-  IBiometricCredentials,
   AuthState,
   IAuthContext,
   IAuthError,
-  SecurityEvent,
-  IResourcePermission
+  SecurityEvent
 } from '../lib/types/auth';
 
-import { IUser, IUserSecurityProfile } from '../lib/types/user';
+import { IUser } from '../lib/types/user';
 import { WebEncryptionService } from '../lib/utils/encryption';
 
 // Security constants
@@ -47,10 +48,8 @@ const useAuth = (): IAuthContext & {
   login: (credentials: ILoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   verifyMFA: (credentials: IMFACredentials) => Promise<void>;
-  verifyBiometric: (credentials: IBiometricCredentials) => Promise<void>;
+  verifyBiometric: (credentials: any) => Promise<void>;
   refreshSession: () => Promise<void>;
-  isAuthenticated: boolean;
-  checkAccess: (resource: string, requiredPermission: string) => boolean;
 } => {
   // State management with security context
   const [state, setState] = useState<AuthState>(AuthState.UNAUTHENTICATED);
@@ -65,32 +64,6 @@ const useAuth = (): IAuthContext & {
   const refreshTokenTimeoutRef = useRef<NodeJS.Timeout>();
   const sessionTimeoutRef = useRef<NodeJS.Timeout>();
   const deviceFingerprintRef = useRef<string>('');
-
-  // Initialize AuthAPI instance
-  const authAPI = new AuthAPI(process.env.NEXT_PUBLIC_API_URL || '');
-
-  // Computed authentication state
-  const isAuthenticated = state === AuthState.AUTHENTICATED && !!tokens?.accessToken;
-
-  /**
-   * Checks if user has required access to a resource
-   */
-  const checkAccess = useCallback((resource: string, requiredPermission: string): boolean => {
-    if (!isAuthenticated || !user) {
-      return false;
-    }
-
-    // Admin role has full access
-    if (user.role === 'ADMIN') {
-      return true;
-    }
-
-    // Check user's permissions for the specific resource
-    const userPermissions = user.securitySettings?.permissions || [];
-    const resourcePermission = userPermissions.find(p => p.resourceType === resource);
-    
-    return resourcePermission?.level === requiredPermission;
-  }, [isAuthenticated, user]);
 
   /**
    * Securely stores encrypted tokens in localStorage
@@ -113,7 +86,7 @@ const useAuth = (): IAuthContext & {
    */
   const validateToken = useCallback((token: string): boolean => {
     try {
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode<{ exp: number }>(token);
       const currentTime = Date.now() / 1000;
       return decoded.exp > currentTime + TOKEN_EXPIRY_BUFFER / 1000;
     } catch {
@@ -136,7 +109,7 @@ const useAuth = (): IAuthContext & {
   /**
    * Sets up automatic token refresh
    */
-  const setupTokenRefresh = useCallback(async () => {
+  const setupTokenRefresh = useCallback(() => {
     if (refreshTokenTimeoutRef.current) {
       clearTimeout(refreshTokenTimeoutRef.current);
     }
@@ -144,7 +117,7 @@ const useAuth = (): IAuthContext & {
     refreshTokenTimeoutRef.current = setTimeout(async () => {
       try {
         if (tokens?.refreshToken) {
-          const newTokens = await authAPI.refreshToken(tokens.refreshToken);
+          const newTokens = await refreshToken(tokens.refreshToken);
           await securelyStoreTokens(newTokens);
           setTokens(newTokens);
           setupTokenRefresh();
@@ -153,7 +126,7 @@ const useAuth = (): IAuthContext & {
         handleAuthError(error);
       }
     }, TOKEN_REFRESH_INTERVAL);
-  }, [tokens, securelyStoreTokens, authAPI]);
+  }, [tokens, securelyStoreTokens]);
 
   /**
    * Monitors session activity and timeout
@@ -184,17 +157,17 @@ const useAuth = (): IAuthContext & {
   const handleSessionTimeout = useCallback(async () => {
     logSecurityEvent({
       eventType: 'SESSION_TIMEOUT',
-      timestamp: Date.now(),
       userId: user?.id || '',
       sessionId: tokens?.accessToken || '',
-      metadata: { lastActivity },
       severity: 'MEDIUM',
-      outcome: 'SUCCESS'
+      outcome: 'SUCCESS',
+      metadata: { lastActivity },
+      timestamp: Date.now()
     });
 
     await handleLogout();
     setState(AuthState.SESSION_EXPIRED);
-  }, [user, tokens, lastActivity, logSecurityEvent]);
+  }, [user, lastActivity, logSecurityEvent]);
 
   /**
    * Enhanced login handler with security measures
@@ -209,7 +182,19 @@ const useAuth = (): IAuthContext & {
         throw new Error('Account locked due to multiple failed attempts');
       }
 
-      const authTokens = await authLogin(credentials);
+      // Generate and validate device fingerprint
+      deviceFingerprintRef.current = await validateDeviceFingerprint();
+      
+      const enhancedCredentials = {
+        ...credentials,
+        deviceId: deviceFingerprintRef.current,
+        clientMetadata: {
+          userAgent: navigator.userAgent,
+          timestamp: Date.now().toString()
+        }
+      };
+
+      const authTokens = await login(enhancedCredentials);
       await securelyStoreTokens(authTokens);
       setTokens(authTokens);
       setState(AuthState.AUTHENTICATED);
@@ -219,12 +204,12 @@ const useAuth = (): IAuthContext & {
 
       logSecurityEvent({
         eventType: 'LOGIN_SUCCESS',
-        timestamp: Date.now(),
         userId: credentials.email,
         sessionId: authTokens.accessToken,
-        metadata: { deviceId: credentials.deviceId },
         severity: 'MEDIUM',
-        outcome: 'SUCCESS'
+        outcome: 'SUCCESS',
+        metadata: { deviceId: deviceFingerprintRef.current },
+        timestamp: Date.now()
       });
     } catch (error) {
       setLoginAttempts(prev => prev + 1);
@@ -249,12 +234,12 @@ const useAuth = (): IAuthContext & {
     setError(authError);
     logSecurityEvent({
       eventType: 'AUTH_ERROR',
-      timestamp: Date.now(),
       userId: user?.id || '',
       sessionId: tokens?.accessToken || '',
-      metadata: authError,
       severity: 'HIGH',
-      outcome: 'FAILURE'
+      outcome: 'FAILURE',
+      metadata: authError,
+      timestamp: Date.now()
     });
   };
 
@@ -265,7 +250,7 @@ const useAuth = (): IAuthContext & {
     try {
       setIsLoading(true);
       if (tokens?.accessToken) {
-        await authAPI.logout(tokens.accessToken);
+        await logout(tokens.accessToken);
       }
       
       // Clear security context
@@ -283,44 +268,13 @@ const useAuth = (): IAuthContext & {
 
       logSecurityEvent({
         eventType: 'LOGOUT',
-        timestamp: Date.now(),
         userId: user?.id || '',
         sessionId: tokens?.accessToken || '',
-        metadata: { timestamp: Date.now() },
         severity: 'LOW',
-        outcome: 'SUCCESS'
+        outcome: 'SUCCESS',
+        metadata: { timestamp: Date.now() },
+        timestamp: Date.now()
       });
-    } catch (error) {
-      handleAuthError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Handles MFA verification
-   */
-  const handleVerifyMFA = async (credentials: IMFACredentials): Promise<void> => {
-    try {
-      setIsLoading(true);
-      const response = await authAPI.verifyMFA(credentials);
-      setTokens(response);
-      setState(AuthState.AUTHENTICATED);
-    } catch (error) {
-      handleAuthError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Handles biometric verification
-   */
-  const handleVerifyBiometric = async (credentials: IBiometricCredentials): Promise<void> => {
-    try {
-      setIsLoading(true);
-      await authVerifyBiometric(credentials);
-      setState(AuthState.AUTHENTICATED);
     } catch (error) {
       handleAuthError(error);
     } finally {
@@ -367,11 +321,9 @@ const useAuth = (): IAuthContext & {
     sessionTimeout: SESSION_TIMEOUT,
     login: handleLogin,
     logout: handleLogout,
-    verifyMFA: handleVerifyMFA,
-    verifyBiometric: handleVerifyBiometric,
-    refreshSession: setupTokenRefresh,
-    isAuthenticated,
-    checkAccess
+    verifyMFA,
+    verifyBiometric,
+    refreshSession: setupTokenRefresh
   };
 };
 
