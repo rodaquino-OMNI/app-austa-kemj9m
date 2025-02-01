@@ -56,14 +56,43 @@ const RATE_LIMIT = {
 /**
  * HIPAA-compliant validation schemas for health records
  */
-const healthRecordSchemas = {
+const healthRecordSchemas: Record<HealthRecordType, yup.ObjectSchema<any>> = {
   [HealthRecordType.CONSULTATION]: yup.object().shape({
     patientId: yup.string().required(),
     providerId: yup.string().required(),
     content: yup.object().required(),
     securityClassification: yup.string().oneOf(Object.values(SecurityClassification)).required()
   }),
-  // Add schemas for other health record types...
+  [HealthRecordType.LAB_RESULT]: yup.object().shape({
+    patientId: yup.string().required(),
+    providerId: yup.string().required(),
+    content: yup.object().required(),
+    securityClassification: yup.string().oneOf(Object.values(SecurityClassification)).required()
+  }),
+  [HealthRecordType.PRESCRIPTION]: yup.object().shape({
+    patientId: yup.string().required(),
+    providerId: yup.string().required(),
+    content: yup.object().required(),
+    securityClassification: yup.string().oneOf(Object.values(SecurityClassification)).required()
+  }),
+  [HealthRecordType.IMAGING]: yup.object().shape({
+    patientId: yup.string().required(),
+    providerId: yup.string().required(),
+    content: yup.object().required(),
+    securityClassification: yup.string().oneOf(Object.values(SecurityClassification)).required()
+  }),
+  [HealthRecordType.VITAL_SIGNS]: yup.object().shape({
+    patientId: yup.string().required(),
+    providerId: yup.string().required(),
+    content: yup.object().required(),
+    securityClassification: yup.string().oneOf(Object.values(SecurityClassification)).required()
+  }),
+  [HealthRecordType.WEARABLE_DATA]: yup.object().shape({
+    patientId: yup.string().required(),
+    providerId: yup.string().required(),
+    content: yup.object().required(),
+    securityClassification: yup.string().oneOf(Object.values(SecurityClassification)).required()
+  })
 };
 
 /**
