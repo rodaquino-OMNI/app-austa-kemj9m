@@ -3,6 +3,7 @@ import styled from '@emotion/styled'; // ^11.11.0
 import { Alert, Button, Typography, Box } from '@mui/material'; // ^5.0.0
 import { Analytics } from '../../lib/utils/analytics';
 import Loader from './Loader';
+import { theme } from '../../styles/theme';
 
 // Styled components for error UI
 const ErrorContainer = styled(Box)`
@@ -10,21 +11,21 @@ const ErrorContainer = styled(Box)`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.spacing(3)};
+  padding: ${theme.spacing(3)}px;
   text-align: center;
   min-height: 200px;
   width: 100%;
 `;
 
 const ErrorMessage = styled(Typography)`
-  margin: ${({ theme }) => theme.spacing(2, 0)};
+  margin: ${theme.spacing(2, 0)}px;
 `;
 
 // Interface definitions
 interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
-  onError?: (error: Error, errorInfo: React.ErrorInfo, context: Analytics.ErrorContext) => void;
+  onError?: (error: Error, errorInfo: React.ErrorInfo, context: Record<string, unknown>) => void;
   retryAttempts?: number;
   recoveryInterval?: number;
 }
@@ -125,7 +126,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       // Track recovery attempt
       Analytics.trackEvent({
         name: 'error_recovery_attempt',
-        category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
+        category: 'SYSTEM_PERFORMANCE',
         properties: {
           retryCount: retryCount + 1,
           maxRetries: retryAttempts,
@@ -133,7 +134,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+        privacyLevel: 'INTERNAL',
         auditInfo: {
           eventId: `recovery_${Date.now()}`,
           timestamp: Date.now(),
