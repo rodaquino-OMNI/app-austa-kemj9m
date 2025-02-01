@@ -106,7 +106,7 @@ const breakpoints = {
 };
 
 // Healthcare-optimized spacing system
-const spacing = {
+const spacingValues = {
   unit: 8,
   xs: 4,
   sm: 8,
@@ -137,48 +137,48 @@ const shadows = {
 const components = {
   MuiButton: {
     styleOverrides: {
-      root: {
+      root: ({ theme }) => ({
         borderRadius: shape.buttonRadius,
         textTransform: 'none',
         fontWeight: typography.fontWeightMedium,
-      },
-      containedPrimary: {
+      }),
+      containedPrimary: ({ theme }) => ({
         '&:hover': {
           backgroundColor: palette.primary.dark,
         },
-      },
-      containedSecondary: {
+      }),
+      containedSecondary: ({ theme }) => ({
         '&:hover': {
           backgroundColor: palette.secondary.dark,
         },
-      },
+      }),
     },
   },
   MuiCard: {
     styleOverrides: {
-      root: {
+      root: ({ theme }) => ({
         borderRadius: shape.clinicalCard,
         boxShadow: shadows.clinical,
-      },
+      }),
     },
   },
   MuiTextField: {
     styleOverrides: {
-      root: {
+      root: ({ theme }) => ({
         '& .MuiOutlinedInput-root': {
           borderRadius: shape.borderRadiusSmall,
         },
-      },
+      }),
     },
   },
   MuiTooltip: {
     styleOverrides: {
-      tooltip: {
+      tooltip: ({ theme }) => ({
         backgroundColor: palette.text.primary,
         fontSize: '0.875rem',
         padding: '8px 16px',
         borderRadius: shape.borderRadiusSmall,
-      },
+      }),
     },
   },
 };
@@ -188,36 +188,10 @@ const themeOptions: ThemeOptions = {
   palette,
   typography,
   breakpoints,
-  spacing,
+  spacing: (factor: number) => `${factor * spacingValues.unit}px`,
   shape,
   components,
-  shadows: [
-    'none',
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-    shadows.clinical,
-  ],
+  shadows: [...Array(25)].map(() => shadows.clinical), // Override default Material shadows
 };
 
 export const theme: Theme = createTheme(themeOptions);
