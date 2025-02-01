@@ -1,5 +1,19 @@
 import { createTheme, Theme, ThemeOptions } from '@mui/material'; // @mui/material ^5.14.0
 
+// Extend the Material UI theme types to include custom properties
+declare module '@mui/material/styles' {
+  interface Palette {
+    clinical: Palette['primary'];
+  }
+  interface PaletteOptions {
+    clinical?: PaletteOptions['primary'];
+  }
+  interface TypeBackground {
+    clinical: string;
+    elevated: string;
+  }
+}
+
 // Healthcare-specific color palette with WCAG 2.1 AA compliant contrast ratios
 const palette = {
   primary: {
