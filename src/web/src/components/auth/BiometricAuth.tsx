@@ -8,10 +8,11 @@
 import React, { useState, useEffect, useCallback } from 'react'; // v18.0.0
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser'; // v7.0.0
 import { MdFingerprint, MdFace, MdError, MdCheckCircle } from 'react-icons/md';
-import { Button, CircularProgress, Alert } from '@material/web/components'; // v1.0.0
+import { Button, CircularProgress, Alert } from '@mui/material';
 import { SecurityLogger } from '@logger/security'; // v2.0.0
 
-import { useAuth, useSecurityContext } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
+import useSecurityContext from '../../hooks/useAuth';
 import { AuthState } from '../../lib/types/auth';
 
 // Security and clinical environment constants
@@ -112,13 +113,14 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
       } else {
         setIsAvailable(isSupported);
       }
-    } catch (error) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError({
         code: 'BIOMETRIC_UNAVAILABLE',
-        message: error.message,
+        message: errorMessage,
         timestamp: Date.now()
       });
-      securityLogger.error('Biometric availability check failed', { error });
+      securityLogger.error('Biometric availability check failed', { error: errorMessage });
     }
   }, [clinicalMode, deviceType]);
 
@@ -146,48 +148,50 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
         securityLogger.info('Clinical context validated', clinicalContext);
       }
 
-      // Start biometric authentication with challenge
+      // Start biometric authentication
       const authOptions = {
         timeout: BIOMETRIC_TIMEOUT,
         userVerification: 'required' as UserVerificationRequirement,
         attestation: clinicalMode ? 'direct' : 'none',
-        challenge: new Uint8Array(32) // Add required challenge
+        challenge: Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64')
       };
 
       const credential = await startAuthentication(authOptions);
       
       // Verify with backend
-      await verifyBiometric({
+      const verificationResult = await verifyBiometric({
         credential,
         deviceId: deviceFingerprint,
         timestamp: Date.now()
       });
 
-      const authResult: AuthResult = {
-        verified: true,
-        deviceId: deviceFingerprint,
-        timestamp: Date.now(),
-        clinicalContext: clinicalMode ? {
-          deviceType: deviceType || 'unknown',
-          locationId: securityContext.locationId,
-          workstationId: securityContext.workstationId,
-          emergencyAccess: false
-        } : undefined
-      };
+      if (verificationResult) {
+        const authResult: AuthResult = {
+          verified: true,
+          deviceId: deviceFingerprint,
+          timestamp: Date.now(),
+          clinicalContext: clinicalMode ? {
+            deviceType: deviceType || 'unknown',
+            locationId: securityContext.locationId,
+            workstationId: securityContext.workstationId,
+            emergencyAccess: false
+          } : undefined
+        };
 
-      securityLogger.info('Biometric authentication successful', {
-        deviceId: deviceFingerprint,
-        clinicalMode
-      });
+        securityLogger.info('Biometric authentication successful', {
+          deviceId: deviceFingerprint,
+          clinicalMode
+        });
 
-      onSuccess(authResult);
-    } catch (error) {
+        onSuccess(authResult);
+      }
+    } catch (err) {
       setAttemptCount(prev => prev + 1);
       
       const biometricError: BiometricError = {
-        code: error.code || 'BIOMETRIC_ERROR',
-        message: error.message,
-        details: error.details,
+        code: err instanceof Error ? err.name : 'BIOMETRIC_ERROR',
+        message: err instanceof Error ? err.message : 'Authentication failed',
+        details: err instanceof Error ? { stack: err.stack } : undefined,
         timestamp: Date.now()
       };
 
