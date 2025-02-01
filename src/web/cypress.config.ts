@@ -2,8 +2,12 @@ import { defineConfig } from 'cypress'; // v13.0.0
 import '@cypress/code-coverage'; // v3.12.0
 import '@cypress/audit'; // v1.0.0
 
+// Import enhanced e2e test configuration with security and compliance functions
+import { setupNodeEvents, securityValidation, complianceChecks } from './cypress/support/e2e';
+
 export default defineConfig({
   e2e: {
+    setupNodeEvents,
     baseUrl: 'http://localhost:3000',
     specPattern: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}',
     supportFile: 'cypress/support/e2e.ts',
@@ -99,23 +103,16 @@ export default defineConfig({
 
     // Enhanced viewport configuration
     viewportWidth: 1280,
-    viewportHeight: 720
+    viewportHeight: 720,
   },
 
   component: {
     specPattern: 'src/**/*.cy.{js,jsx,ts,tsx}',
     supportFile: 'cypress/support/component.ts',
-    indexHtmlFile: 'cypress/support/component-index.html'
-  },
-
-  // Enhanced security and compliance plugins
-  env: {
-    codeCoverage: {
-      exclude: [
-        'cypress/**/*.*',
-        'public/**/*.*',
-        '**/node_modules/**/*.*'
-      ]
+    indexHtmlFile: 'cypress/support/component-index.html',
+    devServer: {
+      framework: 'react',
+      bundler: 'webpack'
     }
   },
 
