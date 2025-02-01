@@ -6,8 +6,8 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react'; // ^18.0.0
 import { format } from 'date-fns'; // ^2.30.0
-import { useVirtual } from 'react-virtual'; // ^2.10.4
-import { AuditLogger } from '@healthcare/audit-logger'; // ^1.2.0
+import { useVirtual } from '@tanstack/react-virtual'; // ^2.10.4
+import { AuditLogger } from '@austa/audit-logger'; // ^1.0.0
 
 // Internal imports
 import Table from '../common/Table';
@@ -77,15 +77,66 @@ const RecordsList: React.FC<RecordsListProps> = ({
     direction: 'asc' | 'desc';
   }>();
 
-  // PHI data masking based on access level
-  const maskPHIData = useCallback((value: string, level: string): string => {
-    if (level !== SecurityClassification.HIGHLY_CONFIDENTIAL) {
-      return PHI_MASK;
-    }
-    return value;
-  }, []);
+  // Memoized table columns with PHI protection
+  const columns = useMemo(() => [
+    {
+      id: 'date',
+      header: 'Date',
+      accessor: 'date',
+      sortable: true,
+      render: (value: any) => format(new Date(value), 'PPP'),
+    },
+    {
+      id: 'type',
+      header: 'Type',
+      accessor: 'type',
+      sortable: true,
+    },
+    {
+      id: 'provider',
+      header: 'Provider',
+      accessor: 'providerId',
+      sortable: true,
+      render: (value: any) => maskPHIData(value, accessLevel),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessor: 'status',
+      sortable: true,
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      accessor: 'id',
+      render: (value: any, row: Record<string, any>) => (
+        <div role="group" aria-label="Record actions">
+          <button
+            onClick={() => handleRecordSelect(row as IHealthRecord)}
+            aria-label={`View record from ${format(new Date(row.date), 'PPP')}`}
+          >
+            View
+          </button>
+        </div>
+      ),
+    },
+  ], [accessLevel]);
 
   // Handlers
+  const handleSort = useCallback((sortConfig: { column: string; direction: 'asc' | 'desc' }) => {
+    try {
+      setSortConfig(sortConfig);
+      
+      // Audit log for sorting operation
+      auditLogger.log({
+        action: 'RECORDS_SORT',
+        details: { columnId: sortConfig.column, direction: sortConfig.direction }
+      });
+    } catch (error) {
+      onError(new Error(ErrorCode.INTERNAL_SERVER_ERROR));
+    }
+  }, [auditLogger, onError]);
+
   const handleRecordSelect = useCallback(async (record: IHealthRecord) => {
     try {
       // Validate record before selection
@@ -106,68 +157,17 @@ const RecordsList: React.FC<RecordsListProps> = ({
     }
   }, [auditLogger, onRecordSelect, onError]);
 
-  const handleSort = useCallback(async (columnId: string, direction: 'asc' | 'desc') => {
-    try {
-      setSortConfig({ column: columnId, direction });
-      
-      // Audit log for sorting operation
-      await auditLogger.log({
-        action: 'RECORDS_SORT',
-        details: { columnId, direction }
-      });
-    } catch (error) {
-      onError(new Error(ErrorCode.INTERNAL_SERVER_ERROR));
-    }
-  }, [auditLogger, onError]);
-
   const handleFilter = useCallback((type: HealthRecordType) => {
     setActiveFilters([type]);
   }, [setActiveFilters]);
 
-  // Memoized table columns with PHI protection
-  const columns = useMemo(() => [
-    {
-      id: 'date',
-      header: 'Date',
-      accessor: 'date',
-      sortable: true,
-      render: (value: Date) => format(new Date(value), 'PPP'),
-    },
-    {
-      id: 'type',
-      header: 'Type',
-      accessor: 'type',
-      sortable: true,
-    },
-    {
-      id: 'provider',
-      header: 'Provider',
-      accessor: 'providerId',
-      sortable: true,
-      render: (value: string) => maskPHIData(value, accessLevel),
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      accessor: 'status',
-      sortable: true,
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      accessor: 'id',
-      render: (_: any, record: IHealthRecord) => (
-        <div role="group" aria-label="Record actions">
-          <button
-            onClick={() => handleRecordSelect(record)}
-            aria-label={`View record from ${format(new Date(record.date), 'PPP')}`}
-          >
-            View
-          </button>
-        </div>
-      ),
-    },
-  ], [accessLevel, maskPHIData, handleRecordSelect]);
+  // PHI data masking based on access level
+  const maskPHIData = useCallback((value: string, level: string): string => {
+    if (level !== SecurityClassification.HIGHLY_CONFIDENTIAL) {
+      return PHI_MASK;
+    }
+    return value;
+  }, []);
 
   // Error handling
   useEffect(() => {
