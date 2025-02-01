@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'; // v18.2.0
-import { Room, LocalTrack, RemoteParticipant, ConnectionQualityStats } from 'twilio-video'; // v2.27.0
+import { Room, LocalTrack, RemoteParticipant } from 'twilio-video'; // v2.27.0
 
 import { virtualCareApi } from '../lib/api/virtualCare';
 import {
@@ -65,16 +65,15 @@ export const useWebRTC = (
       let videoBitrate = 0;
       let packetLoss = 0;
 
-      // Process stats based on Twilio's StatsReport format
+      // Process stats reports
       stats.forEach(report => {
-        if (report.mediaType === 'audio' && report.mediaSourceStats) {
-          audioLevel = report.mediaSourceStats.audioLevel || 0;
-        }
-        if (report.mediaType === 'video' && report.mediaSourceStats) {
-          videoBitrate = report.mediaSourceStats.bitrate || 0;
-        }
-        if (report.transportStats) {
-          packetLoss = report.transportStats.packetsLost || 0;
+        if (report.type === 'inbound-rtp') {
+          if (report.kind === 'audio') {
+            audioLevel = report.audioLevel || 0;
+          } else if (report.kind === 'video') {
+            videoBitrate = report.bytesReceived || 0;
+          }
+          packetLoss = report.packetsLost || 0;
         }
       });
 
@@ -86,15 +85,18 @@ export const useWebRTC = (
       }
 
       setConnectionQuality(quality);
-      await virtualCareApi.reportConnectionQuality({
-        consultationId,
-        quality,
-        metrics: { audioLevel, videoBitrate, packetLoss }
+
+      // Log quality metrics
+      console.info('Connection quality metrics:', {
+        audioLevel,
+        videoBitrate,
+        packetLoss,
+        quality
       });
     } catch (err) {
       console.error('Failed to monitor connection quality:', err);
     }
-  }, [room, consultationId]);
+  }, [room]);
 
   /**
    * Initializes and connects to the WebRTC session
@@ -226,7 +228,7 @@ export const useWebRTC = (
   /**
    * Retrieves current connection quality statistics
    */
-  const getConnectionStats = useCallback(async (): Promise<ConnectionQualityStats> => {
+  const getConnectionStats = useCallback(async () => {
     if (!room?.room) {
       throw new Error('Room not connected');
     }
