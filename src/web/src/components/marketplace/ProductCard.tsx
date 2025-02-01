@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import Image from 'next/image';
 import { Product, ProductCategory } from '../../lib/types/product';
 import { Card } from '../../styles/components';
+import { Theme } from '@mui/material';
 
 // Constants
 const MAX_DESCRIPTION_LENGTH = 150;
@@ -24,11 +25,11 @@ const StyledCard = styled(Card)`
   max-width: 360px;
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
-  transform: ${({ isHovered }: { isHovered: boolean }) => isHovered ? 'translateY(-4px)' : 'none'};
+  transform: ${props => props.isHovered ? 'translateY(-4px)' : 'none'};
   
-  ${({ clinicalMode, theme }: { clinicalMode: boolean; theme: any }) => clinicalMode && `
-    border-left: 4px solid ${theme.palette.clinical.main};
-    background-color: ${theme.palette.background.paper};
+  ${props => props.clinicalMode && `
+    border-left: 4px solid ${props.theme.palette.clinical.main};
+    background-color: ${props.theme.palette.background.clinical};
   `}
 
   @media (prefers-reduced-motion: reduce) {
@@ -52,14 +53,14 @@ const Title = styled.h3`
   margin: 0 0 8px 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: ${({ theme }) => theme.palette.text.primary};
+  color: ${props => props.theme.palette.text.primary};
   min-height: 44px;
 `;
 
 const Description = styled.p`
   margin: 0 0 16px 0;
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.palette.text.secondary};
+  color: ${props => props.theme.palette.text.secondary};
   line-height: 1.5;
 `;
 
@@ -73,8 +74,8 @@ const PriceContainer = styled.div`
 const Price = styled.span<{ insuranceCovered: boolean }>`
   font-size: 1.25rem;
   font-weight: 600;
-  color: ${({ theme, insuranceCovered }) => 
-    insuranceCovered ? theme.palette.success.main : theme.palette.text.primary};
+  color: ${props => 
+    props.insuranceCovered ? props.theme.palette.success.main : props.theme.palette.text.primary};
 `;
 
 const BadgeContainer = styled.div`
@@ -89,26 +90,26 @@ const BadgeContainer = styled.div`
 const Badge = styled.span`
   padding: 4px 8px;
   border-radius: 4px;
-  background-color: ${({ theme }) => theme.palette.primary.main};
-  color: ${({ theme }) => theme.palette.primary.contrastText};
+  background-color: ${props => props.theme.palette.primary.main};
+  color: ${props => props.theme.palette.primary.contrastText};
   font-size: 0.75rem;
   font-weight: 500;
 `;
 
 // Helper Functions
-const formatPrice = (price: number, insuranceCovered: boolean): string => {
+const formatPrice = memo((price: number, insuranceCovered: boolean): string => {
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
   }).format(price / 100);
 
   return insuranceCovered ? `${formattedPrice} (Covered)` : formattedPrice;
-};
+});
 
-const truncateText = (text: string, maxLength: number): string => {
+const truncateText = memo((text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
   return `${text.substring(0, maxLength - 3)}...`;
-};
+});
 
 // Main Component
 const ProductCard: React.FC<ProductCardProps> = memo(({ 
@@ -138,56 +139,52 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
   }, []);
 
   return (
-    <div
+    <StyledCard
+      elevation="clinical"
+      clinicalMode={clinicalMode ? "standard" : undefined}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
       role="article"
       aria-label={`${product.name} - ${formatPrice(product.price, product.insuranceCovered)}`}
     >
-      <StyledCard
-        elevation="clinical"
-        clinicalMode={clinicalMode ? "critical" : "standard"}
-        isHovered={isHovered}
-      >
-        <ImageContainer>
-          <Image
-            ref={imageRef}
-            src={imageError ? IMAGE_PLACEHOLDER : product.images[0]}
-            alt={product.name}
-            layout="fill"
-            objectFit="cover"
-            onError={handleImageError}
-            loading="lazy"
-            sizes="(max-width: 768px) 100vw, 360px"
-          />
-          <BadgeContainer>
-            {product.badges?.map((badge) => (
-              <Badge key={badge} role="status">
-                {badge}
-              </Badge>
-            ))}
-          </BadgeContainer>
-        </ImageContainer>
+      <ImageContainer>
+        <Image
+          ref={imageRef}
+          src={imageError ? IMAGE_PLACEHOLDER : product.images[0]}
+          alt={product.name}
+          layout="fill"
+          objectFit="cover"
+          onError={handleImageError}
+          loading="lazy"
+          sizes="(max-width: 768px) 100vw, 360px"
+        />
+        <BadgeContainer>
+          {product.badges?.map((badge) => (
+            <Badge key={badge} role="status">
+              {badge}
+            </Badge>
+          ))}
+        </BadgeContainer>
+      </ImageContainer>
 
-        <ContentContainer>
-          <Title>
-            {product.name}
-          </Title>
-          <Description aria-label={product.description}>
-            {truncateText(product.description, MAX_DESCRIPTION_LENGTH)}
-          </Description>
-          <PriceContainer>
-            <Price 
-              insuranceCovered={product.insuranceCovered}
-              aria-label={`Price: ${formatPrice(product.price, product.insuranceCovered)}`}
-            >
-              {formatPrice(product.price, product.insuranceCovered)}
-            </Price>
-          </PriceContainer>
-        </ContentContainer>
-      </StyledCard>
-    </div>
+      <ContentContainer>
+        <Title>
+          {product.name}
+        </Title>
+        <Description aria-label={product.description}>
+          {truncateText(product.description, MAX_DESCRIPTION_LENGTH)}
+        </Description>
+        <PriceContainer>
+          <Price 
+            insuranceCovered={product.insuranceCovered}
+            aria-label={`Price: ${formatPrice(product.price, product.insuranceCovered)}`}
+          >
+            {formatPrice(product.price, product.insuranceCovered)}
+          </Price>
+        </PriceContainer>
+      </ContentContainer>
+    </StyledCard>
   );
 });
 
