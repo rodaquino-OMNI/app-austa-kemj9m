@@ -17,7 +17,8 @@ const USER_TABLE_COLUMNS = [
     header: 'Name',
     accessor: 'profile.firstName',
     sortable: true,
-    render: (value: any, row: Record<string, any>) => 
+    secure: true,
+    render: (value: string, row: IUser) => 
       SecurityUtils.maskPII(`${row.profile.firstName} ${row.profile.lastName}`)
   },
   {
@@ -25,7 +26,8 @@ const USER_TABLE_COLUMNS = [
     header: 'Email',
     accessor: 'email',
     sortable: true,
-    render: (value: any) => SecurityUtils.maskPII(value)
+    secure: true,
+    render: (value: string) => SecurityUtils.maskPII(value)
   },
   {
     id: 'role',
@@ -44,13 +46,13 @@ const USER_TABLE_COLUMNS = [
     header: 'Last Login',
     accessor: 'securitySettings.lastLoginAt',
     sortable: true,
-    render: (value: any) => new Date(value).toLocaleString()
+    render: (value: Date) => new Date(value).toLocaleString()
   },
   {
     id: 'mfaStatus',
     header: 'MFA Status',
     accessor: 'securitySettings.mfaEnabled',
-    render: (value: any) => value ? 'Enabled' : 'Disabled'
+    render: (value: boolean) => value ? 'Enabled' : 'Disabled'
   }
 ];
 
@@ -150,13 +152,13 @@ const UsersPage: React.FC = () => {
     {
       label: 'Update',
       onClick: () => selectedUser && handleUserUpdate(selectedUser.id, selectedUser),
-      variant: 'primary',
+      variant: 'primary' as const,
       requiresConfirmation: true
     },
     {
       label: 'Cancel',
       onClick: () => setIsModalOpen(false),
-      variant: 'secondary'
+      variant: 'secondary' as const
     }
   ], [selectedUser]);
 
@@ -226,6 +228,7 @@ const UsersPage: React.FC = () => {
       >
         {selectedUser && (
           <div className="space-y-4">
+            {/* Modal content with secure form fields */}
             <div className="grid grid-cols-2 gap-4">
               {/* Implement secure form fields here */}
             </div>
