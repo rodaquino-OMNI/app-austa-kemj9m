@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { format, parseISO } from 'date-fns';
 import useWebSocket from 'react-use-websocket';
-import { Theme } from '@mui/material';
 
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Table from '../../../components/common/Table';
@@ -45,25 +44,25 @@ interface ComplianceRecord {
 }
 
 // Styled Components
-const StyledCompliancePage = styled.div<{ theme?: Theme }>`
-  padding: ${({ theme }) => theme?.spacing(2)}px;
+const StyledCompliancePage = styled.div`
+  padding: ${({ theme }) => theme.spacing.lg}px;
   max-width: 1600px;
   margin: 0 auto;
-  background-color: ${({ theme }) => theme?.palette.background.default};
+  background-color: ${({ theme }) => theme.palette.background.default};
   min-height: calc(100vh - 64px);
 `;
 
-const Header = styled.div<{ theme?: Theme }>`
+const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme?.spacing(3)}px;
+  margin-bottom: ${({ theme }) => theme.spacing.xl}px;
 `;
 
-const Controls = styled.div<{ theme?: Theme }>`
+const Controls = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme?.spacing(2)}px;
-  margin-bottom: ${({ theme }) => theme?.spacing(2)}px;
+  gap: ${({ theme }) => theme.spacing.md}px;
+  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
 `;
 
 const CompliancePage: React.FC = () => {
@@ -78,11 +77,11 @@ const CompliancePage: React.FC = () => {
     onOpen: () => {
       Analytics.trackEvent({
         name: 'compliance_websocket_connected',
-        category: 'SYSTEM_PERFORMANCE',
+        category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
         properties: { endpoint: WEBSOCKET_ENDPOINT },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'INTERNAL',
+        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -93,29 +92,122 @@ const CompliancePage: React.FC = () => {
       });
     },
     onError: (error) => {
-      Analytics.trackError(error instanceof Error ? error : new Error('WebSocket error'), {
+      Analytics.trackError(error, {
         context: 'compliance_websocket',
         endpoint: WEBSOCKET_ENDPOINT
       });
     }
   });
 
-  // Handle WebSocket updates
+  // Table columns configuration
+  const columns = useMemo(() => [
+    {
+      id: 'type',
+      header: 'Compliance Type',
+      accessor: 'type',
+      sortable: true
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessor: 'status',
+      sortable: true,
+      render: (value: string) => (
+        <div style={{ 
+          color: value === 'Compliant' ? 'green' : 
+                 value === 'Non-Compliant' ? 'red' : 
+                 value === 'In-Progress' ? 'orange' : 'gray' 
+        }}>
+          {value}
+        </div>
+      )
+    },
+    {
+      id: 'lastChecked',
+      header: 'Last Checked',
+      accessor: 'lastChecked',
+      sortable: true,
+      render: (value: string) => format(parseISO(value), 'PPp')
+    },
+    {
+      id: 'nextReview',
+      header: 'Next Review',
+      accessor: 'nextReview',
+      sortable: true,
+      render: (value: string) => format(parseISO(value), 'PPp')
+    },
+    {
+      id: 'metrics',
+      header: 'Compliance Score',
+      accessor: 'metrics',
+      sortable: true,
+      render: (value: ComplianceRecord['metrics']) => (
+        <div>{value.complianceScore}% ({value.resolvedFindings}/{value.criticalFindings} findings resolved)</div>
+      )
+    }
+  ], []);
+
+  // Fetch compliance records
+  const fetchRecords = useCallback(async () => {
+    try {
+      setLoading(true);
+      // API call would go here
+      const mockData: ComplianceRecord[] = []; // Replace with actual API call
+      setRecords(mockData);
+    } catch (error) {
+      Analytics.trackError(error as Error, {
+        context: 'compliance_fetch_records'
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Handle real-time updates
   useEffect(() => {
-    if (lastMessage?.data) {
+    if (lastMessage) {
       const update = JSON.parse(lastMessage.data);
-      setRecords(prevRecords => 
-        prevRecords.map(record => 
-          record.id === update.id ? { ...record, ...update } : record
-        )
-      );
+      setRecords(prev => prev.map(record => 
+        record.id === update.id ? { ...record, ...update } : record
+      ));
     }
   }, [lastMessage]);
 
-  // Filter records based on selected status
+  // Initial data fetch
+  useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
+
+  // Record selection handler
+  const handleRecordSelect = useCallback((record: ComplianceRecord) => {
+    setSelectedRecord(record);
+    setIsModalOpen(true);
+    
+    Analytics.trackEvent({
+      name: 'compliance_record_viewed',
+      category: Analytics.AnalyticsCategory.USER_INTERACTION,
+      properties: {
+        recordId: record.id,
+        complianceType: record.type
+      },
+      timestamp: Date.now(),
+      userConsent: true,
+      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+      auditInfo: {
+        eventId: crypto.randomUUID(),
+        timestamp: Date.now(),
+        userId: 'admin',
+        ipAddress: 'masked',
+        actionType: 'record_view'
+      }
+    });
+  }, []);
+
+  // Filtered records
   const filteredRecords = useMemo(() => {
-    if (filter === 'All') return records;
-    return records.filter(record => record.status === filter);
+    return filter === 'All' 
+      ? records 
+      : records.filter(record => record.status === filter);
   }, [records, filter]);
 
   return (
@@ -123,30 +215,79 @@ const CompliancePage: React.FC = () => {
       <AdminLayout>
         <StyledCompliancePage>
           <Header>
-            <h1>Compliance Dashboard</h1>
-            <Controls>
-              {/* Add your control components here */}
-            </Controls>
+            <h1>Compliance Monitoring</h1>
           </Header>
-          
-          <Table 
+
+          <Controls>
+            <select 
+              value={filter} 
+              onChange={(e) => setFilter(e.target.value as typeof STATUS_FILTERS[number])}
+            >
+              {STATUS_FILTERS.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </Controls>
+
+          <Table
             data={filteredRecords}
+            columns={columns}
             loading={loading}
-            onRowClick={record => {
-              setSelectedRecord(record);
-              setIsModalOpen(true);
-            }}
+            sortable
+            pagination
+            pageSize={10}
+            ariaLabel="Compliance records table"
           />
 
           {selectedRecord && (
             <Modal
-              open={isModalOpen}
-              onClose={() => {
-                setIsModalOpen(false);
-                setSelectedRecord(null);
-              }}
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              title={`${selectedRecord.type} Compliance Details`}
+              size="large"
+              clinicalContext="standard"
+              actions={[
+                {
+                  label: 'Generate Report',
+                  onClick: () => {/* Report generation logic */},
+                  variant: 'secondary'
+                },
+                {
+                  label: 'Close',
+                  onClick: () => setIsModalOpen(false),
+                  variant: 'primary'
+                }
+              ]}
             >
-              {/* Add your modal content here */}
+              <div>
+                <h3>Findings</h3>
+                <Table
+                  data={selectedRecord.findings}
+                  columns={[
+                    { id: 'severity', header: 'Severity', accessor: 'severity' },
+                    { id: 'description', header: 'Description', accessor: 'description' },
+                    { id: 'remediation', header: 'Remediation', accessor: 'remediation' }
+                  ]}
+                  ariaLabel="Compliance findings table"
+                />
+
+                <h3>Audit Trail</h3>
+                <Table
+                  data={selectedRecord.auditTrail}
+                  columns={[
+                    { 
+                      id: 'timestamp', 
+                      header: 'Timestamp', 
+                      accessor: 'timestamp',
+                      render: (value: string) => format(parseISO(value), 'PPp')
+                    },
+                    { id: 'action', header: 'Action', accessor: 'action' },
+                    { id: 'user', header: 'User', accessor: 'user' },
+                    { id: 'details', header: 'Details', accessor: 'details' }
+                  ]}
+                  ariaLabel="Audit trail table"
+                />
+              </div>
             </Modal>
           )}
         </StyledCompliancePage>
