@@ -45,10 +45,10 @@ interface ComplianceRecord {
 
 // Styled Components
 const StyledCompliancePage = styled.div`
-  padding: 16px;
+  padding: ${({ theme }) => theme.spacing.lg}px;
   max-width: 1600px;
   margin: 0 auto;
-  background-color: #FFFFFF;
+  background-color: ${({ theme }) => theme.palette.background.default};
   min-height: calc(100vh - 64px);
 `;
 
@@ -56,13 +56,13 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: ${({ theme }) => theme.spacing.xl}px;
 `;
 
 const Controls = styled.div`
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: ${({ theme }) => theme.spacing.md}px;
+  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
 `;
 
 const CompliancePage: React.FC = () => {
@@ -77,11 +77,11 @@ const CompliancePage: React.FC = () => {
     onOpen: () => {
       Analytics.trackEvent({
         name: 'compliance_websocket_connected',
-        category: 'SYSTEM_PERFORMANCE',
+        category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
         properties: { endpoint: WEBSOCKET_ENDPOINT },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'INTERNAL',
+        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -92,7 +92,7 @@ const CompliancePage: React.FC = () => {
       });
     },
     onError: (error) => {
-      Analytics.trackError(error instanceof Error ? error : new Error('WebSocket error'), {
+      Analytics.trackError(error, {
         context: 'compliance_websocket',
         endpoint: WEBSOCKET_ENDPOINT
       });
@@ -193,14 +193,14 @@ const CompliancePage: React.FC = () => {
     
     Analytics.trackEvent({
       name: 'compliance_record_viewed',
-      category: 'USER_INTERACTION',
+      category: Analytics.AnalyticsCategory.USER_INTERACTION,
       properties: {
         recordId: record.id,
         complianceType: record.type
       },
       timestamp: Date.now(),
       userConsent: true,
-      privacyLevel: 'INTERNAL',
+      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
       auditInfo: {
         eventId: crypto.randomUUID(),
         timestamp: Date.now(),
