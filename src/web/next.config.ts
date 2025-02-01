@@ -8,8 +8,7 @@ import { BASE_URL, API_VERSION } from './src/lib/constants/endpoints';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import withPWA from 'next-pwa';
 import withSentryConfig from '@sentry/nextjs';
-import type { NextConfig, WebpackConfigContext } from 'next';
-import type { Configuration } from 'webpack';
+import type { NextConfig, Webpack } from 'next';
 
 /**
  * Content Security Policy configuration
@@ -35,8 +34,8 @@ const baseConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? '',
-    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN ?? '',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
 
   async headers() {
@@ -88,7 +87,7 @@ const baseConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
 
-  webpack: (config: Configuration, { dev, isServer }: WebpackConfigContext): Configuration => {
+  webpack: (config, { dev, isServer }) => {
     // Optimize bundle splitting
     config.optimization = {
       ...config.optimization,
@@ -166,7 +165,7 @@ const analyzerConfig = {
 };
 
 // Apply configuration wrappers
-let config: NextConfig = baseConfig;
+let config = baseConfig;
 
 // Enable PWA capabilities
 config = withPWA({
@@ -181,7 +180,8 @@ if (process.env.ANALYZE === 'true') {
 
 // Add Sentry configuration for production
 if (process.env.NODE_ENV === 'production') {
-  config = withSentryConfig(config, sentryConfig);
+  const { withSentryConfig: configureSentry } = require('@sentry/nextjs');
+  config = configureSentry(config, sentryConfig);
 }
 
 export default config;
