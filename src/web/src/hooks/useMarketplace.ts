@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Product, ProductCategory, ProductSortOption } from '../lib/types/product';
 import { useAnalytics } from './useAnalytics';
-import * as marketplace from '../lib/api/marketplace';
+import { MarketplaceAPI } from '../lib/api/marketplace';
 import { ErrorCode } from '../lib/constants/errorCodes';
 
 // Security context type for HIPAA compliance
@@ -97,7 +97,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
     const startTime = performance.now();
 
     try {
-      const response = await marketplace.getProducts({
+      const response = await MarketplaceAPI.getProducts({
         page: filters.page,
         limit: filters.limit,
         category: filters.category,
@@ -150,14 +150,14 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'fetchProducts',
         filters
-      }, 'INTERNAL');
+      });
     }
   }, [filters, logEvent, logError, logPerformance]);
 
   // Secure product retrieval by ID
   const getProductById = useCallback(async (productId: string) => {
     try {
-      const product = await marketplace.getProductById(productId);
+      const product = await MarketplaceAPI.getProductById(productId);
       
       logEvent({
         name: 'marketplace_product_viewed',
@@ -173,7 +173,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'getProductById',
         productId
-      }, 'INTERNAL');
+      });
       throw error;
     }
   }, [logEvent, logError]);
@@ -184,7 +184,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
     paymentDetails: { paymentMethodId: string; encryptedData: string }
   ) => {
     try {
-      const result = await marketplace.purchaseProduct(productId, paymentDetails);
+      const result = await MarketplaceAPI.purchaseProduct(productId, paymentDetails);
 
       logEvent({
         name: 'marketplace_product_purchased',
@@ -200,7 +200,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'purchaseProduct',
         productId
-      }, 'INTERNAL');
+      });
       throw error;
     }
   }, [logEvent, logError]);
