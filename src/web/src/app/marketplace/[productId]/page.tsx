@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { Analytics } from '@vercel/analytics';
+import Analytics from '@vercel/analytics';
 import { ErrorBoundary } from 'react-error-boundary';
 import type { Metadata } from 'next';
 
