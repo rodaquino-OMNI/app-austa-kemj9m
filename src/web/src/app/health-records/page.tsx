@@ -1,22 +1,3 @@
-```
-The import statement has a hyphen which is incorrect. It should be `audit-logger` based on the error message.
-
-2. Second error is about Analytics category:
-```
-Type '"USER_INTERACTION"' is not assignable to type 'AnalyticsCategory'
-```
-We need to use the enum value instead of string literal.
-
-3. Third error is about Analytics privacy level:
-```
-Type '"SENSITIVE"' is not assignable to type 'PrivacyLevel'
-```
-We need to use the enum value instead of string literal.
-
-Let me regenerate the file with these fixes:
-
-# src/web/src/app/health-records/page.tsx
-```tsx
 'use client';
 
 /**
