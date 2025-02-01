@@ -106,8 +106,15 @@ const breakpoints = {
 };
 
 // Healthcare-optimized spacing system
-const createSpacing = (factor: number) => {
-  return factor * 8;
+const spacing = {
+  unit: 8,
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
+  section: 64,
 };
 
 // Medical interface shape configurations
@@ -126,44 +133,15 @@ const shadows = {
   modal: '0px 16px 32px rgba(0, 0, 0, 0.16)',
 };
 
-// Create default shadows array
-const defaultShadows = [
-  'none',
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-  shadows.clinical,
-];
-
 // Component-specific overrides for healthcare context
 const components = {
   MuiButton: {
     styleOverrides: {
-      root: ({ theme }: { theme: Theme }) => ({
+      root: {
         borderRadius: shape.buttonRadius,
         textTransform: 'none',
         fontWeight: typography.fontWeightMedium,
-      }),
+      },
       containedPrimary: {
         '&:hover': {
           backgroundColor: palette.primary.dark,
@@ -210,10 +188,36 @@ const themeOptions: ThemeOptions = {
   palette,
   typography,
   breakpoints,
-  spacing: createSpacing,
+  spacing,
   shape,
   components,
-  shadows: defaultShadows,
+  shadows: [
+    'none',
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+    shadows.clinical,
+  ],
 };
 
 export const theme: Theme = createTheme(themeOptions);
