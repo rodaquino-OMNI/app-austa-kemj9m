@@ -10,23 +10,24 @@ import jwtDecode from 'jwt-decode'; // v3.1.2
 import CryptoJS from 'crypto-js'; // v4.1.1
 
 import {
-  login as loginApi,
-  verifyBiometric as verifyBiometricApi,
-  validateDeviceFingerprint as validateDeviceFingerprintApi
+  login,
+  verifyMFA,
+  refreshToken,
+  logout,
+  verifyBiometric
 } from '../lib/api/auth';
 
 import {
   IAuthTokens,
   ILoginCredentials,
   IMFACredentials,
-  IBiometricCredentials,
   AuthState,
   IAuthContext,
   IAuthError,
   SecurityEvent
 } from '../lib/types/auth';
 
-import { IUser, IUserSecurityProfile } from '../lib/types/user';
+import { IUser } from '../lib/types/user';
 import { WebEncryptionService } from '../lib/utils/encryption';
 
 // Security constants
@@ -46,7 +47,7 @@ const useAuth = (): IAuthContext & {
   login: (credentials: ILoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   verifyMFA: (credentials: IMFACredentials) => Promise<void>;
-  verifyBiometric: (credentials: IBiometricCredentials) => Promise<void>;
+  verifyBiometric: (credentials: any) => Promise<void>;
   refreshSession: () => Promise<void>;
 } => {
   // State management with security context
@@ -84,7 +85,7 @@ const useAuth = (): IAuthContext & {
    */
   const validateToken = useCallback((token: string): boolean => {
     try {
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode<{ exp: number }>(token);
       const currentTime = Date.now() / 1000;
       return decoded.exp > currentTime + TOKEN_EXPIRY_BUFFER / 1000;
     } catch {
@@ -107,7 +108,7 @@ const useAuth = (): IAuthContext & {
   /**
    * Sets up automatic token refresh
    */
-  const setupTokenRefresh = useCallback(() => {
+  const setupTokenRefresh = useCallback(async () => {
     if (refreshTokenTimeoutRef.current) {
       clearTimeout(refreshTokenTimeoutRef.current);
     }
@@ -115,14 +116,16 @@ const useAuth = (): IAuthContext & {
     refreshTokenTimeoutRef.current = setTimeout(async () => {
       try {
         if (tokens?.refreshToken) {
-          // Refresh token logic would be implemented here
+          const newTokens = await refreshToken(tokens.refreshToken);
+          await securelyStoreTokens(newTokens);
+          setTokens(newTokens);
           setupTokenRefresh();
         }
       } catch (error) {
         handleAuthError(error);
       }
     }, TOKEN_REFRESH_INTERVAL);
-  }, [tokens]);
+  }, [tokens, securelyStoreTokens]);
 
   /**
    * Monitors session activity and timeout
@@ -153,7 +156,6 @@ const useAuth = (): IAuthContext & {
   const handleSessionTimeout = useCallback(async () => {
     logSecurityEvent({
       eventType: 'SESSION_TIMEOUT',
-      timestamp: Date.now(),
       userId: user?.id || '',
       sessionId: tokens?.accessToken || '',
       metadata: { lastActivity },
@@ -178,9 +180,6 @@ const useAuth = (): IAuthContext & {
         throw new Error('Account locked due to multiple failed attempts');
       }
 
-      // Generate and validate device fingerprint
-      deviceFingerprintRef.current = await validateDeviceFingerprintApi();
-      
       const enhancedCredentials = {
         ...credentials,
         deviceId: deviceFingerprintRef.current,
@@ -190,17 +189,16 @@ const useAuth = (): IAuthContext & {
         }
       };
 
-      const authTokens = await loginApi(enhancedCredentials);
+      const authTokens = await login(enhancedCredentials);
       await securelyStoreTokens(authTokens);
       setTokens(authTokens);
       setState(AuthState.AUTHENTICATED);
-      setupTokenRefresh();
+      await setupTokenRefresh();
       setupSessionMonitoring();
       setLoginAttempts(0);
 
       logSecurityEvent({
         eventType: 'LOGIN_SUCCESS',
-        timestamp: Date.now(),
         userId: credentials.email,
         sessionId: authTokens.accessToken,
         metadata: { deviceId: deviceFingerprintRef.current },
@@ -230,7 +228,6 @@ const useAuth = (): IAuthContext & {
     setError(authError);
     logSecurityEvent({
       eventType: 'AUTH_ERROR',
-      timestamp: Date.now(),
       userId: user?.id || '',
       sessionId: tokens?.accessToken || '',
       metadata: authError,
@@ -245,6 +242,9 @@ const useAuth = (): IAuthContext & {
   const handleLogout = async (): Promise<void> => {
     try {
       setIsLoading(true);
+      if (tokens?.accessToken) {
+        await logout(tokens.accessToken);
+      }
       
       // Clear security context
       localStorage.removeItem('auth_tokens');
@@ -261,7 +261,6 @@ const useAuth = (): IAuthContext & {
 
       logSecurityEvent({
         eventType: 'LOGOUT',
-        timestamp: Date.now(),
         userId: user?.id || '',
         sessionId: tokens?.accessToken || '',
         metadata: { timestamp: Date.now() },
@@ -284,7 +283,7 @@ const useAuth = (): IAuthContext & {
           const decryptedTokens = JSON.parse(storedTokens) as IAuthTokens;
           setTokens(decryptedTokens);
           setState(AuthState.AUTHENTICATED);
-          setupTokenRefresh();
+          await setupTokenRefresh();
           setupSessionMonitoring();
         }
       } catch (error) {
@@ -314,8 +313,8 @@ const useAuth = (): IAuthContext & {
     sessionTimeout: SESSION_TIMEOUT,
     login: handleLogin,
     logout: handleLogout,
-    verifyMFA: async () => {}, // Placeholder for MFA verification
-    verifyBiometric: verifyBiometricApi,
+    verifyMFA,
+    verifyBiometric,
     refreshSession: setupTokenRefresh
   };
 };
