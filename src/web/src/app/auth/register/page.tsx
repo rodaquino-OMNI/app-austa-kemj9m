@@ -18,7 +18,7 @@ import { SecurityLogger } from '@austa/security-logger'; // v1.0.0
 import RegisterForm from '../../../components/auth/RegisterForm';
 import useAuth from '../../../hooks/useAuth';
 import { IUser, UserRole, UserStatus } from '../../../lib/types/user';
-import { IAuthError, MFAMethod, IMFASetup } from '../../../lib/types/auth';
+import { IAuthError, MFAMethod } from '../../../lib/types/auth';
 import { ErrorCode, ErrorTracker } from '../../../lib/constants/errorCodes';
 
 // Initialize security services
@@ -89,7 +89,7 @@ const RegisterPage: React.FC = () => {
    */
   const handleRegistrationSuccess = useCallback(async (
     user: IUser,
-    mfaSetup: IMFASetup
+    mfaSetup: { type: MFAMethod; verified: boolean }
   ) => {
     try {
       setIsLoading(true);
@@ -111,9 +111,9 @@ const RegisterPage: React.FC = () => {
         userId: user.id,
         severity: 'MEDIUM',
         metadata: {
-          mfaType: mfaSetup.method,
+          mfaType: mfaSetup.type,
           deviceFingerprint: securityContext.deviceFingerprint,
-          biometricEnabled: mfaSetup.method === MFAMethod.BIOMETRIC
+          biometricEnabled: mfaSetup.type === MFAMethod.BIOMETRIC
         }
       });
 
@@ -190,19 +190,17 @@ const RegisterPage: React.FC = () => {
     <Auth0Provider
       domain={process.env.NEXT_PUBLIC_AUTH0_DOMAIN!}
       clientId={process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID!}
-      redirectUri={window.location.origin}
-      audience={process.env.NEXT_PUBLIC_AUTH0_AUDIENCE}
-      scope="openid profile email"
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE,
+        scope: "openid profile email"
+      }}
     >
       <div className="register-page">
         <RegisterForm
           onSuccess={handleRegistrationSuccess}
           onError={handleRegistrationError}
           onSecurityEvent={securityLogger.log}
-          securityContext={{
-            deviceFingerprint: securityContext.deviceFingerprint,
-            biometricSupport: securityContext.biometricSupport
-          }}
           isLoading={isLoading}
         />
       </div>
