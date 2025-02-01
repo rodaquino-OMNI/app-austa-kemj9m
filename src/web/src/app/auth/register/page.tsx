@@ -1,10 +1,11 @@
-'use client';
 /**
  * @fileoverview Next.js registration page component for AUSTA SuperApp
  * Implements HIPAA-compliant registration with OAuth 2.0 + OIDC, MFA, and biometric support
  * @version 1.0.0
  * @license HIPAA-compliant
  */
+
+'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -17,7 +18,7 @@ import { SecurityLogger } from '@austa/security-logger'; // v1.0.0
 import RegisterForm from '../../../components/auth/RegisterForm';
 import useAuth from '../../../hooks/useAuth';
 import { IUser, UserRole, UserStatus } from '../../../lib/types/user';
-import { IAuthError, MFAMethod } from '../../../lib/types/auth';
+import { IAuthError, MFAMethod, IMFASetup } from '../../../lib/types/auth';
 import { ErrorCode, ErrorTracker } from '../../../lib/constants/errorCodes';
 
 // Initialize security services
@@ -88,7 +89,7 @@ const RegisterPage: React.FC = () => {
    */
   const handleRegistrationSuccess = useCallback(async (
     user: IUser,
-    mfaSetup: { type: MFAMethod; verified: boolean }
+    mfaSetup: IMFASetup
   ) => {
     try {
       setIsLoading(true);
@@ -110,9 +111,9 @@ const RegisterPage: React.FC = () => {
         userId: user.id,
         severity: 'MEDIUM',
         metadata: {
-          mfaType: mfaSetup.type,
+          mfaType: mfaSetup.method,
           deviceFingerprint: securityContext.deviceFingerprint,
-          biometricEnabled: mfaSetup.type === MFAMethod.BIOMETRIC
+          biometricEnabled: mfaSetup.method === MFAMethod.BIOMETRIC
         }
       });
 
@@ -189,17 +190,19 @@ const RegisterPage: React.FC = () => {
     <Auth0Provider
       domain={process.env.NEXT_PUBLIC_AUTH0_DOMAIN!}
       clientId={process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID!}
-      authorizationParams={{
-        redirect_uri: window.location.origin,
-        audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE,
-        scope: "openid profile email"
-      }}
+      redirectUri={window.location.origin}
+      audience={process.env.NEXT_PUBLIC_AUTH0_AUDIENCE}
+      scope="openid profile email"
     >
       <div className="register-page">
         <RegisterForm
           onSuccess={handleRegistrationSuccess}
           onError={handleRegistrationError}
           onSecurityEvent={securityLogger.log}
+          securityContext={{
+            deviceFingerprint: securityContext.deviceFingerprint,
+            biometricSupport: securityContext.biometricSupport
+          }}
           isLoading={isLoading}
         />
       </div>
