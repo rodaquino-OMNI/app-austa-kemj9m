@@ -44,7 +44,7 @@ const encryptionService = new WebEncryptionService();
 /**
  * Enhanced authentication hook with comprehensive security features
  */
-const useAuth = (): IAuthContext & {
+export const useAuth = (): IAuthContext & {
   login: (credentials: ILoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   verifyMFA: (credentials: IMFACredentials) => Promise<void>;
@@ -327,4 +327,15 @@ const useAuth = (): IAuthContext & {
   };
 };
 
-export default useAuth;
+/**
+ * Security context hook for enhanced security features
+ */
+export const useSecurityContext = () => {
+  const auth = useAuth();
+  return {
+    isAuthenticated: auth.state === AuthState.AUTHENTICATED,
+    sessionTimeout: auth.sessionTimeout,
+    lastActivity: auth.lastActivity,
+    refreshSession: auth.refreshSession
+  };
+};
