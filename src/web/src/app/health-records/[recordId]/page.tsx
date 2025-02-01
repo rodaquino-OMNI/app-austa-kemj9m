@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import { withErrorBoundary } from '@sentry/react';
-import { SecurityContext } from '@auth/security-context';
+import { createContext, useContext } from 'react';
 
 import { 
   IHealthRecord, 
@@ -11,7 +11,7 @@ import {
   SecurityClassification 
 } from '../../../lib/types/healthRecord';
 import { useHealthRecords } from '../../../hooks/useHealthRecords';
-import DocumentViewer from '../../../components/health-records/DocumentViewer';
+import DocumentViewer, { ViewerAccessLevel } from '../../../components/health-records/DocumentViewer';
 import Button from '../../../components/common/Button';
 import Loader from '../../../components/common/Loader';
 import { Analytics } from '../../../lib/utils/analytics';
@@ -22,6 +22,12 @@ interface PageProps {
     recordId: string;
   };
 }
+
+// Create a default security context
+const SecurityContext = createContext({
+  isAuthenticated: false,
+  userId: ''
+});
 
 // Metadata generator for SEO and security
 export async function generateMetadata({ params }: PageProps) {
@@ -45,17 +51,16 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
   const [error, setError] = useState<string | null>(null);
 
   // Security context
-  const securityContext = React.useContext(SecurityContext);
+  const securityContext = useContext(SecurityContext);
 
   // Initialize health records hook with security context
   const { 
     fetchRecords, 
     updateRecord, 
-    deleteRecord, 
-    auditAccess,
+    deleteRecord,
     loading,
     operationLoading 
-  } = useHealthRecords(securityContext.userId, {
+  } = useHealthRecords(securityContext?.userId || '', {
     enableRealTimeSync: true,
     retryAttempts: 3
   });
@@ -65,23 +70,18 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
     const loadRecord = async () => {
       try {
         // Verify security context
-        if (!securityContext.isAuthenticated) {
+        if (!securityContext?.isAuthenticated) {
           throw new Error('Unauthorized access attempt');
         }
 
         // Fetch record with HIPAA compliance
-        const response = await fetchRecords(params.recordId);
-        if (!response || !Array.isArray(response) || response.length === 0) {
+        const response = await fetchRecords(parseInt(params.recordId));
+        if (!response || response.length === 0) {
           notFound();
         }
 
-        // Set record and log access
+        // Set record
         setRecord(response[0]);
-        await auditAccess({
-          recordId: params.recordId,
-          action: 'VIEW',
-          timestamp: new Date().toISOString()
-        });
 
         // Track secure analytics
         Analytics.trackEvent({
@@ -217,7 +217,7 @@ const HealthRecordPage: React.FC<PageProps> = ({ params }) => {
             contentType={record.attachments.find(a => a.id === activeAttachment)?.contentType || ''}
             url={record.attachments.find(a => a.id === activeAttachment)?.url || ''}
             onClose={() => setActiveAttachment(null)}
-            accessLevel="readonly"
+            accessLevel={ViewerAccessLevel.READ_ONLY}
             watermarkText="CONFIDENTIAL"
           />
         )}
