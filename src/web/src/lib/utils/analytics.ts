@@ -8,63 +8,63 @@ const DATADOG_CLIENT_TOKEN = process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN;
 const ANALYTICS_ENABLED = process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === 'true';
 
 // Privacy and security enums/types
+export enum PrivacyLevel {
+  PUBLIC = 'PUBLIC',
+  INTERNAL = 'INTERNAL',
+  SENSITIVE = 'SENSITIVE',
+  PHI = 'PHI'
+}
+
+export enum AnalyticsCategory {
+  USER_INTERACTION = 'USER_INTERACTION',
+  SYSTEM_PERFORMANCE = 'SYSTEM_PERFORMANCE',
+  SECURITY = 'SECURITY',
+  BUSINESS_METRICS = 'BUSINESS_METRICS'
+}
+
+export interface AuditMetadata {
+  eventId: string;
+  timestamp: number;
+  userId: string;
+  ipAddress: string;
+  actionType: string;
+}
+
+export interface AnalyticsEvent {
+  name: string;
+  category: AnalyticsCategory;
+  properties: Record<string, unknown>;
+  timestamp: number;
+  userConsent: boolean;
+  privacyLevel: PrivacyLevel;
+  auditInfo: AuditMetadata;
+}
+
+export interface PerformanceContext {
+  page?: string;
+  component?: string;
+  browser?: string;
+  device?: string;
+}
+
+export interface PerformanceMetric {
+  name: string;
+  value: number;
+  tags: Record<string, string>;
+  timestamp: number;
+  context: PerformanceContext;
+}
+
+// PII/PHI patterns for sanitization
+const SENSITIVE_PATTERNS = {
+  email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+  phone: /(\+\d{1,3}[- ]?)?\d{10}/g,
+  ssn: /\d{3}-?\d{2}-?\d{4}/g,
+  medicalRecord: /MRN:?\s*\d+/gi,
+};
+
+// Analytics namespace implementation
 export namespace Analytics {
-  export enum PrivacyLevel {
-    PUBLIC = 'PUBLIC',
-    INTERNAL = 'INTERNAL',
-    SENSITIVE = 'SENSITIVE',
-    PHI = 'PHI'
-  }
-
-  export enum AnalyticsCategory {
-    USER_INTERACTION = 'USER_INTERACTION',
-    SYSTEM_PERFORMANCE = 'SYSTEM_PERFORMANCE',
-    SECURITY = 'SECURITY',
-    BUSINESS_METRICS = 'BUSINESS_METRICS'
-  }
-
-  export interface AuditMetadata {
-    eventId: string;
-    timestamp: number;
-    userId: string;
-    ipAddress: string;
-    actionType: string;
-  }
-
-  export interface AnalyticsEvent {
-    name: string;
-    category: AnalyticsCategory;
-    properties: Record<string, unknown>;
-    timestamp: number;
-    userConsent: boolean;
-    privacyLevel: PrivacyLevel;
-    auditInfo: AuditMetadata;
-  }
-
-  export interface PerformanceContext {
-    [key: string]: string | undefined;
-    page?: string;
-    component?: string;
-    browser?: string;
-    device?: string;
-  }
-
-  export interface PerformanceMetric {
-    name: string;
-    value: number;
-    tags: Record<string, string>;
-    timestamp: number;
-    context: PerformanceContext;
-  }
-
-  // PII/PHI patterns for sanitization
-  const SENSITIVE_PATTERNS = {
-    email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
-    phone: /(\+\d{1,3}[- ]?)?\d{10}/g,
-    ssn: /\d{3}-?\d{2}-?\d{4}/g,
-    medicalRecord: /MRN:?\s*\d+/gi,
-  };
-
   let initialized = false;
 
   /**
@@ -222,7 +222,7 @@ export namespace Analytics {
 
     try {
       const sanitizedTags = sanitizeData(metric.tags);
-      const sanitizedContext = sanitizeData(metric.context as Record<string, unknown>);
+      const sanitizedContext = sanitizeData(metric.context);
 
       const performanceData = {
         metric_name: metric.name,
@@ -233,7 +233,10 @@ export namespace Analytics {
         environment: process.env.NODE_ENV,
       };
 
-      datadogRum.addTiming(metric.name, metric.value);
+      datadogRum.addTiming(metric.name, metric.value, {
+        ...performanceData,
+        privacy_level: PrivacyLevel.PUBLIC,
+      });
 
     } catch (error) {
       console.error('Performance tracking failed:', error);
