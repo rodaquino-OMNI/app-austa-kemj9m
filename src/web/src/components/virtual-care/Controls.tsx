@@ -84,8 +84,8 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await toggleAudio();
       setIsAudioEnabled(prev => !prev);
-    } catch (error) {
-      onError(new Error('Failed to toggle audio: ' + error.message));
+    } catch (error: unknown) {
+      onError(new Error(`Failed to toggle audio: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [toggleAudio, onError]);
 
@@ -96,8 +96,8 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await toggleVideo();
       setIsVideoEnabled(prev => !prev);
-    } catch (error) {
-      onError(new Error('Failed to toggle video: ' + error.message));
+    } catch (error: unknown) {
+      onError(new Error(`Failed to toggle video: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [toggleVideo, onError]);
 
@@ -108,8 +108,8 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await shareScreen();
       setIsScreenSharing(prev => !prev);
-    } catch (error) {
-      onError(new Error('Failed to toggle screen sharing: ' + error.message));
+    } catch (error: unknown) {
+      onError(new Error(`Failed to toggle screen sharing: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [shareScreen, onError]);
 
@@ -120,8 +120,8 @@ const Controls: React.FC<IControlsProps> = ({
     try {
       await disconnect();
       onEnd();
-    } catch (error) {
-      onError(new Error('Failed to end consultation: ' + error.message));
+    } catch (error: unknown) {
+      onError(new Error(`Failed to end consultation: ${error instanceof Error ? error.message : 'Unknown error'}`));
     }
   }, [disconnect, onEnd, onError]);
 
@@ -132,30 +132,20 @@ const Controls: React.FC<IControlsProps> = ({
     const monitorConnection = async () => {
       try {
         const stats = await getConnectionStats();
-        let latency = 0;
         let quality = ConnectionQuality.GOOD;
-        let encrypted = true;
+        let latency = 0;
 
-        stats.forEach(report => {
-          if (report.mediaType === 'audio' || report.mediaType === 'video') {
-            if (report.transportStats) {
-              latency = report.transportStats.roundTripTime || 0;
-            }
+        stats.forEach((report: RTCStatsReport) => {
+          if (report.type === 'inbound-rtp') {
+            latency = (report as any).jitter || 0;
           }
         });
-
-        // Determine quality based on latency
-        if (latency > 300) {
-          quality = ConnectionQuality.POOR;
-        } else if (latency > 150) {
-          quality = ConnectionQuality.FAIR;
-        }
 
         setConnectionState(prev => ({
           ...prev,
           quality,
           latency,
-          encrypted
+          encrypted: true
         }));
       } catch (error) {
         console.error('Connection monitoring error:', error);
