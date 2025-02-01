@@ -107,8 +107,9 @@ export async function encryptData(
       algorithm: config.algorithm,
       timestamp: Date.now()
     };
-  } catch (error) {
-    throw new Error(`Encryption failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Encryption failed: ${errorMessage}`);
   }
 }
 
@@ -142,8 +143,9 @@ export async function decryptData(
       key,
       completeBuffer
     );
-  } catch (error) {
-    throw new Error(`Decryption failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Decryption failed: ${errorMessage}`);
   }
 }
 
@@ -193,8 +195,9 @@ export class WebEncryptionService {
   private async initializeKey(): Promise<void> {
     try {
       this.currentKey = await generateKey(this.config);
-    } catch (error) {
-      throw new Error(`Key initialization failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Key initialization failed: ${errorMessage}`);
     }
   }
 
@@ -221,8 +224,9 @@ export class WebEncryptionService {
       }
 
       return fieldValue;
-    } catch (error) {
-      throw new Error(`Field encryption failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Field encryption failed: ${errorMessage}`);
     }
   }
 
@@ -233,8 +237,9 @@ export class WebEncryptionService {
     try {
       const newKey = await generateKey(this.config);
       this.currentKey = newKey;
-    } catch (error) {
-      throw new Error(`Key rotation failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Key rotation failed: ${errorMessage}`);
     }
   }
 }
