@@ -7,7 +7,7 @@ import Table from '../../../components/common/Table';
 import Modal from '../../../components/common/Modal';
 import { AdminAPI } from '../../../lib/api/admin';
 import { UserRole, UserStatus, IUser } from '../../../lib/types/user';
-import { Analytics } from '../../../lib/utils/analytics';
+import { Analytics, AnalyticsCategory, PrivacyLevel } from '../../../lib/utils/analytics';
 import { SecurityUtils } from '@company/security-utils';
 
 // Table column definitions with security considerations
@@ -17,8 +17,7 @@ const USER_TABLE_COLUMNS = [
     header: 'Name',
     accessor: 'profile.firstName',
     sortable: true,
-    secure: true,
-    render: (value: string, row: IUser) => 
+    render: (value: any, row: Record<string, any>) => 
       SecurityUtils.maskPII(`${row.profile.firstName} ${row.profile.lastName}`)
   },
   {
@@ -26,8 +25,7 @@ const USER_TABLE_COLUMNS = [
     header: 'Email',
     accessor: 'email',
     sortable: true,
-    secure: true,
-    render: (value: string) => SecurityUtils.maskPII(value)
+    render: (value: any) => SecurityUtils.maskPII(value)
   },
   {
     id: 'role',
@@ -46,13 +44,13 @@ const USER_TABLE_COLUMNS = [
     header: 'Last Login',
     accessor: 'securitySettings.lastLoginAt',
     sortable: true,
-    render: (value: Date) => new Date(value).toLocaleString()
+    render: (value: any) => new Date(value).toLocaleString()
   },
   {
     id: 'mfaStatus',
     header: 'MFA Status',
     accessor: 'securitySettings.mfaEnabled',
-    render: (value: boolean) => value ? 'Enabled' : 'Disabled'
+    render: (value: any) => value ? 'Enabled' : 'Disabled'
   }
 ];
 
@@ -101,14 +99,14 @@ const UsersPage: React.FC = () => {
     try {
       await Analytics.trackEvent({
         name: 'admin_update_user',
-        category: 'USER_INTERACTION',
+        category: AnalyticsCategory.USER_INTERACTION,
         properties: {
           userId,
           updateType: Object.keys(updates).join(',')
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'SENSITIVE',
+        privacyLevel: PrivacyLevel.SENSITIVE,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -228,7 +226,6 @@ const UsersPage: React.FC = () => {
       >
         {selectedUser && (
           <div className="space-y-4">
-            {/* Modal content with secure form fields */}
             <div className="grid grid-cols-2 gap-4">
               {/* Implement secure form fields here */}
             </div>
