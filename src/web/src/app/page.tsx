@@ -3,7 +3,7 @@
 import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Grid, Container, Typography, ThemeProvider } from '@mui/material';
-import Analytics from '@vercel/analytics';
+import { Analytics } from '@vercel/analytics';
 
 // Internal imports
 import Header from '../components/layout/Header';
@@ -13,7 +13,6 @@ import ErrorBoundary from '../components/common/ErrorBoundary';
 import useAuth from '../hooks/useAuth';
 import theme from '../styles/theme';
 import { UserRole } from '../lib/types/user';
-import { SecurityClassification, AccessLevel, ThemePreference } from '../lib/types/healthRecord';
 
 // Constants
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -25,25 +24,39 @@ const ERROR_BOUNDARY_CONFIG = { maxRetries: 3, fallbackUI: true };
  * Enhanced security check for authentication and role validation
  */
 const checkAuth = () => {
-  const { user, state } = useAuth();
+  const { user, isAuthenticated, userRole } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (state !== 'AUTHENTICATED') {
+    if (!isAuthenticated) {
       router.push('/auth/login');
       return;
     }
 
     // Track secure page view
-    Analytics.track('page_view', {
-      page: 'dashboard',
-      userRole: user?.role,
+    Analytics.trackEvent({
+      name: 'page_view',
+      category: Analytics.AnalyticsCategory.USER_INTERACTION,
+      properties: {
+        page: 'dashboard',
+        userRole: userRole || 'unknown',
+        timestamp: Date.now(),
+        isAuthenticated: true
+      },
       timestamp: Date.now(),
-      isAuthenticated: true
+      userConsent: true,
+      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+      auditInfo: {
+        eventId: crypto.randomUUID(),
+        timestamp: Date.now(),
+        userId: user?.id || 'anonymous',
+        ipAddress: 'masked',
+        actionType: 'page_view'
+      }
     });
-  }, [state, user?.role, router]);
+  }, [isAuthenticated, userRole, router]);
 
-  return { user, userRole: user?.role };
+  return { user, userRole };
 };
 
 /**
@@ -63,11 +76,25 @@ const HomePage = () => {
 
   // Handle component errors with audit logging
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
-    Analytics.track('error_boundary_triggered', {
-      error: error.message,
-      component: 'HomePage',
-      userRole,
-      timestamp: Date.now()
+    Analytics.trackEvent({
+      name: 'error_boundary_triggered',
+      category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
+      properties: {
+        error: error.message,
+        component: 'HomePage',
+        userRole: userRole || 'unknown',
+        timestamp: Date.now()
+      },
+      timestamp: Date.now(),
+      userConsent: true,
+      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+      auditInfo: {
+        eventId: crypto.randomUUID(),
+        timestamp: Date.now(),
+        userId: user?.id || 'anonymous',
+        ipAddress: 'masked',
+        actionType: 'error_boundary'
+      }
     });
   };
 
@@ -121,8 +148,8 @@ const HomePage = () => {
                     refreshInterval={REFRESH_INTERVAL}
                     showHistory={true}
                     encryptionKey={user?.securitySettings?.lastLoginAt.toString() || ''}
-                    accessLevel={AccessLevel.READ}
-                    theme={ThemePreference.LIGHT}
+                    accessLevel="read"
+                    theme="light"
                   />
                 </Suspense>
               </Grid>
@@ -148,5 +175,4 @@ const HomePage = () => {
   );
 };
 
-// Export with analytics wrapper
-export default Analytics.withAnalytics(HomePage);
+export default HomePage;
