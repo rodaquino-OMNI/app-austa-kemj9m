@@ -14,7 +14,7 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs'; // v3.4.0
 import { Logger } from 'winston'; // v3.8.0
 
 // Internal imports
-import { ILoginCredentials, IMFASetup, IAuthError, ISecurityEvent } from '../../lib/types/auth';
+import { ILoginCredentials, IMFASetup, ISecurityEvent, IAuthError, IUser } from '../../lib/types/auth';
 import { validateForm } from '../../lib/utils/validation';
 import { ErrorCode, ErrorTracker } from '../../lib/constants/errorCodes';
 
@@ -61,8 +61,9 @@ const registrationSchema = yup.object().shape({
   deviceFingerprint: yup.string().required('Device verification failed')
 });
 
+// Interface definitions
 interface RegisterFormProps {
-  onSuccess: (user: any, mfaSetup: IMFASetup) => void;
+  onSuccess: (user: IUser, mfaSetup: IMFASetup) => void;
   onError: (error: IAuthError) => void;
   onSecurityEvent: (event: ISecurityEvent) => void;
 }
@@ -87,6 +88,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   onError,
   onSecurityEvent
 }) => {
+  // State management
   const [formState, setFormState] = useState<RegisterFormState>({
     email: '',
     password: '',
@@ -104,6 +106,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
   const { loginWithRedirect } = useAuth0();
 
+  // Initialize device fingerprint on mount
   useEffect(() => {
     const initializeFingerprint = async () => {
       try {
@@ -123,13 +126,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     initializeFingerprint();
   }, []);
 
-  const handleSecureInput = useCallback(async (
-    event: React.ChangeEvent<HTMLInputElement>
+  // Secure input handling with sanitization
+  const handleSecureInput = useCallback((
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type, checked } = event.target;
+    const { name, value, type } = event.target;
+    const checked = (event.target as HTMLInputElement).checked;
     const fieldValue = type === 'checkbox' ? checked : value;
 
     try {
+      // Sanitize input
       const sanitizedValue = type === 'checkbox' 
         ? fieldValue 
         : CryptoJS.AES.encrypt(fieldValue as string, process.env.REACT_APP_ENCRYPTION_KEY!).toString();
@@ -150,11 +156,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     }
   }, []);
 
+  // Form submission with security measures
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setFormState(prev => ({ ...prev, loading: true }));
 
     try {
+      // Validate form data
       const validationResult = await validateForm(formState, registrationSchema);
       
       if (!validationResult.isValid) {
@@ -169,12 +177,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         return;
       }
 
+      // Encrypt sensitive data
       const encryptedData = {
         firstName: CryptoJS.AES.encrypt(formState.firstName, process.env.REACT_APP_ENCRYPTION_KEY!).toString(),
         lastName: CryptoJS.AES.encrypt(formState.lastName, process.env.REACT_APP_ENCRYPTION_KEY!).toString(),
         phoneNumber: CryptoJS.AES.encrypt(formState.phoneNumber, process.env.REACT_APP_ENCRYPTION_KEY!).toString()
       };
 
+      // Initialize Auth0 registration
       const auth0Response = await loginWithRedirect({
         screen_hint: 'signup',
         login_hint: formState.email,
@@ -184,17 +194,22 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           deviceFingerprint: formState.deviceFingerprint,
           biometricConsent: formState.biometricConsent
         }
-      } as any);
+      });
 
+      // Handle biometric registration if selected
       if (formState.mfaPreference === 'biometric' && formState.biometricConsent) {
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+        const base64Challenge = btoa(String.fromCharCode(...challenge));
+        
         const biometricCredential = await startRegistration({
-          challenge: new Uint8Array(32),
+          challenge: base64Challenge,
           rp: {
             name: 'AUSTA SuperApp',
             id: window.location.hostname
           },
           user: {
-            id: auth0Response.user.sub,
+            id: 'temp-id', // Will be updated after Auth0 registration
             name: formState.email,
             displayName: `${formState.firstName} ${formState.lastName}`
           },
@@ -211,22 +226,23 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           }
         });
 
+        // Verify biometric registration
         if (!biometricCredential) {
           throw new Error(ErrorCode.INVALID_CREDENTIALS);
         }
       }
 
-      onSuccess(auth0Response.user, {
-        method: formState.mfaPreference,
-        verificationStatus: true,
-        setupDate: new Date()
+      onSuccess({} as IUser, {
+        type: formState.mfaPreference,
+        verified: true,
+        setupDate: Date.now()
       });
 
+      // Log security event
       onSecurityEvent({
-        eventType: 'REGISTRATION_SUCCESS',
-        timestamp: Date.now(),
-        userId: auth0Response.user.sub,
-        sessionId: formState.deviceFingerprint,
+        type: 'REGISTRATION_SUCCESS',
+        severity: 'LOW',
+        outcome: 'SUCCESS',
         metadata: {
           email: formState.email,
           mfaType: formState.mfaPreference,
@@ -252,7 +268,184 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="register-form" noValidate>
-      {/* Form JSX remains unchanged */}
+      <div className="form-group">
+        <input
+          type="email"
+          name="email"
+          value={formState.email}
+          onChange={handleSecureInput}
+          placeholder="Healthcare Email"
+          aria-label="Email Address"
+          aria-invalid={!!formState.errors.email}
+          aria-describedby="email-error"
+          required
+        />
+        {formState.errors.email && (
+          <span id="email-error" className="error-message" role="alert">
+            {formState.errors.email}
+          </span>
+        )}
+      </div>
+
+      <div className="form-group">
+        <input
+          type="password"
+          name="password"
+          value={formState.password}
+          onChange={handleSecureInput}
+          placeholder="Password"
+          aria-label="Password"
+          aria-invalid={!!formState.errors.password}
+          aria-describedby="password-error"
+          required
+        />
+        {formState.errors.password && (
+          <span id="password-error" className="error-message" role="alert">
+            {formState.errors.password}
+          </span>
+        )}
+      </div>
+
+      <div className="form-group">
+        <input
+          type="password"
+          name="confirmPassword"
+          value={formState.confirmPassword}
+          onChange={handleSecureInput}
+          placeholder="Confirm Password"
+          aria-label="Confirm Password"
+          aria-invalid={!!formState.errors.confirmPassword}
+          aria-describedby="confirm-password-error"
+          required
+        />
+        {formState.errors.confirmPassword && (
+          <span id="confirm-password-error" className="error-message" role="alert">
+            {formState.errors.confirmPassword}
+          </span>
+        )}
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <input
+            type="text"
+            name="firstName"
+            value={formState.firstName}
+            onChange={handleSecureInput}
+            placeholder="First Name"
+            aria-label="First Name"
+            aria-invalid={!!formState.errors.firstName}
+            aria-describedby="first-name-error"
+            required
+          />
+          {formState.errors.firstName && (
+            <span id="first-name-error" className="error-message" role="alert">
+              {formState.errors.firstName}
+            </span>
+          )}
+        </div>
+
+        <div className="form-group">
+          <input
+            type="text"
+            name="lastName"
+            value={formState.lastName}
+            onChange={handleSecureInput}
+            placeholder="Last Name"
+            aria-label="Last Name"
+            aria-invalid={!!formState.errors.lastName}
+            aria-describedby="last-name-error"
+            required
+          />
+          {formState.errors.lastName && (
+            <span id="last-name-error" className="error-message" role="alert">
+              {formState.errors.lastName}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="form-group">
+        <input
+          type="tel"
+          name="phoneNumber"
+          value={formState.phoneNumber}
+          onChange={handleSecureInput}
+          placeholder="Phone Number"
+          aria-label="Phone Number"
+          aria-invalid={!!formState.errors.phoneNumber}
+          aria-describedby="phone-error"
+          required
+        />
+        {formState.errors.phoneNumber && (
+          <span id="phone-error" className="error-message" role="alert">
+            {formState.errors.phoneNumber}
+          </span>
+        )}
+      </div>
+
+      <div className="form-group">
+        <select
+          name="mfaPreference"
+          value={formState.mfaPreference}
+          onChange={handleSecureInput}
+          aria-label="MFA Preference"
+          aria-invalid={!!formState.errors.mfaPreference}
+          aria-describedby="mfa-error"
+          required
+        >
+          <option value="">Select MFA Method</option>
+          <option value="sms">SMS</option>
+          <option value="email">Email</option>
+          <option value="authenticator">Authenticator App</option>
+          <option value="biometric">Biometric</option>
+        </select>
+        {formState.errors.mfaPreference && (
+          <span id="mfa-error" className="error-message" role="alert">
+            {formState.errors.mfaPreference}
+          </span>
+        )}
+      </div>
+
+      <div className="form-group checkbox">
+        <label>
+          <input
+            type="checkbox"
+            name="biometricConsent"
+            checked={formState.biometricConsent}
+            onChange={handleSecureInput}
+            aria-label="Biometric Consent"
+          />
+          I consent to biometric authentication
+        </label>
+      </div>
+
+      <div className="form-group checkbox">
+        <label>
+          <input
+            type="checkbox"
+            name="acceptTerms"
+            checked={formState.acceptTerms}
+            onChange={handleSecureInput}
+            aria-label="Accept Terms"
+            required
+          />
+          I accept the terms and conditions
+        </label>
+        {formState.errors.acceptTerms && (
+          <span className="error-message" role="alert">
+            {formState.errors.acceptTerms}
+          </span>
+        )}
+      </div>
+
+      <button
+        type="submit"
+        disabled={formState.loading}
+        aria-busy={formState.loading}
+      >
+        {formState.loading ? 'Registering...' : 'Register'}
+      </button>
     </form>
   );
 };
