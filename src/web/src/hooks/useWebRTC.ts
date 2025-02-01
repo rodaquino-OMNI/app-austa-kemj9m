@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'; // v18.2.0
-import { Room, LocalTrack, RemoteParticipant } from 'twilio-video'; // v2.27.0
+import { Room, LocalTrack, RemoteParticipant, ConnectionQualityStats } from 'twilio-video'; // v2.27.0
 
 import { virtualCareApi } from '../lib/api/virtualCare';
 import {
@@ -65,16 +65,16 @@ export const useWebRTC = (
       let videoBitrate = 0;
       let packetLoss = 0;
 
-      // Process stats array to get required metrics
+      // Process stats based on Twilio's StatsReport format
       stats.forEach(report => {
-        if (report.type === 'media-source' && report.kind === 'audio') {
-          audioLevel = report.audioLevel || 0;
+        if (report.mediaType === 'audio' && report.mediaSourceStats) {
+          audioLevel = report.mediaSourceStats.audioLevel || 0;
         }
-        if (report.type === 'media-source' && report.kind === 'video') {
-          videoBitrate = report.bitrate || 0;
+        if (report.mediaType === 'video' && report.mediaSourceStats) {
+          videoBitrate = report.mediaSourceStats.bitrate || 0;
         }
-        if (report.type === 'transport') {
-          packetLoss = report.packetsLost || 0;
+        if (report.transportStats) {
+          packetLoss = report.transportStats.packetsLost || 0;
         }
       });
 
@@ -86,10 +86,15 @@ export const useWebRTC = (
       }
 
       setConnectionQuality(quality);
+      await virtualCareApi.reportConnectionQuality({
+        consultationId,
+        quality,
+        metrics: { audioLevel, videoBitrate, packetLoss }
+      });
     } catch (err) {
       console.error('Failed to monitor connection quality:', err);
     }
-  }, [room]);
+  }, [room, consultationId]);
 
   /**
    * Initializes and connects to the WebRTC session
@@ -221,7 +226,7 @@ export const useWebRTC = (
   /**
    * Retrieves current connection quality statistics
    */
-  const getConnectionStats = useCallback(async () => {
+  const getConnectionStats = useCallback(async (): Promise<ConnectionQualityStats> => {
     if (!room?.room) {
       throw new Error('Room not connected');
     }
