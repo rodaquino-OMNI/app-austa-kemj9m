@@ -158,7 +158,7 @@ export const ErrorTracker = {
           httpStatus: errorInfo.httpStatus
         },
         contexts: {
-          error: context || {}
+          error: context
         }
       });
     }
