@@ -23,15 +23,15 @@ interface ValidationResult {
 interface SelectProps {
   name: string;
   id: string;
-  options: SelectOption[];
   value: string | string[];
   onChange: (value: string | string[], validationResult: ValidationResult) => void;
+  options: SelectOption[];
   multiple?: boolean;
   disabled?: boolean;
   error?: boolean;
   helperText?: string;
   fullWidth?: boolean;
-  size?: 'small' | 'medium' | 'large';
+  size?: keyof typeof COMPONENT_SIZES;
   clinicalMode?: 'standard' | 'critical' | 'monitoring';
   validationLevel?: 'none' | 'warning' | 'critical';
   secureContent?: boolean;
@@ -61,19 +61,17 @@ const StyledSelectContainer = styled.div<{
   `}
 `;
 
-interface StyledSelectProps {
-  size?: 'small' | 'medium' | 'large';
+const StyledSelect = styled.select<{
+  size?: keyof typeof COMPONENT_SIZES;
   error?: boolean;
-  clinicalMode?: 'standard' | 'critical' | 'monitoring';
+  clinicalMode?: string;
   validationLevel?: string;
   secureContent?: boolean;
-}
-
-const StyledSelect = styled.select<StyledSelectProps>`
+}>`
   width: 100%;
-  padding: ${({ size = 'medium' }) => COMPONENT_SIZES[size].padding};
-  height: ${({ size = 'medium' }) => COMPONENT_SIZES[size].height};
-  font-size: ${({ size = 'medium' }) => COMPONENT_SIZES[size].fontSize};
+  padding: ${props => COMPONENT_SIZES[props.size || 'medium'].padding};
+  height: ${props => COMPONENT_SIZES[props.size || 'medium'].height};
+  font-size: ${props => COMPONENT_SIZES[props.size || 'medium'].fontSize};
   color: ${theme.palette.text.primary};
   background-color: ${theme.palette.background.paper};
   border: 1px solid ${props => 
@@ -82,7 +80,7 @@ const StyledSelect = styled.select<StyledSelectProps>`
     props.validationLevel === 'critical' ? theme.palette.error.main :
     theme.palette.text.disabled
   };
-  border-radius: ${theme.shape.borderRadiusSmall}px;
+  border-radius: ${theme.shape.borderRadius}px;
   cursor: pointer;
   appearance: none;
   transition: all 0.2s ease-in-out;
@@ -95,7 +93,7 @@ const StyledSelect = styled.select<StyledSelectProps>`
   &:focus {
     outline: none;
     border-color: ${theme.palette.primary.main};
-    box-shadow: 0 0 0 ${({ clinicalMode = 'standard' }) => CLINICAL_STATES[clinicalMode].focus} ${theme.palette.primary.light}30;
+    box-shadow: 0 0 0 ${CLINICAL_STATES[props.clinicalMode || 'standard'].focus} ${theme.palette.primary.light}30;
   }
 
   &:disabled {
@@ -116,10 +114,10 @@ const HelperText = styled.span<{ error?: boolean }>`
   color: ${props => props.error ? theme.palette.error.main : theme.palette.text.secondary};
 `;
 
-// Rest of the file remains exactly the same from the validateMedicalData function to the end
+// Validation Functions
 const validateMedicalData = (
   value: string | string[],
-  medicalDataType?: string,
+  medicalDataType: string | undefined,
   options: SelectOption[]
 ): ValidationResult => {
   if (!medicalDataType) return { isValid: true, severity: 'none' };
@@ -128,6 +126,7 @@ const validateMedicalData = (
     ? options.filter(opt => value.includes(opt.value))
     : options.filter(opt => opt.value === value);
 
+  // Validation for high-risk selections
   const hasHighRisk = selectedOptions.some(opt => opt.riskLevel === 'high');
   if (hasHighRisk) {
     return {
@@ -137,6 +136,7 @@ const validateMedicalData = (
     };
   }
 
+  // Clinical code validation
   const hasMissingClinicalCodes = selectedOptions.some(opt => 
     medicalDataType !== 'general' && !opt.clinicalCode
   );
@@ -148,6 +148,7 @@ const validateMedicalData = (
     };
   }
 
+  // Verification requirements
   const needsVerification = selectedOptions.some(opt => opt.requiresVerification);
   if (needsVerification) {
     return {
@@ -160,6 +161,7 @@ const validateMedicalData = (
   return { isValid: true, severity: 'none' };
 };
 
+// Main Component
 export const Select: React.FC<SelectProps> = ({
   name,
   id,
