@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useCallback } from 'react';
 import { useRouter } from 'next/navigation'; // v13.0.0
 import toast from 'react-hot-toast'; // v2.4.0
