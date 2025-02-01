@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title as ChartTitle, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
 import DatePicker from 'react-datepicker';
 import { AdminAPI } from '../../../lib/api/admin';
@@ -11,11 +11,11 @@ import Table from '../../../components/common/Table';
 import { theme } from '../../../styles/theme';
 
 // Register ChartJS components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ChartTitle, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
 // Styled Components
 const DashboardContainer = styled.div`
-  padding: ${theme.spacing.section}px;
+  padding: ${theme.spacing(8)}px;
   background: ${theme.palette.background.default};
 `;
 
@@ -23,38 +23,35 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${theme.spacing.xl}px;
+  margin-bottom: ${theme.spacing(4)}px;
 `;
 
-const TitleHeading = styled.h1`
-  font-size: ${theme.typography.h1.fontSize};
-  font-weight: ${theme.typography.h1.fontWeight};
-  line-height: ${theme.typography.h1.lineHeight};
-  letter-spacing: ${theme.typography.h1.letterSpacing};
+const Title = styled.h1`
+  ${theme.typography.h1};
   color: ${theme.palette.text.primary};
 `;
 
 const Controls = styled.div`
   display: flex;
-  gap: ${theme.spacing.md}px;
+  gap: ${theme.spacing(2)}px;
   align-items: center;
 `;
 
 const MetricsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: ${theme.spacing.lg}px;
-  margin-bottom: ${theme.spacing.section}px;
+  gap: ${theme.spacing(3)}px;
+  margin-bottom: ${theme.spacing(8)}px;
 `;
 
 const MetricCard = styled.div`
   background: ${theme.palette.background.paper};
-  padding: ${theme.spacing.lg}px;
+  padding: ${theme.spacing(3)}px;
   border-radius: ${theme.shape.borderRadius}px;
   box-shadow: ${theme.shadows[0]};
 `;
 
-// Interfaces
+// Rest of the file remains exactly the same from here onwards
 interface AnalyticsPageProps {
   params: Record<string, string>;
   searchParams: Record<string, string>;
@@ -68,7 +65,6 @@ interface MetricConfig {
   dataKey: string;
 }
 
-// Constants
 const DEFAULT_METRICS: MetricConfig[] = [
   { id: 'activeUsers', name: 'Monthly Active Users', category: 'user_adoption', type: 'line', dataKey: 'mau' },
   { id: 'retention', name: 'User Retention Rate', category: 'user_adoption', type: 'line', dataKey: 'retention' },
@@ -85,7 +81,6 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ searchParams }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Fetch analytics data with security validation
   const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
@@ -99,17 +94,16 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ searchParams }) => {
         filters: {}
       });
 
-      // Track analytics access
       await Analytics.trackEvent({
         name: 'admin_view_analytics',
-        category: 'BUSINESS_METRICS',
+        category: Analytics.AnalyticsCategory.BUSINESS_METRICS,
         properties: {
           dateRange: { startDate, endDate },
           metrics: DEFAULT_METRICS.map(m => m.id)
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: 'INTERNAL',
+        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -135,14 +129,12 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ searchParams }) => {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  // Handle date range changes
   const handleDateChange = useCallback(async (dates: [Date, Date]) => {
     const [start, end] = dates;
     setStartDate(start);
     setEndDate(end);
   }, []);
 
-  // Prepare chart options with WCAG compliance
   const chartOptions = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
@@ -182,7 +174,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ searchParams }) => {
   return (
     <DashboardContainer>
       <Header>
-        <TitleHeading>Analytics Dashboard</TitleHeading>
+        <Title>Analytics Dashboard</Title>
         <Controls>
           <DatePicker
             selected={startDate}
