@@ -11,14 +11,13 @@ import AppointmentCard from '../../components/dashboard/AppointmentCard';
 import QuickActions from '../../components/dashboard/QuickActions';
 
 // Hooks
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 import useAnalytics from '../../hooks/useAnalytics';
 
 // Types
 import { HealthRecordType, SecurityClassification } from '../../lib/types/healthRecord';
 import { IConsultation } from '../../lib/types/consultation';
 import { UserRole } from '../../lib/types/user';
-import { AnalyticsCategory, PrivacyLevel } from '../lib/utils/analytics';
 
 // Constants for refresh intervals and security
 const METRICS_REFRESH_INTERVAL = 30000; // 30 seconds
@@ -68,14 +67,14 @@ const DashboardPage: React.FC = () => {
       
       await logEvent({
         name: 'dashboard_refresh',
-        category: AnalyticsCategory.USER_INTERACTION,
+        category: 'USER_INTERACTION',
         properties: {
           userId: user?.id,
           timestamp: Date.now()
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: PrivacyLevel.INTERNAL,
+        privacyLevel: 'INTERNAL',
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -88,7 +87,7 @@ const DashboardPage: React.FC = () => {
       await logError(error as Error, {
         context: 'dashboard_refresh',
         userId: user?.id
-      }, PrivacyLevel.INTERNAL);
+      });
     }
   }, [user, logEvent, logError]);
 
@@ -109,7 +108,7 @@ const DashboardPage: React.FC = () => {
       try {
         await logEvent({
           name: 'dashboard_view',
-          category: AnalyticsCategory.BUSINESS_METRICS,
+          category: 'PAGE_VIEW',
           properties: {
             userId: user?.id,
             userRole: user?.role,
@@ -117,7 +116,7 @@ const DashboardPage: React.FC = () => {
           },
           timestamp: Date.now(),
           userConsent: true,
-          privacyLevel: PrivacyLevel.INTERNAL,
+          privacyLevel: 'INTERNAL',
           auditInfo: {
             eventId: crypto.randomUUID(),
             timestamp: Date.now(),
@@ -131,7 +130,7 @@ const DashboardPage: React.FC = () => {
         await logError(error as Error, {
           context: 'dashboard_view',
           userId: user?.id
-        }, PrivacyLevel.INTERNAL);
+        });
       }
     };
 
@@ -163,8 +162,8 @@ const DashboardPage: React.FC = () => {
                   refreshInterval={METRICS_REFRESH_INTERVAL}
                   showHistory={true}
                   encryptionKey={tokens?.accessToken || ''}
-                  accessLevel={AccessLevel.READ}
-                  theme={ThemePreference.LIGHT}
+                  accessLevel="read"
+                  theme="light"
                 />
               )}
             </Grid>
@@ -202,12 +201,12 @@ const DashboardPage: React.FC = () => {
                       <Grid item xs={12} md={4} key={appointment.id}>
                         <AppointmentCard
                           appointment={appointment}
-                          providerId={appointment.providerId}
+                          provider={appointment.provider}
                           onJoin={async () => {/* Implement join handler */}}
                           onCancel={async () => {/* Implement cancel handler */}}
                           onReschedule={async () => {/* Implement reschedule handler */}}
                           connectionConfig={{
-                            minQuality: ConnectionQuality.FAIR,
+                            minQuality: 'FAIR',
                             checkInterval: 10000
                           }}
                         />
