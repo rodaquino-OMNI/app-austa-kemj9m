@@ -108,16 +108,16 @@ const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
       });
       setSecurityContext(prev => ({
         ...prev,
-        encryptionStatus: 'VERIFIED'
+        encryptionStatus: verified ? 'VERIFIED' : 'FAILED'
       }));
+
+      if (!verified) {
+        handleSecurityViolation('ENCRYPTION_FAILED');
+      }
     } catch (err) {
-      setSecurityContext(prev => ({
-        ...prev,
-        encryptionStatus: 'FAILED'
-      }));
       handleSecurityViolation('ENCRYPTION_VERIFICATION_ERROR');
     }
-  }, [handleSecurityViolation]);
+  }, [params.sessionId, handleSecurityViolation]);
 
   /**
    * Initializes consultation session
