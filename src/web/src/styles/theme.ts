@@ -106,16 +106,7 @@ const breakpoints = {
 };
 
 // Healthcare-optimized spacing system
-const spacing = {
-  unit: 8,
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 40,
-  section: 64,
-};
+const createSpacing = (factor: number) => factor * 8;
 
 // Medical interface shape configurations
 const shape = {
@@ -133,6 +124,35 @@ const shadows = {
   modal: '0px 16px 32px rgba(0, 0, 0, 0.16)',
 };
 
+// Default MUI shadows array with our clinical shadow
+const defaultShadows = [
+  'none',
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+];
+
 // Component-specific overrides for healthcare context
 const components = {
   MuiButton: {
@@ -141,6 +161,7 @@ const components = {
         borderRadius: shape.buttonRadius,
         textTransform: 'none',
         fontWeight: typography.fontWeightMedium,
+        variants: [],
       },
       containedPrimary: {
         '&:hover': {
@@ -159,6 +180,7 @@ const components = {
       root: {
         borderRadius: shape.clinicalCard,
         boxShadow: shadows.clinical,
+        variants: [],
       },
     },
   },
@@ -168,6 +190,7 @@ const components = {
         '& .MuiOutlinedInput-root': {
           borderRadius: shape.borderRadiusSmall,
         },
+        variants: [],
       },
     },
   },
@@ -178,20 +201,18 @@ const components = {
         fontSize: '0.875rem',
         padding: '8px 16px',
         borderRadius: shape.borderRadiusSmall,
+        variants: [],
       },
     },
   },
 };
-
-// Create a fixed-length array for shadows
-const defaultShadows = Array(25).fill(shadows.clinical) as [string, ...string[]];
 
 // Create the theme with all configurations
 const themeOptions: ThemeOptions = {
   palette,
   typography,
   breakpoints,
-  spacing,
+  spacing: createSpacing,
   shape,
   components,
   shadows: defaultShadows,
