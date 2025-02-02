@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Product, ProductCategory, ProductSortOption } from '../lib/types/product';
 import { useAnalytics } from './useAnalytics';
-import { getProducts, getProductById, purchaseProduct } from '../lib/api/marketplace';
+import { MarketplaceAPI } from '../lib/api/marketplace';
 import { ErrorCode } from '../lib/constants/errorCodes';
 
 // Security context type for HIPAA compliance
@@ -41,7 +41,7 @@ interface MarketplaceError {
 
 // Filter interface with security validation
 interface MarketplaceFilters {
-  category: ProductCategory | null;
+  category: ProductCategory | undefined;
   search: string;
   sortBy: ProductSortOption;
   page: number;
@@ -51,7 +51,7 @@ interface MarketplaceFilters {
 
 // Default values with security considerations
 const DEFAULT_FILTERS: MarketplaceFilters = {
-  category: null,
+  category: undefined,
   search: '',
   sortBy: ProductSortOption.NEWEST,
   page: 1,
@@ -97,7 +97,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
     const startTime = performance.now();
 
     try {
-      const response = await getProducts({
+      const response = await MarketplaceAPI.getProducts({
         page: filters.page,
         limit: filters.limit,
         category: filters.category,
@@ -117,10 +117,18 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
       // Track successful fetch
       logEvent({
         name: 'marketplace_products_fetched',
+        category: AnalyticsCategory.USER_INTERACTION,
         properties: {
           productCount: response.products.length,
           category: filters.category,
           page: filters.page
+        },
+        timestamp: Date.now(),
+        userConsent: true,
+        privacyLevel: 'PROTECTED',
+        auditInfo: {
+          eventId: crypto.randomUUID(),
+          timestamp: Date.now()
         }
       });
 
@@ -128,7 +136,11 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
       logPerformance({
         name: 'marketplace_fetch_duration',
         value: performance.now() - startTime,
-        tags: { category: filters.category?.toString() || 'all' }
+        tags: { category: filters.category?.toString() || 'all' },
+        timestamp: Date.now(),
+        context: {
+          operation: 'fetchProducts'
+        }
       });
 
     } catch (error: any) {
@@ -150,20 +162,28 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'fetchProducts',
         filters
-      });
+      }, 'PROTECTED');
     }
   }, [filters, logEvent, logError, logPerformance]);
 
   // Secure product retrieval by ID
-  const getProductByIdSecure = useCallback(async (productId: string) => {
+  const getProductById = useCallback(async (productId: string) => {
     try {
-      const product = await getProductById(productId);
+      const product = await MarketplaceAPI.getProductById(productId);
       
       logEvent({
         name: 'marketplace_product_viewed',
+        category: AnalyticsCategory.USER_INTERACTION,
         properties: {
           productId,
           category: product.category
+        },
+        timestamp: Date.now(),
+        userConsent: true,
+        privacyLevel: 'PROTECTED',
+        auditInfo: {
+          eventId: crypto.randomUUID(),
+          timestamp: Date.now()
         }
       });
 
@@ -173,24 +193,32 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'getProductById',
         productId
-      });
+      }, 'PROTECTED');
       throw error;
     }
   }, [logEvent, logError]);
 
   // Secure purchase handling
-  const purchaseProductSecure = useCallback(async (
+  const purchaseProduct = useCallback(async (
     productId: string,
-    paymentDetails: { paymentMethodId: string; encryptedData: string }
+    paymentDetails: { paymentMethodId: string; encryptedData: string; validationToken: string }
   ) => {
     try {
-      const result = await purchaseProduct(productId, paymentDetails);
+      const result = await MarketplaceAPI.purchaseProduct(productId, paymentDetails);
 
       logEvent({
         name: 'marketplace_product_purchased',
+        category: AnalyticsCategory.USER_INTERACTION,
         properties: {
           productId,
           transactionId: result.transactionId
+        },
+        timestamp: Date.now(),
+        userConsent: true,
+        privacyLevel: 'PROTECTED',
+        auditInfo: {
+          eventId: crypto.randomUUID(),
+          timestamp: Date.now()
         }
       });
 
@@ -200,7 +228,7 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
         component: 'useMarketplace',
         operation: 'purchaseProduct',
         productId
-      });
+      }, 'PROTECTED');
       throw error;
     }
   }, [logEvent, logError]);
@@ -235,8 +263,8 @@ export const useMarketplace = (initialFilters?: Partial<MarketplaceFilters>) => 
     state,
     actions: {
       updateFilters,
-      getProductById: getProductByIdSecure,
-      purchaseProduct: purchaseProductSecure,
+      getProductById,
+      purchaseProduct,
       refreshProducts: fetchProducts
     }
   };
