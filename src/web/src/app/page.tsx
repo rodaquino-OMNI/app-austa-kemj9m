@@ -3,14 +3,14 @@
 import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Grid, Container, Typography, ThemeProvider } from '@mui/material';
-import { Analytics } from '@vercel/analytics';
+import Analytics from '@vercel/analytics';
 
 // Internal imports
 import Header from '../components/layout/Header';
 import HealthMetrics from '../components/dashboard/HealthMetrics';
 import QuickActions from '../components/dashboard/QuickActions';
 import ErrorBoundary from '../components/common/ErrorBoundary';
-import { useAuth } from '../hooks/useAuth';
+import useAuth from '../hooks/useAuth';
 import theme from '../styles/theme';
 import { UserRole } from '../lib/types/user';
 import { SecurityClassification } from '../lib/types/healthRecord';
@@ -121,8 +121,8 @@ const HomePage = () => {
                     refreshInterval={REFRESH_INTERVAL}
                     showHistory={true}
                     encryptionKey={user?.securitySettings?.lastLoginAt.toString() || ''}
-                    accessLevel="read"
-                    theme="light"
+                    accessLevel={AccessLevel.READ}
+                    theme={ThemePreference.LIGHT}
                   />
                 </Suspense>
               </Grid>
@@ -148,4 +148,5 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+// Export with analytics wrapper
+export default Analytics.withAnalytics(HomePage);
