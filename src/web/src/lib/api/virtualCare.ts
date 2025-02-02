@@ -202,7 +202,7 @@ class VirtualCareApi {
    * Verifies encryption capabilities for the session
    * @param requirements Encryption requirements
    */
-  private async verifyEncryptionCapabilities(
+  public async verifyEncryptionCapabilities(
     requirements: { algorithm: string; keySize: number }
   ): Promise<void> {
     const subtle = window.crypto.subtle;
