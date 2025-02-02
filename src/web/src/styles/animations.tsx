@@ -1,4 +1,5 @@
 import { keyframes, css, SerializedStyles } from '@emotion/react'; // @emotion/react ^11.11.0
+import React from 'react';
 
 // Animation Duration Constants
 export const ANIMATION_DURATION_FAST = '150ms';
@@ -151,9 +152,11 @@ export class AnimationWrapper extends React.Component<AnimationWrapperProps> {
 
   constructor(props: AnimationWrapperProps) {
     super(props);
-    this.shouldReduceMotion = 
-      props.reducedMotion ?? 
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.shouldReduceMotion = props.reducedMotion ?? (
+      typeof window !== 'undefined' 
+        ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
+        : false
+    );
   }
 
   applyAnimation(animationName: keyframes): SerializedStyles {

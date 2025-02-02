@@ -43,7 +43,7 @@ import {
   ADMIN_ROUTES
 } from '../../lib/constants/routes';
 
-import { useAuth } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
 import { UserRole } from '../../lib/types/user';
 
 // Constants
@@ -250,7 +250,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           arrow
         >
           <NavigationItem
-            button
             active={isRouteActive(item.route)}
             onClick={() => item.children ? handleExpand(item.id) : router.push(item.route)}
             sx={{ pl: level * 2 }}

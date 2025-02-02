@@ -10,7 +10,7 @@ import axios, { AxiosError, AxiosResponse } from 'axios'; // v1.4.0
 // Internal imports
 import { IHealthRecord, HealthRecordErrorType, SecurityClassification } from '../types/healthRecord';
 import { HealthRecordEndpoints, buildUrl, processEndpointParams } from '../constants/endpoints';
-import { ErrorCode, ErrorTracker } from '../constants/errorCodes';
+import { ErrorCode, ErrorTracker, ErrorMessage } from '../constants/errorCodes';
 
 /**
  * Interface for health record API response with audit information
@@ -57,7 +57,7 @@ const DEFAULT_CONFIG = {
  */
 const validateHIPAACompliance = (record: Partial<IHealthRecord>): void => {
   if (!record.patientId || !record.content) {
-    throw new Error(HealthRecordErrorType.PHI_VALIDATION_ERROR);
+    throw new Error(ErrorMessage[HealthRecordErrorType.PHI_VALIDATION_ERROR].message);
   }
 
   // Additional HIPAA validation logic
@@ -72,7 +72,7 @@ const validateHIPAACompliance = (record: Partial<IHealthRecord>): void => {
     let obj: any = record.metadata;
     return keys.every(key => (obj = obj?.[key]) !== undefined);
   })) {
-    throw new Error(HealthRecordErrorType.PHI_VALIDATION_ERROR);
+    throw new Error(ErrorMessage[HealthRecordErrorType.PHI_VALIDATION_ERROR].message);
   }
 };
 

@@ -77,6 +77,7 @@ export interface IConsultation {
     metadata: Record<string, unknown>;
     securityMetadata: Record<string, string>;
     auditLog: readonly Record<string, any>[];
+    isEmergency: boolean;
 }
 
 /**

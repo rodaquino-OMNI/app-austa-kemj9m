@@ -1,24 +1,24 @@
 import React from 'react'; // ^18.2.0
 import styled from '@emotion/styled'; // ^11.11.0
 import { keyframes } from '@emotion/react'; // ^11.11.0
-import { palette, spacing } from '../../styles/theme';
+import { themePalette as palette, themeSpacing as spacing } from '../../styles/theme';
 
 // Size configurations following Material Design specifications
 const LOADER_SIZES = {
   small: {
-    width: spacing.lg,
-    height: spacing.lg,
-    borderWidth: spacing.xs
+    width: spacing(4),
+    height: spacing(4),
+    borderWidth: spacing(1)
   },
   medium: {
-    width: spacing.xxl,
-    height: spacing.xxl,
-    borderWidth: spacing.sm
+    width: spacing(6),
+    height: spacing(6),
+    borderWidth: spacing(2)
   },
   large: {
-    width: spacing.section,
-    height: spacing.section,
-    borderWidth: spacing.md
+    width: spacing(8),
+    height: spacing(8),
+    borderWidth: spacing(3)
   }
 } as const;
 

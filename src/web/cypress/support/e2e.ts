@@ -30,19 +30,16 @@ Cypress.on('window:before:load', (win) => {
 });
 
 // Enhanced global configuration
-Cypress.config({
-  defaultCommandTimeout: 10000,
-  requestTimeout: 10000,
-  responseTimeout: 30000,
-  pageLoadTimeout: 30000,
-  viewportWidth: 1280,
-  viewportHeight: 720,
-  chromeWebSecurity: true,
-  video: true,
-  retries: {
-    runMode: 2,
-    openMode: 0
-  }
+Cypress.config('defaultCommandTimeout', 10000);
+Cypress.config('requestTimeout', 10000);
+Cypress.config('responseTimeout', 30000);
+Cypress.config('pageLoadTimeout', 30000);
+Cypress.config('viewportWidth', 1280);
+Cypress.config('viewportHeight', 720);
+Cypress.config('video', true);
+Cypress.config('retries', {
+  runMode: 2,
+  openMode: 0
 });
 
 // Enhanced beforeEach hook with security and performance validation
@@ -87,8 +84,7 @@ beforeEach(() => {
 // Enhanced afterEach hook with comprehensive validation
 afterEach(() => {
   // Validate accessibility compliance
-  cy.checkA11y({
-    includedImpacts: ['critical', 'serious'],
+  cy.checkA11y(null, {
     rules: {
       'color-contrast': { enabled: true },
       'html-has-lang': { enabled: true },

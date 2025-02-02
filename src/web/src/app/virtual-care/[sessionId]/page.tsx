@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, CircularProgress, Typography, Alert, SecurityIndicator } from '@mui/material';
+import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { useRouter } from 'next/navigation';
 
 import VideoConsultation from '../../../components/virtual-care/VideoConsultation';
@@ -102,13 +102,13 @@ const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
    */
   const verifyEncryption = useCallback(async () => {
     try {
-      const verified = await virtualCareApi.verifyEncryption(params.sessionId);
+      const status = await virtualCareApi.verifyEncryption(params.sessionId);
       setSecurityContext(prev => ({
         ...prev,
-        encryptionStatus: verified ? 'VERIFIED' : 'FAILED'
+        encryptionStatus: status ? 'VERIFIED' : 'FAILED'
       }));
 
-      if (!verified) {
+      if (!status) {
         handleSecurityViolation('ENCRYPTION_FAILED');
       }
     } catch (err) {

@@ -4,7 +4,7 @@
  * @license HIPAA-compliant
  */
 
-import { IUser, UserRole, UserStatus } from './user';
+import type { IUser, UserRole, UserStatus } from './user';
 
 /**
  * Enum defining all possible authentication states

@@ -45,8 +45,8 @@ const MODAL_SIZES = {
 // Clinical context styles
 const CLINICAL_CONTEXTS = {
   standard: {
-    borderColor: theme.palette.clinical.main,
-    backgroundColor: theme.palette.background.clinical,
+    borderColor: theme.palette.primary.main,
+    backgroundColor: theme.palette.background.default,
     headerColor: theme.palette.primary.main,
   },
   emergency: {
@@ -88,8 +88,8 @@ const StyledModal = styled.div<{
     CLINICAL_CONTEXTS[clinicalContext as keyof typeof CLINICAL_CONTEXTS].backgroundColor};
   border: 2px solid ${({ clinicalContext }) =>
     CLINICAL_CONTEXTS[clinicalContext as keyof typeof CLINICAL_CONTEXTS].borderColor};
-  border-radius: ${theme.shape.borderRadiusLarge}px;
-  box-shadow: ${theme.shadows.modal};
+  border-radius: ${theme.shape.borderRadius}px;
+  box-shadow: 0px 16px 32px rgba(0, 0, 0, 0.16);
   width: ${({ size }) => MODAL_SIZES[size].width};
   max-height: ${({ size }) => MODAL_SIZES[size].maxHeight};
   max-width: 95vw;
@@ -121,7 +121,7 @@ const StyledModal = styled.div<{
 `;
 
 const ModalHeader = styled.div<{ clinicalContext: string }>`
-  padding: ${theme.spacing.lg}px;
+  padding: 24px;
   border-bottom: 1px solid ${({ clinicalContext }) =>
     CLINICAL_CONTEXTS[clinicalContext as keyof typeof CLINICAL_CONTEXTS].borderColor};
   display: flex;
@@ -138,18 +138,18 @@ const Title = styled.h2<{ clinicalContext: string }>`
 `;
 
 const Content = styled.div`
-  padding: ${theme.spacing.lg}px;
+  padding: 24px;
   overflow-y: auto;
   flex: 1;
   -webkit-overflow-scrolling: touch;
 `;
 
 const Actions = styled.div`
-  padding: ${theme.spacing.lg}px;
+  padding: 24px;
   border-top: 1px solid ${theme.palette.divider};
   display: flex;
   justify-content: flex-end;
-  gap: ${theme.spacing.md}px;
+  gap: 16px;
 `;
 
 // Clinical action handler with safety checks

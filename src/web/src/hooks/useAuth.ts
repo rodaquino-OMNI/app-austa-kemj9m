@@ -22,14 +22,13 @@ import {
   IAuthTokens,
   ILoginCredentials,
   IMFACredentials,
-  IBiometricCredentials,
   AuthState,
   IAuthContext,
   IAuthError,
-  ISecurityEvent
+  SecurityEvent
 } from '../lib/types/auth';
 
-import { IUser, IUserSecurityProfile } from '../lib/types/user';
+import { IUser } from '../lib/types/user';
 import { WebEncryptionService } from '../lib/utils/encryption';
 
 // Security constants
@@ -49,7 +48,6 @@ const useAuth = (): IAuthContext & {
   login: (credentials: ILoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   verifyMFA: (credentials: IMFACredentials) => Promise<void>;
-  verifyBiometric: (credentials: IBiometricCredentials) => Promise<void>;
   refreshSession: () => Promise<void>;
 } => {
   // State management with security context
@@ -87,7 +85,7 @@ const useAuth = (): IAuthContext & {
    */
   const validateToken = useCallback((token: string): boolean => {
     try {
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode<{ exp: number }>(token);
       const currentTime = Date.now() / 1000;
       return decoded.exp > currentTime + TOKEN_EXPIRY_BUFFER / 1000;
     } catch {
@@ -98,7 +96,7 @@ const useAuth = (): IAuthContext & {
   /**
    * Handles security event logging
    */
-  const logSecurityEvent = useCallback((event: ISecurityEvent) => {
+  const logSecurityEvent = useCallback((event: SecurityEvent) => {
     // Implementation would typically send to security monitoring service
     console.info('Security Event:', {
       ...event,
@@ -159,9 +157,10 @@ const useAuth = (): IAuthContext & {
     logSecurityEvent({
       eventType: 'SESSION_TIMEOUT',
       userId: user?.id || '',
+      sessionId: tokens?.accessToken || '',
+      metadata: { lastActivity },
       severity: 'MEDIUM',
-      outcome: 'SUCCESS',
-      metadata: { lastActivity }
+      outcome: 'SUCCESS'
     });
 
     await handleLogout();
@@ -204,9 +203,10 @@ const useAuth = (): IAuthContext & {
       logSecurityEvent({
         eventType: 'LOGIN_SUCCESS',
         userId: credentials.email,
+        sessionId: authTokens.accessToken,
+        metadata: { deviceId: deviceFingerprintRef.current },
         severity: 'MEDIUM',
-        outcome: 'SUCCESS',
-        metadata: { deviceId: deviceFingerprintRef.current }
+        outcome: 'SUCCESS'
       });
     } catch (error) {
       setLoginAttempts(prev => prev + 1);
@@ -232,9 +232,10 @@ const useAuth = (): IAuthContext & {
     logSecurityEvent({
       eventType: 'AUTH_ERROR',
       userId: user?.id || '',
+      sessionId: tokens?.accessToken || '',
+      metadata: authError,
       severity: 'HIGH',
-      outcome: 'FAILURE',
-      metadata: authError
+      outcome: 'FAILURE'
     });
   };
 
@@ -264,9 +265,10 @@ const useAuth = (): IAuthContext & {
       logSecurityEvent({
         eventType: 'LOGOUT',
         userId: user?.id || '',
+        sessionId: tokens?.accessToken || '',
+        metadata: { timestamp: Date.now() },
         severity: 'LOW',
-        outcome: 'SUCCESS',
-        metadata: { timestamp: Date.now() }
+        outcome: 'SUCCESS'
       });
     } catch (error) {
       handleAuthError(error);
@@ -315,7 +317,6 @@ const useAuth = (): IAuthContext & {
     login: handleLogin,
     logout: handleLogout,
     verifyMFA,
-    verifyBiometric,
     refreshSession: setupTokenRefresh
   };
 };

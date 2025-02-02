@@ -1,5 +1,33 @@
 import { createTheme, Theme, ThemeOptions } from '@mui/material'; // @mui/material ^5.14.0
 
+// Extend the default theme types to include custom properties
+declare module '@mui/material/styles' {
+  interface Palette {
+    clinical: {
+      main: string;
+      light: string;
+      dark: string;
+      contrastText: string;
+    };
+  }
+  
+  interface PaletteOptions {
+    clinical?: {
+      main: string;
+      light: string;
+      dark: string;
+      contrastText: string;
+    };
+  }
+
+  interface Shape {
+    borderRadiusSmall: number;
+    borderRadiusLarge: number;
+    clinicalCard: number;
+    buttonRadius: number;
+  }
+}
+
 // Healthcare-specific color palette with WCAG 2.1 AA compliant contrast ratios
 const palette = {
   primary: {
@@ -106,16 +134,7 @@ const breakpoints = {
 };
 
 // Healthcare-optimized spacing system
-const spacing = {
-  unit: 8,
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 40,
-  section: 64,
-};
+const spacing = (factor: number) => `${factor * 8}px`;
 
 // Medical interface shape configurations
 const shape = {
@@ -132,6 +151,35 @@ const shadows = {
   elevated: '0px 8px 24px rgba(0, 0, 0, 0.12)',
   modal: '0px 16px 32px rgba(0, 0, 0, 0.16)',
 };
+
+// Default MUI shadows array with our clinical shadow
+const defaultShadows = [
+  'none',
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+  shadows.clinical,
+];
 
 // Component-specific overrides for healthcare context
 const components = {
@@ -191,7 +239,7 @@ const themeOptions: ThemeOptions = {
   spacing,
   shape,
   components,
-  shadows: [...Array(25)].map(() => shadows.clinical), // Override default Material shadows
+  shadows: defaultShadows,
 };
 
 export const theme: Theme = createTheme(themeOptions);
@@ -201,7 +249,6 @@ export const {
   palette: themePalette,
   typography: themeTypography,
   breakpoints: themeBreakpoints,
-  spacing: themeSpacing,
   shape: themeShape,
   components: themeComponents,
 } = theme;

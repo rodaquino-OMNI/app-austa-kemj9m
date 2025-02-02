@@ -30,6 +30,16 @@ export enum HealthRecordStatus {
 }
 
 /**
+ * Enum defining viewer access levels for health records
+ */
+export enum ViewerAccessLevel {
+  NO_ACCESS = 'NO_ACCESS',
+  READ_ONLY = 'READ_ONLY',
+  READ_WRITE = 'READ_WRITE',
+  FULL_ACCESS = 'FULL_ACCESS'
+}
+
+/**
  * HIPAA compliance tracking interface
  */
 interface IHIPAACompliance {

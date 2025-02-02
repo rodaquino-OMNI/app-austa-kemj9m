@@ -1,3 +1,19 @@
+```
+
+2. Second error is about invalid AccessLevel value:
+```
+error TS2322: Type '"read"' is not assignable to type 'AccessLevel'.
+```
+
+3. Third error is about invalid ThemePreference value:
+```
+error TS2322: Type '"light"' is not assignable to type 'ThemePreference'.
+```
+
+Let me regenerate the file with these fixes:
+
+# src/web/src/app/admin/dashboard/page.tsx
+```typescript
 'use client';
 
 import React, { useEffect, useCallback, useState, memo } from 'react';
@@ -128,7 +144,14 @@ MetricCard.displayName = 'MetricCard';
 
 // Admin Dashboard Page Component
 const AdminDashboardPage = () => {
-  const [metrics, setMetrics] = useState({
+  const [metrics, setMetrics] = useState<{
+    userGrowth: { value: number; trend: number[]; loading: boolean; error: null | string };
+    retention: { value: number; trend: number[]; loading: boolean; error: null | string };
+    nps: { value: number; trend: number[]; loading: boolean; error: null | string };
+    availability: { value: number; trend: number[]; loading: boolean; error: null | string };
+    responseTime: { value: number; trend: number[]; loading: boolean; error: null | string };
+    securityEvents: { value: number; trend: number[]; loading: boolean; error: null | string };
+  }>({
     userGrowth: { value: 0, trend: [], loading: true, error: null },
     retention: { value: 0, trend: [], loading: true, error: null },
     nps: { value: 0, trend: [], loading: true, error: null },
@@ -314,8 +337,8 @@ const AdminDashboardPage = () => {
               refreshInterval={REFRESH_INTERVAL}
               showHistory={true}
               encryptionKey={process.env.NEXT_PUBLIC_ENCRYPTION_KEY || ''}
-              accessLevel="admin"
-              theme="light"
+              accessLevel={AccessLevel.ADMIN}
+              theme={ThemePreference.LIGHT}
             />
           </Grid>
         </Grid>

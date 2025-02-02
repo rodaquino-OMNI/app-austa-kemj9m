@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { Analytics } from '@vercel/analytics';
+import { Analytics } from '@vercel/analytics/react';
 import { ErrorBoundary } from 'react-error-boundary';
 import type { Metadata } from 'next';
 
@@ -33,7 +33,7 @@ export async function generateMetadata({
       openGraph: {
         title: product.name,
         description: product.description,
-        images: product.images.map(url => ({
+        images: product.images.map((url: string) => ({
           url,
           width: MAX_IMAGE_WIDTH,
           height: MAX_IMAGE_HEIGHT,

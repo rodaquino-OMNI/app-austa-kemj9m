@@ -1,7 +1,7 @@
 import React from 'react'; // ^18.2.0
 import styled from '@emotion/styled'; // ^11.11.0
 import Loader from '../components/common/Loader';
-import { palette } from '../styles/theme';
+import { themePalette as palette } from '../styles/theme';
 
 // Constants for accessibility and styling
 const ARIA_LABEL = 'Loading page content, please wait...';

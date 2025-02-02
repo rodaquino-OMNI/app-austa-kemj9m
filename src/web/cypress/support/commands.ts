@@ -1,6 +1,7 @@
 // External imports
 import '@testing-library/cypress/add-commands'; // v10.0.0
 import '@cypress/code-coverage/support'; // v3.12.0
+import 'cypress-file-upload'; // Add cypress-file-upload plugin
 
 // Internal imports
 import { IUser } from '../../lib/types/user';

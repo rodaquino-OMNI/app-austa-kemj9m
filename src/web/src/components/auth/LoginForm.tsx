@@ -10,7 +10,7 @@ import styled from '@emotion/styled';
 import { Button, TextField, CircularProgress, Alert, FormControlLabel, Checkbox } from '@mui/material';
 import { useAuditLog } from '@healthcare/audit-logger';
 
-import { useAuth } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
 import { ILoginCredentials, AuthState, MFAMethod } from '../../lib/types/auth';
 
 // Styled components with enhanced accessibility
@@ -106,8 +106,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
         clientMetadata: {
           userAgent: navigator.userAgent,
           timestamp: new Date().toISOString(),
-          securityLevel,
-          emergencyAccess
+          securityLevel: securityLevel.toString(),
+          emergencyAccess: emergencyAccess.toString()
         }
       }));
     });
@@ -172,16 +172,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
       });
 
       onSuccess(response);
-    } catch (error) {
+    } catch (error: any) {
       auditLog.error('Login failed', {
         userId: formData.email,
-        error: error.message,
+        error: error?.message || 'Unknown error',
         securityLevel
       });
 
       setErrors(prev => ({
         ...prev,
-        general: error.message
+        general: error?.message || 'Authentication failed'
       }));
 
       onError?.(error);
@@ -203,10 +203,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
         setAuthState(AuthState.AUTHENTICATED);
         onSuccess(mfaResult.tokens);
       }
-    } catch (error) {
+    } catch (error: any) {
       setErrors(prev => ({
         ...prev,
-        mfa: error.message
+        mfa: error?.message || 'MFA verification failed'
       }));
     }
   };

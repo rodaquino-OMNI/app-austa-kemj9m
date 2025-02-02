@@ -227,8 +227,12 @@ const VideoConsultation: React.FC<IVideoConsultationProps> = ({
                 key={participant.sid}
                 ref={el => {
                   if (el && participant.videoTracks.size > 0) {
-                    const track = Array.from(participant.videoTracks.values())[0].track;
-                    el.srcObject = new MediaStream([track]);
+                    const trackPublication = Array.from(participant.videoTracks.values())[0];
+                    if (trackPublication.track) {
+                      const mediaStream = new MediaStream();
+                      mediaStream.addTrack(trackPublication.track.mediaStreamTrack);
+                      el.srcObject = mediaStream;
+                    }
                   }
                 }}
                 autoPlay
@@ -252,7 +256,11 @@ const VideoConsultation: React.FC<IVideoConsultationProps> = ({
               ref={el => {
                 if (el && localTracks.find(track => track.kind === 'video')) {
                   const videoTrack = localTracks.find(track => track.kind === 'video');
-                  el.srcObject = new MediaStream([videoTrack!]);
+                  if (videoTrack) {
+                    const mediaStream = new MediaStream();
+                    mediaStream.addTrack(videoTrack.mediaStreamTrack);
+                    el.srcObject = mediaStream;
+                  }
                 }
               }}
               autoPlay

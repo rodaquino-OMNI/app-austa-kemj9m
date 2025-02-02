@@ -1,3 +1,14 @@
+```
+
+2. Second error is about accessing non-existent TRIAGE property:
+```
+error TS2339: Property 'TRIAGE' does not exist on type '{ readonly HOME: "/emergency"; readonly URGENT_CARE: "/emergency/urgent-care"; readonly SOS: "/emergency/sos"; readonly NEARBY_FACILITIES: "/emergency/nearby-facilities"; readonly EMERGENCY_CONTACTS: "/emergency/contacts"; readonly EMERGENCY_INSTRUCTIONS: "/emergency/instructions"; readonly EMERGENCY_HISTORY: "/emer...'.
+```
+
+Let me regenerate the file with these fixes:
+
+# src/web/src/components/layout/Header.tsx
+```typescript
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import styled from '@emotion/styled';
@@ -222,7 +233,7 @@ const Header: React.FC<HeaderProps> = ({
       <UserSection>
         {emergencyMode && (
           <EmergencyButton
-            onClick={() => handleEmergencyNavigation(EMERGENCY_ROUTES.TRIAGE, 'HIGH')}
+            onClick={() => handleEmergencyNavigation(EMERGENCY_ROUTES.HOME, 'HIGH')}
             aria-label="Emergency access"
           >
             Emergency Mode

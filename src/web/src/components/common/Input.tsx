@@ -1,3 +1,9 @@
+```
+
+Looking at the validation.ts file, I notice that the validateForm function accepts a yup.Schema as its second parameter, but we're passing options directly. I'll fix this by adjusting how we call validateForm.
+
+# src/web/src/components/common/Input.tsx
+```typescript
 /**
  * @fileoverview Healthcare-optimized form input component with HIPAA compliance
  * Implements Material Design 3.0 principles and WCAG 2.1 Level AA accessibility
@@ -113,7 +119,6 @@ const Input: React.FC<InputProps> = ({
         const validationResult = await validateForm(
           { [name]: sanitizedValue },
           {
-            abortEarly: false,
             context: {
               isPHI,
               dataType,

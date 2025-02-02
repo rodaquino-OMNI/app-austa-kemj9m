@@ -8,7 +8,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react'; // v18.0.0
 import { Suspense } from 'react'; // v18.0.0
-import { audit-log } from '@austa/audit-log'; // v1.0.0
+import { AuditLogger } from '@austa/audit-logger'; // v1.0.0
 
 // Internal imports
 import RecordsList from '../../components/health-records/RecordsList';
@@ -54,8 +54,7 @@ const HealthRecordsPage: React.FC<{
     records,
     loading,
     error,
-    fetchRecords,
-    subscribeToUpdates
+    fetchRecords
   } = useHealthRecords(params.patientId, {
     autoFetch: true,
     recordTypes: activeRecordTypes,
@@ -63,17 +62,11 @@ const HealthRecordsPage: React.FC<{
   });
 
   // Initialize audit logger
-  const auditLogger = new audit-log({
+  const auditLogger = new AuditLogger({
     context: AUDIT_CONTEXT,
     patientId: params.patientId,
     enableEncryption: true
   });
-
-  // Setup real-time updates subscription
-  useEffect(() => {
-    const unsubscribe = subscribeToUpdates();
-    return () => unsubscribe();
-  }, [subscribeToUpdates]);
 
   // Handle record selection with security checks
   const handleRecordSelect = useCallback(async (record: IHealthRecord) => {
@@ -93,14 +86,14 @@ const HealthRecordsPage: React.FC<{
       // Track interaction
       Analytics.trackEvent({
         name: 'health_record_selected',
-        category: Analytics.AnalyticsCategory.USER_INTERACTION,
+        category: 'USER_INTERACTION',
         properties: {
           recordType: record.type,
           viewType
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: Analytics.PrivacyLevel.SENSITIVE,
+        privacyLevel: 'SENSITIVE',
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -193,7 +186,7 @@ const HealthRecordsPage: React.FC<{
         </div>
 
         {/* Document viewer modal */}
-        {selectedRecord?.attachments?.length > 0 && (
+        {selectedRecord && selectedRecord.attachments && selectedRecord.attachments.length > 0 && (
           <DocumentViewer
             recordId={selectedRecord.id}
             attachmentId={selectedRecord.attachments[0].id}
@@ -203,6 +196,7 @@ const HealthRecordsPage: React.FC<{
             accessLevel={ViewerAccessLevel.READ_ONLY}
             watermarkText="CONFIDENTIAL"
             highContrastMode={false}
+            patientId={params.patientId}
           />
         )}
       </main>

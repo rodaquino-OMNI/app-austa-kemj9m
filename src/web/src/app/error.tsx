@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import styled from '@emotion/styled';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import Button from '../../components/common/Button';
-import { Analytics } from '../../lib/utils/analytics';
+import { Analytics, PrivacyLevel, AnalyticsCategory } from '../../lib/utils/analytics';
 import { theme } from '../../styles/theme';
 
 // Styled components with Material Design 3.0 and WCAG compliance
@@ -14,36 +14,36 @@ const ErrorContainer = styled.div`
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: ${theme.spacing.xl}px;
+  padding: ${theme.spacing(4)}px;
   background-color: ${theme.palette.background.default};
   text-align: center;
 `;
 
 const ErrorContent = styled.div`
   max-width: 600px;
-  padding: ${theme.spacing.xl}px;
+  padding: ${theme.spacing(4)}px;
   background-color: ${theme.palette.background.paper};
   border-radius: ${theme.shape.borderRadius}px;
-  box-shadow: ${theme.shadows.clinical};
+  box-shadow: ${theme.shadows[1]};
 `;
 
 const ErrorTitle = styled.h1`
   color: ${theme.palette.error.main};
   font-size: ${theme.typography.h3.fontSize};
   font-weight: ${theme.typography.fontWeightBold};
-  margin-bottom: ${theme.spacing.md}px;
+  margin-bottom: ${theme.spacing(2)}px;
 `;
 
 const ErrorMessage = styled.p`
   color: ${theme.palette.text.primary};
   font-size: ${theme.typography.body1.fontSize};
   line-height: ${theme.typography.body1.lineHeight};
-  margin-bottom: ${theme.spacing.xl}px;
+  margin-bottom: ${theme.spacing(4)}px;
 `;
 
 const ErrorActions = styled.div`
   display: flex;
-  gap: ${theme.spacing.md}px;
+  gap: ${theme.spacing(2)}px;
   justify-content: center;
 `;
 
@@ -74,7 +74,7 @@ const handleRetry = async (reset: () => void, error: Error): Promise<void> => {
   try {
     await Analytics.trackEvent({
       name: 'error_retry_attempt',
-      category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
+      category: AnalyticsCategory.SYSTEM_PERFORMANCE,
       properties: {
         error_type: error.name,
         error_sanitized: true,
@@ -82,7 +82,7 @@ const handleRetry = async (reset: () => void, error: Error): Promise<void> => {
       },
       timestamp: Date.now(),
       userConsent: true,
-      privacyLevel: Analytics.PrivacyLevel.INTERNAL,
+      privacyLevel: PrivacyLevel.INTERNAL,
       auditInfo: {
         eventId: `error_retry_${Date.now()}`,
         timestamp: Date.now(),

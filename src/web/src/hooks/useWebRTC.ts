@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'; // v18.2.0
-import { Room, LocalTrack, RemoteParticipant, ConnectionQualityStats } from 'twilio-video'; // v2.27.0
+import { Room, LocalTrack, RemoteParticipant } from 'twilio-video'; // v2.27.0
 
 import { virtualCareApi } from '../lib/api/virtualCare';
 import {
@@ -213,7 +213,7 @@ export const useWebRTC = (
   /**
    * Retrieves current connection quality statistics
    */
-  const getConnectionStats = useCallback(async (): Promise<ConnectionQualityStats> => {
+  const getConnectionStats = useCallback(async () => {
     if (!room?.room) {
       throw new Error('Room not connected');
     }

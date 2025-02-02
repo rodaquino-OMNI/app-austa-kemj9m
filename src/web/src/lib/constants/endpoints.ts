@@ -27,6 +27,7 @@ export enum AuthEndpoints {
   REGISTER = '/auth/register',
   REFRESH_TOKEN = '/auth/refresh',
   VERIFY_TOKEN = '/auth/verify',
+  VERIFY_BIOMETRIC = '/auth/verify-biometric',
   LOGOUT = '/auth/logout',
   RESET_PASSWORD = '/auth/reset-password',
   VERIFY_EMAIL = '/auth/verify-email'

@@ -3,7 +3,7 @@
 import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Grid, Container, Typography, ThemeProvider } from '@mui/material';
-import { Analytics } from '@vercel/analytics';
+import Analytics from '@vercel/analytics';
 
 // Internal imports
 import Header from '../components/layout/Header';
@@ -121,8 +121,8 @@ const HomePage = () => {
                     refreshInterval={REFRESH_INTERVAL}
                     showHistory={true}
                     encryptionKey={user?.securitySettings?.lastLoginAt.toString() || ''}
-                    accessLevel="read"
-                    theme="light"
+                    accessLevel={AccessLevel.READ}
+                    theme={ThemePreference.LIGHT}
                   />
                 </Suspense>
               </Grid>

@@ -107,6 +107,20 @@ export const ADMIN_ROUTES = {
 } as const;
 
 /**
+ * Emergency related route constants
+ * Emergency services and urgent care navigation paths
+ */
+export const EMERGENCY_ROUTES = {
+  HOME: '/emergency',
+  URGENT_CARE: '/emergency/urgent-care',
+  SOS: '/emergency/sos',
+  NEARBY_FACILITIES: '/emergency/nearby-facilities',
+  EMERGENCY_CONTACTS: '/emergency/contacts',
+  EMERGENCY_INSTRUCTIONS: '/emergency/instructions',
+  EMERGENCY_HISTORY: '/emergency/history'
+} as const;
+
+/**
  * Error handling route constants
  * System errors and maintenance pages
  */
@@ -142,4 +156,5 @@ export type HealthRecordsRoutes = ReadonlyRoutes<typeof HEALTH_RECORDS_ROUTES>;
 export type ClaimsRoutes = ReadonlyRoutes<typeof CLAIMS_ROUTES>;
 export type MarketplaceRoutes = ReadonlyRoutes<typeof MARKETPLACE_ROUTES>;
 export type AdminRoutes = ReadonlyRoutes<typeof ADMIN_ROUTES>;
+export type EmergencyRoutes = ReadonlyRoutes<typeof EMERGENCY_ROUTES>;
 export type ErrorRoutes = ReadonlyRoutes<typeof ERROR_ROUTES>;
