@@ -1,11 +1,13 @@
-import React from 'react'; // ^18.2.0
-import styled from '@emotion/styled'; // ^11.11.0
-import { Alert, Button, Typography, Box, Theme } from '@mui/material'; // ^5.0.0
-import { Analytics, PrivacyLevel, AnalyticsCategory } from '../../lib/utils/analytics';
+import React from 'react';
+import styled from '@emotion/styled';
+import { ThemeProvider } from '@emotion/react';
+import { Alert, Button, Typography, Box } from '@mui/material';
+import { Analytics } from '../../lib/utils/analytics';
 import Loader from './Loader';
+import { theme } from '../../styles/theme';
 
 // Styled components for error UI
-const ErrorContainer = styled(Box)<{ theme: Theme }>`
+const ErrorContainer = styled(Box)`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -16,7 +18,7 @@ const ErrorContainer = styled(Box)<{ theme: Theme }>`
   width: 100%;
 `;
 
-const ErrorMessage = styled(Typography)<{ theme: Theme }>`
+const ErrorMessage = styled(Typography)`
   margin: ${({ theme }) => theme.spacing(2, 0)};
 `;
 
@@ -24,7 +26,7 @@ const ErrorMessage = styled(Typography)<{ theme: Theme }>`
 interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
-  onError?: (error: Error, errorInfo: React.ErrorInfo, context: Record<string, unknown>) => void;
+  onError?: (error: Error, errorInfo: React.ErrorInfo, context: Analytics.ErrorContext) => void;
   retryAttempts?: number;
   recoveryInterval?: number;
 }
@@ -65,7 +67,6 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    // Collect error context
     this.errorContext = {
       componentStack: errorInfo.componentStack,
       timestamp: Date.now(),
@@ -74,25 +75,20 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       retryCount: this.state.retryCount,
     };
 
-    // Update state with error info
     this.setState({
       errorInfo,
     });
 
-    // Track error with sanitized data
     Analytics.trackError(error, this.errorContext).catch(console.error);
 
-    // Call optional error handler
     if (this.props.onError) {
       this.props.onError(error, errorInfo, this.errorContext);
     }
 
-    // Attempt recovery if retries are available
     if (this.state.retryCount < (this.props.retryAttempts || 3)) {
       this.attemptRecovery();
     }
 
-    // Log sanitized error in development
     if (process.env.NODE_ENV === 'development') {
       console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
@@ -122,10 +118,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         }));
       }, recoveryInterval);
 
-      // Track recovery attempt
       Analytics.trackEvent({
         name: 'error_recovery_attempt',
-        category: AnalyticsCategory.SYSTEM_PERFORMANCE,
+        category: Analytics.AnalyticsCategory.SYSTEM_PERFORMANCE,
         properties: {
           retryCount: retryCount + 1,
           maxRetries: retryAttempts,
@@ -133,7 +128,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: PrivacyLevel.INTERNAL,
+        privacyLevel: Analytics.PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: `recovery_${Date.now()}`,
           timestamp: Date.now(),
@@ -149,51 +144,47 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     const { hasError, error, isRecovering } = this.state;
     const { children, fallback } = this.props;
 
-    if (isRecovering) {
-      return (
-        <ErrorContainer>
-          <Loader 
-            size="medium"
-            color="primary"
-            ariaLabel="Attempting to recover from error"
-          />
-          <ErrorMessage variant="body1">
-            Attempting to recover...
-          </ErrorMessage>
-        </ErrorContainer>
-      );
-    }
-
-    if (hasError) {
-      if (fallback) {
-        return fallback;
-      }
-
-      return (
-        <ErrorContainer role="alert" aria-live="polite">
-          <Alert 
-            severity="error"
-            sx={{ mb: 2 }}
-            aria-atomic="true"
-          >
-            {error?.message || 'An unexpected error occurred'}
-          </Alert>
-          <ErrorMessage variant="body1">
-            We apologize for the inconvenience. Please try again or contact support if the problem persists.
-          </ErrorMessage>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => window.location.reload()}
-            aria-label="Reload page"
-          >
-            Reload Page
-          </Button>
-        </ErrorContainer>
-      );
-    }
-
-    return children;
+    return (
+      <ThemeProvider theme={theme}>
+        {isRecovering ? (
+          <ErrorContainer>
+            <Loader 
+              size="medium"
+              color="primary"
+              ariaLabel="Attempting to recover from error"
+            />
+            <ErrorMessage variant="body1">
+              Attempting to recover...
+            </ErrorMessage>
+          </ErrorContainer>
+        ) : hasError ? (
+          fallback || (
+            <ErrorContainer role="alert" aria-live="polite">
+              <Alert 
+                severity="error"
+                sx={{ mb: 2 }}
+                aria-atomic="true"
+              >
+                {error?.message || 'An unexpected error occurred'}
+              </Alert>
+              <ErrorMessage variant="body1">
+                We apologize for the inconvenience. Please try again or contact support if the problem persists.
+              </ErrorMessage>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => window.location.reload()}
+                aria-label="Reload page"
+              >
+                Reload Page
+              </Button>
+            </ErrorContainer>
+          )
+        ) : (
+          children
+        )}
+      </ThemeProvider>
+    );
   }
 }
 
