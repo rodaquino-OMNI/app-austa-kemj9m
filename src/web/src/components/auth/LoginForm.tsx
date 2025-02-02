@@ -10,7 +10,7 @@ import styled from '@emotion/styled';
 import { Button, TextField, CircularProgress, Alert, FormControlLabel, Checkbox } from '@mui/material';
 import { useAuditLog } from '@healthcare/audit-logger';
 
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 import { ILoginCredentials, AuthState, MFAMethod } from '../../lib/types/auth';
 
 // Styled components with enhanced accessibility
@@ -100,17 +100,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
     };
 
     generateDeviceId().then(id => {
-      const metadata: Record<string, string> = {
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString(),
-        securityLevel: securityLevel.toString(),
-        emergencyAccess: emergencyAccess.toString()
-      };
-
       setFormData(prev => ({
         ...prev,
         deviceId: id,
-        clientMetadata: metadata
+        clientMetadata: {
+          userAgent: navigator.userAgent,
+          timestamp: new Date().toISOString(),
+          securityLevel,
+          emergencyAccess
+        }
       }));
     });
   }, [securityLevel, emergencyAccess]);
@@ -175,17 +173,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
       onSuccess(response);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
-      
       auditLog.error('Login failed', {
         userId: formData.email,
-        error: errorMessage,
+        error: error.message,
         securityLevel
       });
 
       setErrors(prev => ({
         ...prev,
-        general: errorMessage
+        general: error.message
       }));
 
       onError?.(error);
@@ -208,10 +204,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
         onSuccess(mfaResult.tokens);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'MFA verification failed';
       setErrors(prev => ({
         ...prev,
-        mfa: errorMessage
+        mfa: error.message
       }));
     }
   };
