@@ -6,13 +6,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TextField, IconButton, Paper, Typography, CircularProgress } from '@mui/material';
-import { SendIcon, AttachFileIcon, SecurityIcon } from '@mui/icons-material';
+import { Send, AttachFile, Security } from '@mui/icons-material';
 import { useAuditLog } from '@healthcare/audit-logger'; // v1.2.0
 
 import { IConsultation, IConsultationParticipant, isSecureRoom } from '../../lib/types/consultation';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import { virtualCareApi } from '../../lib/api/virtualCare';
-import { VirtualCareEndpoints, processEndpointParams } from '../../lib/constants/endpoints';
+import { VirtualCareEndpoints } from '../../lib/constants/endpoints';
 
 // Message status enum for tracking delivery and encryption status
 enum MessageStatus {
@@ -202,7 +202,7 @@ const Chat: React.FC<IChatProps> = ({
 
       // Send encrypted message
       await virtualCareApi.sendChatMessage(
-        processEndpointParams(VirtualCareEndpoints.SEND_CHAT_MESSAGE, { id: consultation.id }),
+        VirtualCareEndpoints.SEND_CHAT_MESSAGE,
         {
           consultationId: consultation.id,
           message: secureMessage,
@@ -244,7 +244,7 @@ const Chat: React.FC<IChatProps> = ({
     <Paper className={className} elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Security status header */}
       <Paper elevation={1} sx={{ p: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <SecurityIcon color={isEncrypted ? 'success' : 'error'} />
+        <Security color={isEncrypted ? 'success' : 'error'} />
         <Typography variant="body2">
           {isEncrypted ? 'End-to-end encrypted' : 'Establishing secure connection...'}
         </Typography>
@@ -304,7 +304,7 @@ const Chat: React.FC<IChatProps> = ({
           onClick={() => fileInputRef.current?.click()}
           disabled={!isEncrypted || isSending}
         >
-          <AttachFileIcon />
+          <AttachFile />
         </IconButton>
         <TextField
           fullWidth
@@ -319,7 +319,7 @@ const Chat: React.FC<IChatProps> = ({
           onClick={handleSendMessage}
           disabled={!isEncrypted || isSending || (!newMessage.trim() && !attachments.length)}
         >
-          {isSending ? <CircularProgress size={24} /> : <SendIcon />}
+          {isSending ? <CircularProgress size={24} /> : <Send />}
         </IconButton>
       </Paper>
     </Paper>
