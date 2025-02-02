@@ -9,7 +9,7 @@ import * as Sentry from '@sentry/browser'; // v7.0.0
 import i18next from 'i18next'; // v23.0.0
 
 // Internal imports
-import { ErrorCategory, ErrorCode } from '../../../backend/shared/constants/error-codes';
+import { ErrorCategory, ErrorCode } from '../../backend/shared/constants/error-codes';
 
 /**
  * HTTP status codes used in API responses
@@ -146,7 +146,7 @@ export const ErrorTracker = {
    * @param error - Error object to track
    * @param context - Additional context for the error
    */
-  captureError: (error: Error, context?: Record<string, any>): void => {
+  captureError: (error: Error, context?: Sentry.Context): void => {
     const errorCode = (error as any).code as ErrorCode;
     const errorInfo = errorCode ? ErrorMessage[errorCode] : null;
 
@@ -158,7 +158,7 @@ export const ErrorTracker = {
           httpStatus: errorInfo.httpStatus
         },
         contexts: {
-          error: context
+          error: context || {}
         }
       });
     }
