@@ -23,25 +23,23 @@ Cypress.on('window:before:load', (win) => {
     originalError.apply(win.console, args);
     Cypress.log({
       name: 'Console Error',
-      message: args.join(' ')
+      message: args.join(' '),
+      level: 'error'
     });
   };
 });
 
 // Enhanced global configuration
-Cypress.config({
-  defaultCommandTimeout: 10000,
-  requestTimeout: 10000,
-  responseTimeout: 30000,
-  pageLoadTimeout: 30000,
-  viewportWidth: 1280,
-  viewportHeight: 720,
-  chromeWebSecurity: true,
-  video: true,
-  retries: {
-    runMode: 2,
-    openMode: 0
-  }
+Cypress.config('defaultCommandTimeout', 10000);
+Cypress.config('requestTimeout', 10000);
+Cypress.config('responseTimeout', 30000);
+Cypress.config('pageLoadTimeout', 30000);
+Cypress.config('viewportWidth', 1280);
+Cypress.config('viewportHeight', 720);
+Cypress.config('video', true);
+Cypress.config('retries', {
+  runMode: 2,
+  openMode: 0
 });
 
 // Enhanced beforeEach hook with security and performance validation
@@ -86,8 +84,7 @@ beforeEach(() => {
 // Enhanced afterEach hook with comprehensive validation
 afterEach(() => {
   // Validate accessibility compliance
-  cy.checkA11y({
-    includedImpacts: ['critical', 'serious'],
+  cy.checkA11y(null, {
     rules: {
       'color-contrast': { enabled: true },
       'html-has-lang': { enabled: true },
@@ -95,16 +92,14 @@ afterEach(() => {
     }
   });
 
-  // Verify security headers through request
-  cy.request('/')
-    .its('headers')
-    .should('include', {
-      'strict-transport-security': 'max-age=31536000; includeSubDomains',
-      'x-content-type-options': 'nosniff',
-      'x-frame-options': 'DENY',
-      'x-xss-protection': '1; mode=block',
-      'content-security-policy': "default-src 'self'"
-    });
+  // Verify security headers
+  cy.verifySecurityHeaders({
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Content-Security-Policy': "default-src 'self'"
+  });
 
   // Check performance metrics
   cy.window().then((win) => {
@@ -118,8 +113,8 @@ afterEach(() => {
     expect(testDuration).to.be.lessThan(500, 'Test execution time exceeds SLA threshold');
   });
 
-  // Validate HIPAA compliance through task
-  cy.task('validateHIPAACompliance');
+  // Validate HIPAA compliance
+  cy.validateHIPAACompliance();
 
   // Generate security test report
   cy.task('generateSecurityReport');
