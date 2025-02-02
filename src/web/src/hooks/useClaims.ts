@@ -166,17 +166,11 @@ export const useClaims = (options: ClaimsOptions = {}) => {
 
       const { claims, total } = await response.json();
 
-      // Create a proper IClaim object for validation
-      const claimData: IClaim = {
-        ...claims[0],
-        documents: claims.flatMap(claim => claim.documents || [])
-      };
-
       setState(prev => ({
         ...prev,
         claims,
         totalClaims: total,
-        complianceStatus: validateCompliance(claimData)
+        complianceStatus: validateCompliance({ documents: claims.flatMap((claim: IClaim) => claim.documents || []) })
       }));
 
       await auditLogger.log('CLAIMS_RETRIEVAL_SUCCESSFUL', {
