@@ -166,11 +166,20 @@ export const useClaims = (options: ClaimsOptions = {}) => {
 
       const { claims, total } = await response.json();
 
+      // Fixed: Properly validate compliance for retrieved claims
+      const complianceStatus = claims.reduce((status: { isCompliant: boolean, violations: string[] }, claim: IClaim) => {
+        const claimCompliance = validateCompliance(claim);
+        return {
+          isCompliant: status.isCompliant && claimCompliance.isCompliant,
+          violations: [...status.violations, ...claimCompliance.violations]
+        };
+      }, { isCompliant: true, violations: [] });
+
       setState(prev => ({
         ...prev,
         claims,
         totalClaims: total,
-        complianceStatus: validateCompliance({ documents: claims.flatMap((claim: IClaim) => claim.documents || []) })
+        complianceStatus
       }));
 
       await auditLogger.log('CLAIMS_RETRIEVAL_SUCCESSFUL', {
