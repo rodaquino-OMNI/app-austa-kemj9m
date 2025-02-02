@@ -6,6 +6,9 @@
 
 import { IUser, UserRole, UserStatus } from './user';
 
+// Re-export types from user.ts
+export { IUser, UserRole, UserStatus };
+
 /**
  * Enum defining all possible authentication states
  * Includes comprehensive security and verification states
@@ -64,19 +67,6 @@ export interface IMFACredentials {
     method: MFAMethod;
     verificationId: string;
     timestamp: number;
-}
-
-/**
- * Interface for MFA setup configuration
- * Implements secure MFA enrollment process
- */
-export interface IMFASetup {
-    method: MFAMethod;
-    secret?: string;
-    qrCode?: string;
-    verificationStatus: boolean;
-    setupDate: number;
-    backupCodes?: string[];
 }
 
 /**
@@ -164,20 +154,6 @@ export interface IOAuthProviderConfig {
     tokenEndpoint: string;
     userInfoEndpoint: string;
     logoutEndpoint: string;
-}
-
-/**
- * Interface for security event logging
- * Implements comprehensive security audit tracking
- */
-export interface ISecurityEvent {
-    eventType: string;
-    timestamp: number;
-    userId: string;
-    sessionId: string;
-    metadata: Record<string, any>;
-    severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-    outcome: 'SUCCESS' | 'FAILURE' | 'ERROR';
 }
 
 /**
