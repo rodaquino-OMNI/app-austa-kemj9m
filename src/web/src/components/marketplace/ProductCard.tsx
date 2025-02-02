@@ -1,9 +1,9 @@
 import React, { useCallback, useRef, useState, memo } from 'react';
 import styled from '@emotion/styled';
 import Image from 'next/image';
-import { Theme } from '@mui/material';
 import { Product, ProductCategory } from '../../lib/types/product';
 import { Card } from '../../styles/components';
+import { Theme } from '@mui/material';
 
 // Constants
 const MAX_DESCRIPTION_LENGTH = 150;
@@ -19,7 +19,7 @@ interface ProductCardProps {
 }
 
 // Styled Components
-const StyledCard = styled(Card)<{ isHovered: boolean; clinicalMode: boolean }>`
+const StyledCard = styled(Card)<{ isHovered: boolean; clinicalMode: boolean; theme: Theme }>`
   position: relative;
   width: 100%;
   max-width: 360px;
@@ -49,7 +49,7 @@ const ContentContainer = styled.div`
   padding: 16px;
 `;
 
-const Title = styled.h3`
+const Title = styled.h3<{ theme: Theme }>`
   margin: 0 0 8px 0;
   font-size: 1.125rem;
   font-weight: 600;
@@ -57,7 +57,7 @@ const Title = styled.h3`
   min-height: 44px;
 `;
 
-const Description = styled.p`
+const Description = styled.p<{ theme: Theme }>`
   margin: 0 0 16px 0;
   font-size: 0.875rem;
   color: ${({ theme }) => theme.palette.text.secondary};
@@ -71,7 +71,7 @@ const PriceContainer = styled.div`
   min-height: ${MIN_TOUCH_TARGET_SIZE}px;
 `;
 
-const Price = styled.span<{ insuranceCovered: boolean }>`
+const Price = styled.span<{ insuranceCovered: boolean; theme: Theme }>`
   font-size: 1.25rem;
   font-weight: 600;
   color: ${({ theme, insuranceCovered }) => 
@@ -87,7 +87,7 @@ const BadgeContainer = styled.div`
   z-index: 1;
 `;
 
-const Badge = styled.span`
+const Badge = styled.span<{ theme: Theme }>`
   padding: 4px 8px;
   border-radius: 4px;
   background-color: ${({ theme }) => theme.palette.primary.main};
@@ -96,22 +96,18 @@ const Badge = styled.span`
   font-weight: 500;
 `;
 
-// Helper Functions
-const formatPrice = memo((price: number, insuranceCovered: boolean): string => {
-  const formattedPrice = new Intl.NumberFormat('en-US', {
+const formatPrice = (price: number): string => {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
   }).format(price / 100);
+};
 
-  return insuranceCovered ? `${formattedPrice} (Covered)` : formattedPrice;
-});
+const truncateText = (text: string): string => {
+  if (text.length <= MAX_DESCRIPTION_LENGTH) return text;
+  return `${text.substring(0, MAX_DESCRIPTION_LENGTH - 3)}...`;
+};
 
-const truncateText = memo((text: string, maxLength: number): string => {
-  if (text.length <= maxLength) return text;
-  return `${text.substring(0, maxLength - 3)}...`;
-});
-
-// Main Component
 const ProductCard: React.FC<ProductCardProps> = memo(({ 
   product, 
   onClick, 
@@ -138,29 +134,16 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
     setImageError(true);
   }, []);
 
-  const getCategoryBadgeColor = useCallback((category: ProductCategory) => {
-    switch (category) {
-      case ProductCategory.DIGITAL_THERAPY:
-        return 'primary';
-      case ProductCategory.WELLNESS_PROGRAM:
-        return 'secondary';
-      case ProductCategory.PROVIDER_SERVICE:
-        return 'clinical';
-      default:
-        return 'primary';
-    }
-  }, []);
-
   return (
     <StyledCard
-      elevation={isHovered ? 'elevated' : 'clinical'}
+      elevation="clinical"
       clinicalMode={clinicalMode}
       isHovered={isHovered}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
       role="article"
-      aria-label={`${product.name} - ${formatPrice(product.price, product.insuranceCovered)}`}
+      aria-label={`${product.name} - ${formatPrice(product.price)}`}
     >
       <ImageContainer>
         <Image
@@ -187,14 +170,14 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
           {product.name}
         </Title>
         <Description aria-label={product.description}>
-          {truncateText(product.description, MAX_DESCRIPTION_LENGTH)}
+          {truncateText(product.description)}
         </Description>
         <PriceContainer>
           <Price 
             insuranceCovered={product.insuranceCovered}
-            aria-label={`Price: ${formatPrice(product.price, product.insuranceCovered)}`}
+            aria-label={`Price: ${formatPrice(product.price)}`}
           >
-            {formatPrice(product.price, product.insuranceCovered)}
+            {formatPrice(product.price)}
           </Price>
         </PriceContainer>
       </ContentContainer>
