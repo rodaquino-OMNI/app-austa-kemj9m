@@ -28,6 +28,7 @@ import HealthMetrics from '../../../components/dashboard/HealthMetrics';
 import { useAnalytics } from '../../../hooks/useAnalytics';
 import { UserRole } from '../../../lib/types/user';
 import { SecurityClassification } from '../../../lib/types/healthRecord';
+import { AnalyticsCategory, PrivacyLevel } from '../../../lib/utils/analytics';
 
 // Constants
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -128,9 +129,7 @@ MetricCard.displayName = 'MetricCard';
 
 // Admin Dashboard Page Component
 const AdminDashboardPage = () => {
-  const [metrics, setMetrics] = useState<{
-    [key: string]: { value: number; trend: number[]; loading: boolean; error: string | null };
-  }>({
+  const [metrics, setMetrics] = useState({
     userGrowth: { value: 0, trend: [], loading: true, error: null },
     retention: { value: 0, trend: [], loading: true, error: null },
     nps: { value: 0, trend: [], loading: true, error: null },
@@ -171,13 +170,13 @@ const AdminDashboardPage = () => {
       // Log successful metrics update
       logEvent({
         name: 'metrics_updated',
-        category: AnalyticsCategory.USER_INTERACTION,
+        category: AnalyticsCategory.SYSTEM_PERFORMANCE,
         properties: {
           metrics: Object.keys(newMetrics)
         },
         timestamp: Date.now(),
         userConsent: true,
-        privacyLevel: PrivacyLevel.PUBLIC,
+        privacyLevel: PrivacyLevel.INTERNAL,
         auditInfo: {
           eventId: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -191,7 +190,7 @@ const AdminDashboardPage = () => {
       logError(error as Error, {
         component: 'AdminDashboard',
         action: 'fetchMetrics'
-      }, PrivacyLevel.PUBLIC);
+      }, PrivacyLevel.INTERNAL);
 
       setMetrics(prev => ({
         ...prev,
@@ -227,7 +226,7 @@ const AdminDashboardPage = () => {
           logError(error, {
             component: 'AdminDashboard',
             severity: 'HIGH'
-          }, PrivacyLevel.PUBLIC);
+          }, PrivacyLevel.INTERNAL);
         }}
       >
         <Grid container spacing={3}>
@@ -316,8 +315,8 @@ const AdminDashboardPage = () => {
               refreshInterval={REFRESH_INTERVAL}
               showHistory={true}
               encryptionKey={process.env.NEXT_PUBLIC_ENCRYPTION_KEY || ''}
-              accessLevel={AccessLevel.READ}
-              theme={ThemePreference.LIGHT}
+              accessLevel="read"
+              theme="light"
             />
           </Grid>
         </Grid>
