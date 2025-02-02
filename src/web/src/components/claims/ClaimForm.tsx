@@ -189,14 +189,13 @@ const ClaimForm: React.FC<ClaimFormProps> = ({
         <Controller
           name="serviceDate"
           control={control}
-          render={({ field: { value, ...field } }) => (
+          render={({ field }) => (
             <div className="form-field">
               <label htmlFor="service-date">Service Date</label>
               <input
                 {...field}
                 type="date"
                 id="service-date"
-                value={value instanceof Date ? value.toISOString().split('T')[0] : ''}
                 max={new Date().toISOString().split('T')[0]}
                 aria-invalid={!!errors.serviceDate}
                 aria-describedby={errors.serviceDate ? "date-error" : undefined}
@@ -266,13 +265,12 @@ const ClaimForm: React.FC<ClaimFormProps> = ({
         <Controller
           name="hipaaAuthorization"
           control={control}
-          render={({ field: { value, ...field } }) => (
+          render={({ field }) => (
             <div className="form-field">
               <label className="checkbox-label">
                 <input
                   type="checkbox"
                   {...field}
-                  checked={value}
                   aria-invalid={!!errors.hipaaAuthorization}
                   aria-describedby={errors.hipaaAuthorization ? "hipaa-error" : undefined}
                 />
@@ -290,13 +288,12 @@ const ClaimForm: React.FC<ClaimFormProps> = ({
         <Controller
           name="consentAcknowledgment"
           control={control}
-          render={({ field: { value, ...field } }) => (
+          render={({ field }) => (
             <div className="form-field">
               <label className="checkbox-label">
                 <input
                   type="checkbox"
                   {...field}
-                  checked={value}
                   aria-invalid={!!errors.consentAcknowledgment}
                   aria-describedby={errors.consentAcknowledgment ? "consent-error" : undefined}
                 />
