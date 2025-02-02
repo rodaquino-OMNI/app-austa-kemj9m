@@ -1,5 +1,33 @@
 import { createTheme, Theme, ThemeOptions } from '@mui/material'; // @mui/material ^5.14.0
 
+// Extend the default theme types to include custom properties
+declare module '@mui/material/styles' {
+  interface Palette {
+    clinical: {
+      main: string;
+      light: string;
+      dark: string;
+      contrastText: string;
+    };
+  }
+  
+  interface PaletteOptions {
+    clinical?: {
+      main: string;
+      light: string;
+      dark: string;
+      contrastText: string;
+    };
+  }
+
+  interface Shape {
+    borderRadiusSmall: number;
+    borderRadiusLarge: number;
+    clinicalCard: number;
+    buttonRadius: number;
+  }
+}
+
 // Healthcare-specific color palette with WCAG 2.1 AA compliant contrast ratios
 const palette = {
   primary: {
@@ -106,7 +134,7 @@ const breakpoints = {
 };
 
 // Healthcare-optimized spacing system
-const createSpacing = (factor: number) => factor * 8;
+const spacing = (factor: number) => `${factor * 8}px`;
 
 // Medical interface shape configurations
 const shape = {
@@ -161,7 +189,6 @@ const components = {
         borderRadius: shape.buttonRadius,
         textTransform: 'none',
         fontWeight: typography.fontWeightMedium,
-        variants: [],
       },
       containedPrimary: {
         '&:hover': {
@@ -180,7 +207,6 @@ const components = {
       root: {
         borderRadius: shape.clinicalCard,
         boxShadow: shadows.clinical,
-        variants: [],
       },
     },
   },
@@ -190,7 +216,6 @@ const components = {
         '& .MuiOutlinedInput-root': {
           borderRadius: shape.borderRadiusSmall,
         },
-        variants: [],
       },
     },
   },
@@ -201,7 +226,6 @@ const components = {
         fontSize: '0.875rem',
         padding: '8px 16px',
         borderRadius: shape.borderRadiusSmall,
-        variants: [],
       },
     },
   },
@@ -212,7 +236,7 @@ const themeOptions: ThemeOptions = {
   palette,
   typography,
   breakpoints,
-  spacing: createSpacing,
+  spacing,
   shape,
   components,
   shadows: defaultShadows,
@@ -225,7 +249,6 @@ export const {
   palette: themePalette,
   typography: themeTypography,
   breakpoints: themeBreakpoints,
-  spacing: themeSpacing,
   shape: themeShape,
   components: themeComponents,
 } = theme;
