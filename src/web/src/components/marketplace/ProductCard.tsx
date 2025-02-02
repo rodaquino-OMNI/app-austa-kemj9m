@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState, memo } from 'react';
 import styled from '@emotion/styled';
 import Image from 'next/image';
+import { Theme } from '@mui/material';
 import { Product, ProductCategory } from '../../lib/types/product';
 import { Card } from '../../styles/components';
 
@@ -18,21 +19,17 @@ interface ProductCardProps {
 }
 
 // Styled Components
-const StyledCard = styled.div<{ isHovered: boolean; clinicalMode: boolean }>`
+const StyledCard = styled(Card)<{ isHovered: boolean; clinicalMode: boolean }>`
   position: relative;
   width: 100%;
   max-width: 360px;
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
   transform: ${({ isHovered }) => isHovered ? 'translateY(-4px)' : 'none'};
-  background-color: ${({ theme }) => theme.palette.background.paper};
-  border-radius: ${({ theme }) => theme.shape.borderRadius}px;
-  box-shadow: ${({ theme, isHovered }) => 
-    isHovered ? theme.shadows[4] : theme.shadows[1]};
   
   ${({ clinicalMode, theme }) => clinicalMode && `
-    border-left: 4px solid ${theme.palette.primary.main};
-    background-color: ${theme.palette.background.default};
+    border-left: 4px solid ${theme.palette.clinical.main};
+    background-color: ${theme.palette.background.clinical};
   `}
 
   @media (prefers-reduced-motion: reduce) {
@@ -100,19 +97,19 @@ const Badge = styled.span`
 `;
 
 // Helper Functions
-const formatPrice = (price: number, insuranceCovered: boolean): string => {
+const formatPrice = memo((price: number, insuranceCovered: boolean): string => {
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
   }).format(price / 100);
 
   return insuranceCovered ? `${formattedPrice} (Covered)` : formattedPrice;
-};
+});
 
-const truncateText = (text: string, maxLength: number): string => {
+const truncateText = memo((text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
   return `${text.substring(0, maxLength - 3)}...`;
-};
+});
 
 // Main Component
 const ProductCard: React.FC<ProductCardProps> = memo(({ 
@@ -141,10 +138,24 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
     setImageError(true);
   }, []);
 
+  const getCategoryBadgeColor = useCallback((category: ProductCategory) => {
+    switch (category) {
+      case ProductCategory.DIGITAL_THERAPY:
+        return 'primary';
+      case ProductCategory.WELLNESS_PROGRAM:
+        return 'secondary';
+      case ProductCategory.PROVIDER_SERVICE:
+        return 'clinical';
+      default:
+        return 'primary';
+    }
+  }, []);
+
   return (
     <StyledCard
-      isHovered={isHovered}
+      elevation={isHovered ? 'elevated' : 'clinical'}
       clinicalMode={clinicalMode}
+      isHovered={isHovered}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
