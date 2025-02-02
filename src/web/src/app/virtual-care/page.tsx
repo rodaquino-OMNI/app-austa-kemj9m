@@ -9,7 +9,8 @@ import { virtualCareApi } from '../../lib/api/virtualCare';
 import { 
   ConsultationStatus, 
   ConnectionQuality,
-  isSecureRoom 
+  isSecureRoom,
+  ConsultationType 
 } from '../../lib/types/consultation';
 
 // Security violation types for monitoring
@@ -86,17 +87,21 @@ const VirtualCarePage: React.FC = () => {
     if (!consultationId) return;
 
     try {
-      const encryptionVerified = await virtualCareApi.verifyEncryptionCapabilities({
-        algorithm: 'AES-256-GCM',
-        keySize: 256
+      const encryptionVerified = await virtualCareApi.verifyEncryption({
+        consultationId,
+        timestamp: new Date().toISOString()
       });
 
       setSecurityStatus(prev => ({
         ...prev,
-        isVerified: true,
+        isVerified: encryptionVerified,
         lastVerification: new Date(),
-        encryptionStatus: 'verified'
+        encryptionStatus: encryptionVerified ? 'verified' : 'failed'
       }));
+
+      if (!encryptionVerified) {
+        handleSecurityViolation('ENCRYPTION_FAILED');
+      }
     } catch (error) {
       console.error('Security verification failed:', error);
       handleSecurityViolation('CONNECTION_INSECURE');
@@ -112,7 +117,7 @@ const VirtualCarePage: React.FC = () => {
       const consultation = await virtualCareApi.createConsultation({
         patientId: 'current-user-id', // Should be retrieved from auth context
         providerId: 'provider-id', // Should be retrieved from route params
-        type: 'VIDEO',
+        type: ConsultationType.VIDEO,
         scheduledStartTime: new Date(),
         securityLevel: 'HIPAA',
         encryptionRequirements: {
@@ -201,7 +206,19 @@ const VirtualCarePage: React.FC = () => {
         <VideoConsultation
           consultation={{
             id: consultationId,
-            isEmergency: false // Added missing required property
+            type: ConsultationType.VIDEO,
+            patientId: 'current-user-id',
+            providerId: 'provider-id',
+            scheduledStartTime: new Date(),
+            actualStartTime: new Date(),
+            endTime: null,
+            status: ConsultationStatus.IN_PROGRESS,
+            participants: [],
+            healthRecordId: null,
+            roomSid: null,
+            metadata: {},
+            securityMetadata: {},
+            auditLog: []
           }}
           onEnd={handleConsultationEnd}
           onSecurityViolation={handleSecurityViolation}
