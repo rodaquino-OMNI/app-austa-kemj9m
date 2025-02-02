@@ -1,19 +1,5 @@
 import { createTheme, Theme, ThemeOptions } from '@mui/material'; // @mui/material ^5.14.0
 
-// Extend the Material UI theme types to include custom properties
-declare module '@mui/material/styles' {
-  interface Palette {
-    clinical: Palette['primary'];
-  }
-  interface PaletteOptions {
-    clinical?: PaletteOptions['primary'];
-  }
-  interface TypeBackground {
-    clinical: string;
-    elevated: string;
-  }
-}
-
 // Healthcare-specific color palette with WCAG 2.1 AA compliant contrast ratios
 const palette = {
   primary: {
@@ -120,7 +106,7 @@ const breakpoints = {
 };
 
 // Healthcare-optimized spacing system
-const spacingValues = {
+const spacing = {
   unit: 8,
   xs: 4,
   sm: 8,
@@ -151,61 +137,64 @@ const shadows = {
 const components = {
   MuiButton: {
     styleOverrides: {
-      root: ({ theme }) => ({
+      root: {
         borderRadius: shape.buttonRadius,
         textTransform: 'none',
         fontWeight: typography.fontWeightMedium,
-      }),
-      containedPrimary: ({ theme }) => ({
+      },
+      containedPrimary: {
         '&:hover': {
           backgroundColor: palette.primary.dark,
         },
-      }),
-      containedSecondary: ({ theme }) => ({
+      },
+      containedSecondary: {
         '&:hover': {
           backgroundColor: palette.secondary.dark,
         },
-      }),
+      },
     },
   },
   MuiCard: {
     styleOverrides: {
-      root: ({ theme }) => ({
+      root: {
         borderRadius: shape.clinicalCard,
         boxShadow: shadows.clinical,
-      }),
+      },
     },
   },
   MuiTextField: {
     styleOverrides: {
-      root: ({ theme }) => ({
+      root: {
         '& .MuiOutlinedInput-root': {
           borderRadius: shape.borderRadiusSmall,
         },
-      }),
+      },
     },
   },
   MuiTooltip: {
     styleOverrides: {
-      tooltip: ({ theme }) => ({
+      tooltip: {
         backgroundColor: palette.text.primary,
         fontSize: '0.875rem',
         padding: '8px 16px',
         borderRadius: shape.borderRadiusSmall,
-      }),
+      },
     },
   },
 };
+
+// Create a fixed-length array for shadows
+const defaultShadows = Array(25).fill(shadows.clinical) as [string, ...string[]];
 
 // Create the theme with all configurations
 const themeOptions: ThemeOptions = {
   palette,
   typography,
   breakpoints,
-  spacing: (factor: number) => `${factor * spacingValues.unit}px`,
+  spacing,
   shape,
   components,
-  shadows: [...Array(25)].map(() => shadows.clinical), // Override default Material shadows
+  shadows: defaultShadows,
 };
 
 export const theme: Theme = createTheme(themeOptions);
