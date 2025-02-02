@@ -10,9 +10,9 @@ import {
   HEALTH_RECORDS_ROUTES,
   CLAIMS_ROUTES,
   MARKETPLACE_ROUTES,
-  ERROR_ROUTES 
+  EMERGENCY_ROUTES 
 } from '../../lib/constants/routes';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 
 // Constants
 const MOBILE_BREAKPOINT = 768;
@@ -131,7 +131,7 @@ const Header: React.FC<HeaderProps> = ({
   clinicalEnvironment = 'STANDARD'
 }) => {
   const router = useRouter();
-  const { user, logout, sessionTimeout } = useAuth();
+  const { user, secureLogout, sessionTimeout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Handle scroll transparency
@@ -147,12 +147,12 @@ const Header: React.FC<HeaderProps> = ({
   // Handle secure logout with audit logging
   const handleSecureLogout = useCallback(async () => {
     try {
-      await logout();
+      await secureLogout();
       router.push(AUTH_ROUTES.LOGIN);
     } catch (error) {
       console.error('Logout failed:', error);
     }
-  }, [logout, router]);
+  }, [secureLogout, router]);
 
   // Handle emergency navigation with priority
   const handleEmergencyNavigation = useCallback((route: string, priority: EmergencyPriority) => {
@@ -222,7 +222,7 @@ const Header: React.FC<HeaderProps> = ({
       <UserSection>
         {emergencyMode && (
           <EmergencyButton
-            onClick={() => handleEmergencyNavigation(ERROR_ROUTES.SERVER_ERROR, 'HIGH')}
+            onClick={() => handleEmergencyNavigation(EMERGENCY_ROUTES.TRIAGE, 'HIGH')}
             aria-label="Emergency access"
           >
             Emergency Mode
