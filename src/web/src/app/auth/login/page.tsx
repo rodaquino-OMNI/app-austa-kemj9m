@@ -13,7 +13,7 @@ import styled from '@emotion/styled'; // v11.11.0
 
 import LoginForm from '../../../components/auth/LoginForm';
 import BiometricAuth from '../../../components/auth/BiometricAuth';
-import useAuth from '../../../hooks/useAuth';
+import { useAuth } from '../../../hooks/useAuth';
 import { AuthState } from '../../../lib/types/auth';
 
 // Styled components with healthcare optimizations
@@ -72,7 +72,8 @@ const LoginPage: React.FC = () => {
     state: authState,
     isLoading,
     error,
-    login: handleLogin
+    login: handleLogin,
+    verifyBiometric
   } = useAuth();
 
   // State management
