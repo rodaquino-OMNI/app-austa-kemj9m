@@ -1,8 +1,9 @@
+'use client';
+
 import React, { useCallback } from 'react';
 import { useRouter } from 'next/navigation'; // v13.0.0
 import toast from 'react-hot-toast'; // v2.4.0
 import { useErrorBoundary } from 'react-error-boundary'; // v4.0.0
-import { useSecureUpload } from '@austa/secure-upload'; // v1.0.0
 
 // Internal imports
 import ClaimForm from '../../../components/claims/ClaimForm';
@@ -17,7 +18,6 @@ import { ErrorCode, ErrorTracker } from '../../../lib/constants/errorCodes';
 const ClaimsSubmitPage: React.FC = () => {
   const router = useRouter();
   const { showBoundary } = useErrorBoundary();
-  const { secureUpload } = useSecureUpload();
 
   // Initialize claims management hook with strict compliance
   const {
