@@ -17,20 +17,20 @@ import { theme } from '../../styles/theme';
 const FilterContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing(2)}px;
-  padding: ${theme.spacing(3)}px;
+  gap: ${theme.spacing.md}px;
+  padding: ${theme.spacing.lg}px;
   background-color: ${theme.palette.background.paper};
   border-radius: ${theme.shape.borderRadius}px;
-  box-shadow: ${theme.shadows[0]};
+  box-shadow: ${theme.shadows.clinical};
 
   @media (max-width: ${theme.breakpoints.values.sm}px) {
-    padding: ${theme.spacing(1)}px;
+    padding: ${theme.spacing.sm}px;
   }
 `;
 
 const FilterRow = styled.div`
   display: flex;
-  gap: ${theme.spacing(2)}px;
+  gap: ${theme.spacing.md}px;
   align-items: center;
   flex-wrap: wrap;
   min-height: 48px;
@@ -43,7 +43,7 @@ const FilterRow = styled.div`
 
 const PriceRangeContainer = styled.div`
   display: flex;
-  gap: ${theme.spacing(1)}px;
+  gap: ${theme.spacing.sm}px;
   align-items: center;
 
   @media (max-width: ${theme.breakpoints.values.sm}px) {
@@ -62,8 +62,8 @@ export interface FilterState {
   search?: string;
   categories?: ProductCategory[];
   priceRange?: {
-    min: number | undefined;
-    max: number | undefined;
+    min: number;
+    max: number;
   };
   sortBy?: ProductSortOption;
 }
@@ -129,10 +129,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
   // Category selection handler
   const handleCategoryChange = useCallback(
-    (selectedValues: string[], validationResult: { isValid: boolean }) => {
+    (value: string | string[], validationResult: { isValid: boolean }) => {
       if (!validationResult.isValid) return;
 
-      const categories = selectedValues.map(value => value as ProductCategory);
+      const categories = (Array.isArray(value) ? value : [value]) as ProductCategory[];
       setFilters(prev => {
         const newFilters = { ...prev, categories };
         onFilterChange(newFilters);
@@ -157,8 +157,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
       setFilters(prev => {
         const newPriceRange = {
-          ...prev.priceRange,
-          [field]: numValue || undefined,
+          min: field === 'min' ? numValue : (prev.priceRange?.min || 0),
+          max: field === 'max' ? numValue : (prev.priceRange?.max || 0)
         };
         const newFilters = { ...prev, priceRange: newPriceRange };
         onFilterChange(newFilters);
@@ -175,8 +175,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
   // Sort option handler
   const handleSortChange = useCallback(
-    (value: string, validationResult: { isValid: boolean }) => {
-      if (!validationResult.isValid) return;
+    (value: string | string[], validationResult: { isValid: boolean }) => {
+      if (!validationResult.isValid || Array.isArray(value)) return;
 
       const sortBy = value as ProductSortOption;
       setFilters(prev => {
