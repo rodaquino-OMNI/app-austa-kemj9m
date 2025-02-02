@@ -4,10 +4,7 @@
  * @license HIPAA-compliant
  */
 
-import { IUser, UserRole, UserStatus } from './user';
-
-// Re-export types from user.ts
-export { IUser, UserRole, UserStatus };
+import type { IUser, UserRole, UserStatus } from './user';
 
 /**
  * Enum defining all possible authentication states
