@@ -7,12 +7,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react'; // v18.0.0
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser'; // v7.0.0
-import { MdFingerprint, MdFace, MdError, MdCheckCircle } from 'react-icons/md'; // Fixed import
-import { Button, CircularProgress, Alert } from '@material/web/components'; // v1.0.0
-import { SecurityLogger } from '@logger/security'; // v2.0.0
+import { MdFingerprint, MdFace, MdError, MdCheckCircle } from 'react-icons/md';
+import { Button, CircularProgress, Alert } from '@material/web/components';
+import { SecurityLogger } from '@logger/security';
 
-import { useAuth, useSecurityContext } from '../../hooks/useAuth'; // Fixed named imports
-
+import useAuth from '../../hooks/useAuth';
 import { AuthState } from '../../lib/types/auth';
 
 // Security and clinical environment constants
@@ -79,7 +78,6 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
 
   // Hooks
   const { state: authState, verifyBiometric } = useAuth();
-  const securityContext = useSecurityContext();
 
   // Security logger instance
   const securityLogger = new SecurityLogger({
@@ -114,12 +112,13 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
         setIsAvailable(isSupported);
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setError({
         code: 'BIOMETRIC_UNAVAILABLE',
-        message: error.message,
+        message: errorMessage,
         timestamp: Date.now()
       });
-      securityLogger.error('Biometric availability check failed', { error });
+      securityLogger.error('Biometric availability check failed', { error: errorMessage });
     }
   }, [clinicalMode, deviceType]);
 
@@ -136,11 +135,12 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
       }
 
       // Clinical environment checks
+      let clinicalContext: ClinicalContext | undefined;
       if (clinicalMode) {
-        const clinicalContext: ClinicalContext = {
+        clinicalContext = {
           deviceType: deviceType || 'unknown',
-          locationId: securityContext.locationId,
-          workstationId: securityContext.workstationId,
+          locationId: 'default',
+          workstationId: 'default',
           emergencyAccess: false
         };
 
@@ -149,6 +149,7 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
 
       // Start biometric authentication
       const authOptions = {
+        challenge: new Uint8Array(32),
         timeout: BIOMETRIC_TIMEOUT,
         userVerification: 'required' as UserVerificationRequirement,
         attestation: clinicalMode ? 'direct' : 'none'
@@ -168,12 +169,7 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
           verified: true,
           deviceId: deviceFingerprint,
           timestamp: Date.now(),
-          clinicalContext: clinicalMode ? {
-            deviceType: deviceType || 'unknown',
-            locationId: securityContext.locationId,
-            workstationId: securityContext.workstationId,
-            emergencyAccess: false
-          } : undefined
+          clinicalContext
         };
 
         securityLogger.info('Biometric authentication successful', {
@@ -187,9 +183,9 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
       setAttemptCount(prev => prev + 1);
       
       const biometricError: BiometricError = {
-        code: error.code || 'BIOMETRIC_ERROR',
-        message: error.message,
-        details: error.details,
+        code: error instanceof Error ? error.code || 'BIOMETRIC_ERROR' : 'BIOMETRIC_ERROR',
+        message: error instanceof Error ? error.message : 'Authentication failed',
+        details: error instanceof Error ? error.details : undefined,
         timestamp: Date.now()
       };
 
@@ -216,7 +212,7 @@ const BiometricAuth: React.FC<BiometricAuthProps> = ({
       
       const emergencyContext: EmergencyContext = {
         reason: 'EMERGENCY_ACCESS',
-        authorizedBy: securityContext.userId,
+        authorizedBy: 'default',
         timestamp: Date.now()
       };
 
