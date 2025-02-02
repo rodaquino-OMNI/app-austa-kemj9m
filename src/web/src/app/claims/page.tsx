@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { audit } from '@hipaa-audit/logging'; // v2.0.0
 
 // Internal imports
 import ClaimsList from '@/components/claims/ClaimsList';
@@ -17,22 +16,22 @@ import { Analytics } from '@/lib/utils/analytics';
 const ClaimsPageContainer = styled.main`
   display: grid;
   grid-template-columns: 1fr;
-  gap: ${theme.spacing.lg}px;
-  padding: ${theme.spacing.lg}px;
+  gap: ${theme.spacing(3)}px;
+  padding: ${theme.spacing(3)}px;
   max-width: 1440px;
   margin: 0 auto;
   min-height: 100vh;
 
   @media (max-width: ${theme.breakpoints.values.sm}px) {
-    padding: ${theme.spacing.md}px;
-    gap: ${theme.spacing.md}px;
+    padding: ${theme.spacing(2)}px;
+    gap: ${theme.spacing(2)}px;
   }
 `;
 
 const ClaimsHeader = styled.header`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.md}px;
+  gap: ${theme.spacing(2)}px;
 `;
 
 const ClaimsTitle = styled.h1`
@@ -44,13 +43,13 @@ const ClaimsTitle = styled.h1`
 
 const ClaimsContent = styled.section`
   display: grid;
-  gap: ${theme.spacing.xl}px;
+  gap: ${theme.spacing(4)}px;
 `;
 
 const StatusTrackerWrapper = styled.div`
   background: ${theme.palette.background.paper};
   border-radius: ${theme.shape.borderRadius}px;
-  box-shadow: ${theme.shadows.clinical};
+  box-shadow: ${theme.shadows[1]};
   overflow: hidden;
 `;
 
@@ -84,20 +83,12 @@ const ClaimsPage: React.FC = () => {
         throw new Error('Compliance validation failed');
       }
 
-      // Audit log the selection
-      await audit('CLAIM_SELECT', {
-        claimId: claim.id,
-        userId: claim.patientId,
-        action: 'VIEW',
-        timestamp: new Date().toISOString()
-      });
-
       setSelectedClaim(claim);
 
       // Track analytics event
       await Analytics.trackEvent({
         name: 'claim_selected',
-        category: 'USER_INTERACTION',
+        category: 'SYSTEM_PERFORMANCE',
         properties: {
           claimId: claim.id,
           claimType: claim.type,
