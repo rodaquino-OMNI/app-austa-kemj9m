@@ -1,7 +1,6 @@
-import { useEffect, useCallback, useContext, useState } from 'react'; // v18.0.0
-import { Analytics, AnalyticsEvent, PrivacyLevel, PerformanceMetric } from '../lib/utils/analytics';
+import { useEffect, useCallback, useContext } from 'react'; // v18.0.0
+import { Analytics } from '../lib/utils/analytics';
 import { IAuthContext } from '../lib/types/auth';
-import { AuthContext } from '../contexts/AuthContext';
 
 // Enhanced types for analytics hook
 export enum PrivacyStatus {
@@ -19,9 +18,9 @@ interface IPerformanceMetrics {
 }
 
 interface IAnalyticsHook {
-  logEvent: (event: AnalyticsEvent) => Promise<void>;
-  logError: (error: Error, context: Record<string, any>, privacyLevel: PrivacyLevel) => Promise<void>;
-  logPerformance: (metric: PerformanceMetric) => Promise<void>;
+  logEvent: (event: Analytics.AnalyticsEvent) => Promise<void>;
+  logError: (error: Error, context: Record<string, any>, privacyLevel: Analytics.PrivacyLevel) => Promise<void>;
+  logPerformance: (metric: Analytics.PerformanceMetric) => Promise<void>;
   isInitialized: boolean;
   privacyStatus: PrivacyStatus;
   performanceMetrics: IPerformanceMetrics;
@@ -112,7 +111,7 @@ export const useAnalytics = (): IAnalyticsHook => {
   }, [isInitialized]);
 
   // Memoized event tracking function
-  const logEvent = useCallback(async (event: AnalyticsEvent): Promise<void> => {
+  const logEvent = useCallback(async (event: Analytics.AnalyticsEvent): Promise<void> => {
     if (!isInitialized || privacyStatus !== PrivacyStatus.CONSENTED) {
       return;
     }
@@ -124,7 +123,8 @@ export const useAnalytics = (): IAnalyticsHook => {
         properties: {
           ...event.properties,
           userRole: authContext.user?.role,
-          userStatus: authContext.user?.status
+          userStatus: authContext.user?.status,
+          sessionId: authContext.sessionId
         },
         userConsent: true,
         timestamp: Date.now(),
@@ -147,7 +147,7 @@ export const useAnalytics = (): IAnalyticsHook => {
   const logError = useCallback(async (
     error: Error,
     context: Record<string, any>,
-    privacyLevel: PrivacyLevel
+    privacyLevel: Analytics.PrivacyLevel
   ): Promise<void> => {
     if (!isInitialized) return;
 
@@ -167,7 +167,7 @@ export const useAnalytics = (): IAnalyticsHook => {
   }, [isInitialized, authContext]);
 
   // Memoized performance tracking function
-  const logPerformance = useCallback(async (metric: PerformanceMetric): Promise<void> => {
+  const logPerformance = useCallback(async (metric: Analytics.PerformanceMetric): Promise<void> => {
     if (!isInitialized) return;
 
     try {
@@ -180,6 +180,7 @@ export const useAnalytics = (): IAnalyticsHook => {
         },
         context: {
           ...metric.context,
+          sessionId: authContext.sessionId,
           deviceType: navigator.userAgent
         },
         timestamp: Date.now()
