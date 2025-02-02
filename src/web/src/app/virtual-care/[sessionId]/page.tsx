@@ -102,16 +102,13 @@ const VirtualCarePage: React.FC<IPageProps> = ({ params }) => {
    */
   const verifyEncryption = useCallback(async () => {
     try {
-      const verified = await virtualCareApi.verifyEncryptionCapabilities({
-        algorithm: 'AES-GCM',
-        keySize: 256
-      });
+      const status = await virtualCareApi.verifyEncryption(params.sessionId);
       setSecurityContext(prev => ({
         ...prev,
-        encryptionStatus: verified ? 'VERIFIED' : 'FAILED'
+        encryptionStatus: status ? 'VERIFIED' : 'FAILED'
       }));
 
-      if (!verified) {
+      if (!status) {
         handleSecurityViolation('ENCRYPTION_FAILED');
       }
     } catch (err) {
