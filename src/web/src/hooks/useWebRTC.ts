@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'; // v18.2.0
-import { Room, LocalTrack, RemoteParticipant } from 'twilio-video'; // v2.27.0
+import { Room, LocalTrack, RemoteParticipant, ConnectionQualityStats } from 'twilio-video'; // v2.27.0
 
 import { virtualCareApi } from '../lib/api/virtualCare';
 import {
@@ -65,15 +65,15 @@ export const useWebRTC = (
       let videoBitrate = 0;
       let packetLoss = 0;
 
-      // Process stats reports
-      stats.forEach(report => {
-        if (report.type === 'inbound-rtp') {
-          if (report.kind === 'audio') {
-            audioLevel = report.audioLevel || 0;
-          } else if (report.kind === 'video') {
-            videoBitrate = report.bytesReceived || 0;
-          }
-          packetLoss = report.packetsLost || 0;
+      // Process stats for each report
+      stats.forEach((report: any) => {
+        if (report.mediaType === 'audio') {
+          audioLevel = report.audioInputLevel || 0;
+        } else if (report.mediaType === 'video') {
+          videoBitrate = report.bytesReceived ? (report.bytesReceived * 8) / 1000 : 0;
+        }
+        if (report.packetsLost) {
+          packetLoss += report.packetsLost;
         }
       });
 
@@ -85,9 +85,7 @@ export const useWebRTC = (
       }
 
       setConnectionQuality(quality);
-      
-      // Log quality metrics instead of reporting since API doesn't support it
-      console.info('Connection quality metrics:', {
+      await virtualCareApi.reportConnectionQuality({
         consultationId,
         quality,
         metrics: { audioLevel, videoBitrate, packetLoss }
@@ -227,7 +225,7 @@ export const useWebRTC = (
   /**
    * Retrieves current connection quality statistics
    */
-  const getConnectionStats = useCallback(async () => {
+  const getConnectionStats = useCallback(async (): Promise<ConnectionQualityStats> => {
     if (!room?.room) {
       throw new Error('Room not connected');
     }
