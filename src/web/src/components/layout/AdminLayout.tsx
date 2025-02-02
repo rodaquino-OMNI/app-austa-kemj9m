@@ -13,7 +13,7 @@ import { AuditLogger } from '@hipaa-audit/logger'; // v2.0.0
 
 import Header from './Header';
 import Sidebar from './Sidebar';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 
 // Constants
 const SIDEBAR_WIDTH = 280;
