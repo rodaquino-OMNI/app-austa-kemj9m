@@ -51,7 +51,6 @@ interface MetricCardProps {
   ariaLabel: string;
   thresholds: MetricThresholds;
   trend: TrendDirection;
-  showHistory?: boolean;
 }
 
 interface MetricThresholds {
@@ -190,7 +189,6 @@ const HealthMetrics: React.FC<HealthMetricsProps> = ({
         ariaLabel="Current heart rate measurement"
         thresholds={{ low: 60, high: 100, critical: 120 }}
         trend={TrendDirection.STABLE}
-        showHistory={showHistory}
       />
 
       <MetricCard
@@ -205,7 +203,6 @@ const HealthMetrics: React.FC<HealthMetricsProps> = ({
         ariaLabel="Current blood pressure measurement"
         thresholds={{ low: 90, high: 140, critical: 180 }}
         trend={TrendDirection.UP}
-        showHistory={showHistory}
       />
 
       {/* Additional metric cards... */}
@@ -224,8 +221,7 @@ const MetricCard: React.FC<MetricCardProps> = React.memo(({
   isNormal,
   ariaLabel,
   thresholds,
-  trend,
-  showHistory
+  trend
 }) => {
   const chartData = useMemo(() => 
     history.map(point => ({
